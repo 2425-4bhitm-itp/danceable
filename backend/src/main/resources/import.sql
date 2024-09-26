@@ -4,3 +4,28 @@
 -- insert into myentity (id, field) values(2, 'field-2');
 -- insert into myentity (id, field) values(3, 'field-3');
 -- alter sequence myentity_seq restart with 4;
+
+INSERT INTO dance (name, minbpm, maxbpm)
+VALUES
+     ('Waltz', 84, 90),
+     ('Vienese Waltz', 174, 180),
+     ('Foxtrot', 112, 120),
+     ('Quickstep', 200, 208),
+     ('Tango', 120, 140),
+     ('Cha Cha Cha', 120, 128),
+     ('Rumba', 100, 108),
+     ('Samba', 96, 104),
+     ('Jive', 168, 184),
+     ('Paso Doble', 120, 124),
+     ('Lindy Hop', 105, 190),
+     ('Charleston', 200, 290),
+     ('Balboa', 175, 340),
+     ('East Coast Swing or Jitterbug', 120, 250),
+     ('Blues Dance', 20, 75),
+     ('Tango Argentino', 80, 160),
+     ('Tango Nuevo', 40, 160),
+     ('Milonga', 150, 240),
+     ('Vals', 150, 240),
+     ('Salsa', 180, 300),
+     ('Merenge', 130, 200),
+     ('Bachata', 90, 200);
