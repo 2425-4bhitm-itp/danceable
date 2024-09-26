@@ -1,4 +1,4 @@
-package at.leonding.htl;
+package at.leonding.htl.features.dance;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,8 +12,8 @@ public class Dance {
     private Long id;
 
     private String name;
-    private int minBPM;
-    private int maxBPM;
+    private int minBpm;
+    private int maxBpm;
 
     public void setId(Long id) {
         this.id = id;
@@ -31,20 +31,20 @@ public class Dance {
         this.name = name;
     }
 
-    public int getMinBPM() {
-        return minBPM;
+    public int getMinBpm() {
+        return minBpm;
     }
 
-    public void setMinBPM(int minBPM) {
-        this.minBPM = minBPM;
+    public void setMinBpm(int minBpm) {
+        this.minBpm = minBpm;
     }
 
-    public int getMaxBPM() {
-        return maxBPM;
+    public int getMaxBpm() {
+        return maxBpm;
     }
 
-    public void setMaxBPM(int maxBPM) {
-        this.maxBPM = maxBPM;
+    public void setMaxBpm(int maxBpm) {
+        this.maxBpm = maxBpm;
     }
 
     public Dance() {

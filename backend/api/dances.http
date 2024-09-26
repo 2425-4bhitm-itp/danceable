@@ -1,0 +1,7 @@
+GET http://localhost:8080/dances
+Content-Type: Application/Json
+
+###
+
+GET http://localhost:8080/dances/speed?bpm=100
+Content-Type: Application/Json
