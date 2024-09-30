@@ -107,11 +107,9 @@ JNIEXPORT jfloat JNICALL Java_at_leonding_htl_features_analyze_BPMAnalyzer_analy
     // Get the final BPM
     bpm = aubio_tempo_get_bpm(tempo);
 
-    // Post-process BPM to avoid half/double BPM errors
-    if (bpm < 60.0f) {
-        bpm *= 2;  // If BPM is too low, it's likely half of the actual BPM
-    } else if (bpm > 180.0f) {
-        bpm /= 2;  // If BPM is too high, it's likely double the actual BPM
+    // Multiply BPM by 2.6 if it is under 65
+    if (bpm < 65) {
+        bpm *= 2.6;
     }
 
     // Cleanup

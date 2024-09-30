@@ -26,11 +26,11 @@ public class FileUploadResource {
 
             Files.delete(tempFile); // Clean up the temporary file
 
-            return Response.ok("File uploaded successfully").build();
+            return Response.ok("File uploaded successfully! BPM: "+bpm).build();
         } catch (IOException e) {
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("File upload failed").build();
+                    .entity("File upload failed").build();
         }
     }
 }
