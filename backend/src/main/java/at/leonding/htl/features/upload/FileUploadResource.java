@@ -1,5 +1,6 @@
 package at.leonding.htl.features.upload;
 
+import at.leonding.htl.features.analyze.BPMAnalyzer;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -18,9 +19,11 @@ public class FileUploadResource {
     @Consumes("multipart/form-data")
     public Response uploadFile(@MultipartForm MultipartBody data) {
         try (InputStream uploadedFileStream = data.file) {
-            java.nio.file.Path path = Paths.get("/Users/samuelmayer/Desktop/tmp", data.fileName + ".mp3");
+            BPMAnalyzer bpmAnalyzer = new BPMAnalyzer();
+            float bpm = bpmAnalyzer.getBPM(uploadedFileStream);
 
-            Files.copy(uploadedFileStream, path);
+            System.out.println("BPM: " + bpm);
+
             return Response.ok("File uploaded successfully").build();
         } catch (IOException e) {
             e.printStackTrace();

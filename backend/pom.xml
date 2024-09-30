@@ -71,6 +71,14 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory> <!-- Use the standard resources directory -->
+                <includes>
+                    <include>**/*.so</include> <!-- Include all .so files -->
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>${quarkus.platform.group-id}</groupId>
