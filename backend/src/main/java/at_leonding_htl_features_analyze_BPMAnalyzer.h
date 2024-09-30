@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     at_leonding_htl_features_analyze_BPMAnalyzer
  * Method:    analyzeBPM
- * Signature: (Ljava/io/InputStream;)F
+ * Signature: (Ljava/lang/String;)F
  */
 JNIEXPORT jfloat JNICALL Java_at_leonding_htl_features_analyze_BPMAnalyzer_analyzeBPM
-  (JNIEnv *, jobject, jobject);
+  (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus
 }
