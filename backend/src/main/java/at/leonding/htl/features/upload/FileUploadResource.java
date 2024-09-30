@@ -22,7 +22,6 @@ public class FileUploadResource {
 
             BPMAnalyzer bpmAnalyzer = new BPMAnalyzer();
             float bpm = bpmAnalyzer.getBPM(tempFile.toString());
-            System.out.println("BPM: " + bpm);
 
             Files.delete(tempFile); // Clean up the temporary file
 
