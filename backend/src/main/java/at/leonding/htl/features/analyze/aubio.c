@@ -107,11 +107,6 @@ JNIEXPORT jfloat JNICALL Java_at_leonding_htl_features_analyze_BPMAnalyzer_analy
     // Get the final BPM
     bpm = aubio_tempo_get_bpm(tempo);
 
-    // Multiply BPM by 2.6 if it is under 65
-    if (bpm < 65) {
-        bpm *= 2.6;
-    }
-
     // Cleanup
     swr_free(&swr_ctx);
     av_frame_free(&frame);
