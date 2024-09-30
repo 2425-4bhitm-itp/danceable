@@ -1,0 +1,27 @@
+* {
+    margin: 0;
+    padding: 0;
+
+    box-sizing: border-box;
+}
+
+img {
+    width: 100%;
+    height: auto;
+}
+
+body {
+    font-family: sans-serif;
+}
+
+#wrapper {
+    margin: 5%;
+
+    width: 100%;
+}
+
+#icon {
+    width: 20%;
+
+    filter: drop-shadow(2px 2px 12px rgba(0, 0, 0, 0.1));
+}

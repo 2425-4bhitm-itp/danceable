@@ -34,7 +34,10 @@ const config = {
         },
     plugins: [
         new HtmlWebpackPlugin({
-            template: 'index.html',
+            template: './src/index.html',
+            templateParameters: {
+                iconPath: './src/assets/icon.svg'
+            }
         }),
 
         // Add your plugins here
