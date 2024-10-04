@@ -20,8 +20,9 @@ public class FileUploadResource {
             java.nio.file.Path tempFile = Files.createTempFile("uploaded-", ".mp3");
             Files.copy(data.file, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            BPMAnalyzer bpmAnalyzer = new BPMAnalyzer();
-            float bpm = bpmAnalyzer.getBPM(tempFile.toString());
+            System.out.println(data.fileName + " uploaded successfully");
+            // Call the analysis and save it to the database
+            audioAnalyzer.analyzeAndSave(path.toString(), data.fileName);
 
             Files.delete(tempFile); // Clean up the temporary file
 
