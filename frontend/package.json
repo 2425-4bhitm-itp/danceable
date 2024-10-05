@@ -26,5 +26,9 @@
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.1.0"
+  },
+  "dependencies": {
+    "extendable-media-recorder": "^9.2.13",
+    "extendable-media-recorder-wav-encoder": "^7.0.117"
   }
 }

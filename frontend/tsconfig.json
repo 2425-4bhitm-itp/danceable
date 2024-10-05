@@ -4,7 +4,19 @@
     "noImplicitAny": true,
     "module": "es6",
     "target": "es5",
-    "allowJs": true
+    "allowJs": true,
+    "baseUrl": "./",
+    "paths": {
+      "extendable-media-recorder": ["node_modules/extendable-media-recorder"],
+      "extendable-media-recorder-wav-encoder": ["node_modules/extendable-media-recorder-wav-encoder"]
+    },
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "strict": true
   },
-  "files": ["src/index.ts"]
+  "files": [
+    "./src/index.ts"
+  ],
 }
