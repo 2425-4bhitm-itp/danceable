@@ -13,31 +13,11 @@ body, main {
     background: #ffffff;
 }
 
-button {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 5em;
-    height: 2em;
-    margin-left: -2.5em;
-    margin-top: -1em;
-    z-index: 100;
 
-    padding: .25em .5em;
-    color: #5856D6;
-    background: #ffffff;
-    border: 1px solid #5856D6;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1.15em;
-    font-weight: 200;
-    box-shadow: 0 0 10px rgba( 255, 255, 255, .5 );
-    transition: box-shadow .5s;
-
-    &:hover {
+ /*   &:hover {
         box-shadow: 0 0 30px 5px rgba( 255, 255, 255, .75 );
     }
-}
+*/
 
 main {
     position: relative;
@@ -61,4 +41,66 @@ main {
         margin: 0 auto;
         white-space: pre-line;
     }
+}
+
+/* button idea */
+.like-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ff5252, #d50000);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
+    color: #fff;
+    font-family: "Arial", sans-serif;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+    width: 90px;
+    height: 90px;
+    position: relative;
+    overflow: hidden;
+}
+
+.like-button:before {
+    content: "\2764"; /* Heart Icon */
+    font-size: 50px;
+    color: #fff;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.3s ease-in-out;
+}
+
+.like-button:hover {
+    animation: heartBeat 1s infinite;
+}
+
+.like-button:hover:before {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.like-button:active:after {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+@keyframes heartBeat {
+    from {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+.flex-container {
+    display: flex;
+    flex-direction: column;
 }
