@@ -3,6 +3,8 @@
 }
 
 body, main {
+
+
     margin: 0;
     padding: 0;
     min-width: 100%;
@@ -10,7 +12,7 @@ body, main {
     font-family: sans-serif;
     text-align: center;
     color: #5856D6;
-    background: #ffffff;
+    background: #4444;
 }
 
 
