@@ -1,121 +1,132 @@
-import { MediaRecorder, register } from 'extendable-media-recorder';
-import { connect as wavConnect } from 'extendable-media-recorder-wav-encoder';
+// Access DOM elements with appropriate type assertions
+const recordButton = document.getElementById('recordBtn') as HTMLButtonElement;
+const stopRecordButton = document.getElementById('recordStopBtn') as HTMLButtonElement;
+const playAudioButton = document.getElementById('playAudioBtn') as HTMLButtonElement;
+const fileInput = document.getElementById('file') as HTMLInputElement;
+const filenameInput = document.getElementById('filename') as HTMLInputElement;
 
-
-//@ts-ignore
+// Declare necessary variables and their types
 let mediaRecorder: MediaRecorder | null = null;
-let audioBlobs: Blob[] = [];
-// @ts-ignore
-let timeout: Timeout | number;
-// @ts-ignore
-let blob: Blob | null = null;
-let capturedStream: MediaStream | null = null;
+let audioChunks: Blob[] = [];
+let audioBlob: Blob | null = null;  // Initialize as null for safety
+let timeout: number | undefined;
 
-// Register the extendable-media-recorder-wav-encoder
-async function connect(): Promise<void> {
-  await register(await wavConnect());
-}
+// Event listeners for the buttons
+recordButton.addEventListener('click', () => {
+  _startRecording();
+});
 
-// Starts recording audio
-function startRecording(): Promise<void> {
-  return navigator.mediaDevices.getUserMedia({
-    audio: {
-      echoCancellation: true,
-    }
-  }).then((stream: MediaStream) => {
-    audioBlobs = [];
-    capturedStream = stream;
+stopRecordButton.addEventListener('click', () => {
+  _stopRecording();
+});
 
-    // Use the extended MediaRecorder library
-    // @ts-ignore
-    mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'audio/wav'
-    });
+playAudioButton.addEventListener('click', () => {
+  playAudio();
+});
 
-    // Add audio blobs while recording
-    // @ts-ignore
-    mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
-      audioBlobs.push(event.data);
-    });
+// Function to start recording audio
+async function startRecording(): Promise<void> {
+  try {
+    // Request permission and access to the microphone
+    const stream: MediaStream = await navigator.mediaDevices.getUserMedia({ audio: {
+        echoCancellation: true,
+      } });
 
-    // @ts-ignore
+    // Initialize MediaRecorder with the audio stream
+    mediaRecorder = new MediaRecorder(stream);
+
+    // Clear any previous audio chunks
+    audioChunks = [];
+
+    // Start recording
     mediaRecorder.start();
-  }).catch((e: Error) => {
-    console.error(e);
-  });
-}
 
-function stopRecording(): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    if (!mediaRecorder) {
-      resolve(null); // TODO
-      return;
-    }
-
-    mediaRecorder.addEventListener('stop', () => {
-      const mimeType = mediaRecorder?.mimeType; // audio/wav
-      const audioBlob = new Blob(audioBlobs, { type: mimeType });
-
-      if (capturedStream) {
-        capturedStream.getTracks().forEach(track => track.stop());
-      }
-
-      resolve(audioBlob);
+    // Event listener for when audio data becomes available
+    mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
+      audioChunks.push(event.data);
     });
 
-    mediaRecorder.stop();
-  });
-}
-
-
-
-// @ts-ignore
-function playAudio() {
-  if (blob) {
-    const audio = new Audio();
-    audio.src = URL.createObjectURL(blob);
-    audio.volume = 0.5;
-    audio.play();
+    // Event listener for when the recording is stopped
+    mediaRecorder.addEventListener('stop', () => {
+      if (audioChunks.length > 0) {
+        // Create a Blob from the audio chunks
+        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+      }
+    });
+  } catch (error) {
+    console.error('Error accessing microphone:', error);
   }
 }
 
-async function _startRecording() {
-  await connect();
+// Function to handle recording logic with a timeout
+async function _startRecording(): Promise<void> {
   await startRecording();
-  console.log("Audio Recording started!")
-  timeout = setTimeout(async () => {
-    // @ts-ignore
-    blob = await stopRecording()
-    console.log("Audio Recording stopped!")
-    await addToForm();
-  }, 10 * 1000);
+  console.log("Audio Recording started!");
+
+  // Automatically stop recording after 10 seconds
+  timeout = window.setTimeout(async () => {
+    await stopRecording();  // Make sure recording stops first
+    console.log("Audio Recording stopped!");
+    await addToForm();  // Only add to form once recording is stopped and audioBlob is ready
+  }, 10 * 1000);  // 10 seconds
 }
 
-async function _stopRecording() {
-  clearTimeout(timeout);
-  console.log("Audio Recording stopped manually!")
-  blob = await stopRecording();
-  await addToForm();
+// Function to stop recording manually and clear timeout
+async function _stopRecording(): Promise<void> {
+  if (timeout) {
+    clearTimeout(timeout);
+    console.log("Audio Recording stopped manually!");
+    await stopRecording();  // Ensure recording is stopped before proceeding
+    await addToForm();  // Only add to form once recording is stopped and audioBlob is ready
+  }
 }
 
-async function addToForm() {
-  // @ts-ignore
-  const file = new File([blob], "recorded_audio.wav", { type: 'audio/wav' });
-  // Create a DataTransfer object to hold the file
-  const dataTransfer = new DataTransfer();
-  dataTransfer.items.add(file);
-  // @ts-ignore - Assign the FileList from DataTransfer to the file input element
-  document.getElementById("file").files = dataTransfer.files;
-  // @ts-ignore
-  document.getElementById("filename").value = "recorded_audio.wav";
+// Function to stop the media recording
+async function stopRecording(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      // Stop the media recorder
+      mediaRecorder.addEventListener('stop', () => {
+        if (audioChunks.length > 0) {
+          // Create a Blob from the audio chunks after recording has stopped
+          audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          console.log("Audio Blob created successfully");
+        }
+        resolve();  // Resolve the promise when the stop event is fully handled
+      });
+      mediaRecorder.stop();
+    } else {
+      resolve();  // If mediaRecorder is already inactive, resolve immediately
+    }
+  });
 }
 
+// Function to play the recorded audio
+function playAudio(): void {
+  if (audioBlob) {
+    const audio = new Audio(URL.createObjectURL(audioBlob));
+    audio.volume = 0.5;
+    audio.play();
+  } else {
+    console.error('No audio blob available to play');
+  }
+}
 
+// Function to add the audio blob to a form as a file
+async function addToForm(): Promise<void> {
+  if (audioBlob) {
+    const file = new File([audioBlob], "recorded_audio.wav", { type: 'audio/wav' });
 
-// Register the extendable-media-recorder-wav-encoder
-// @ts-ignore
-window.startRecording = _startRecording;
-// @ts-ignore
-window.stopRecording = _stopRecording;
-// @ts-ignore
-window.playAudio = playAudio;
+    // Create a DataTransfer object to hold the file
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+
+    // Assign the file to the file input
+    fileInput.files = dataTransfer.files;
+
+    // Set the filename value
+    filenameInput.value = "recorded_audio.wav";
+  } else {
+    console.error('No audio blob available to add to form');
+  }
+}
