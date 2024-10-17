@@ -1,8 +1,12 @@
+= Projektstrukturplan - Danceable
+
+[plantuml]
+----
 @startwbs
 <style>
-    .levelOne{
-        BackgroundColor b13aff
-    }
+.levelOne{
+BackgroundColor b13aff
+}
 
     .levelTwo {
         BackgroundColor dca6ff
@@ -10,7 +14,7 @@
 
 </style>
 
-* <b><size:23>Danceable (2080h)</size> <<levelOne>>
+* <b><size:23>Danceable (2000h)</size> <<levelOne>>
 ** <b><size:15>Projektmanagement (400h)</size><<levelTwo>>
 *** Planung und Meilensteine (100h)
 **** Anforderungsanalyse
@@ -23,7 +27,7 @@
 **** Code-Dokumentation
 **** Nutzeranleitung
 
-** <b><size:15>Implementierung (1680h)</size><<levelTwo>>
+** <b><size:15>Implementierung (1700h)</size><<levelTwo>>
 
 *** <size:15><b>Frontend - (Web/IOS/Android) (600h) </size><<levelTwo>>
 **** UI/UX Design
@@ -50,13 +54,13 @@
 ***** Unit-Tests (Code)
 ***** Unit-Tests (API)
 
-***< <size:15><b>Datenbank - Postgres (50h)</size><<levelTwo>>
+***< <size:15><b>Datenbank - Postgres (100h)</size><<levelTwo>>
 **** Datenbankstruktur
 ***** Tanz (mit zB Geschwindigkeit, Takt, ...)
 ***** Benutzerprofile
 **** Indexing und Performance
 
-***> <size:15><b>DevOps und Deployment</size><<levelTwo>>
+***> <size:15><b>DevOps und Deployment (100h)</size><<levelTwo>>
 **** Infrastruktur
 ***** Docker Containerisierung
 ***** Kubernetes Deployment (optional)
@@ -64,3 +68,13 @@
 
 
 @endwbs
+----
+[plantuml]
+== Teammitglieder
+- Tobias Huch
+- Samuel Mayer
+- Luca Zinhobel
+- Zoe Öllinger
+- Silin Hussein
+
+Zeitrechnung: 52 Wochen mit 8 Wochenstunden pro Person -> ca. 2000h
