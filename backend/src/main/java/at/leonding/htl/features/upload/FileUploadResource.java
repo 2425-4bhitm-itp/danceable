@@ -26,12 +26,6 @@ public class FileUploadResource {
             java.nio.file.Path tempFile = Files.createTempFile("uploaded-", ".mp3");
             Files.copy(data.file, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            // Call the analysis and save it to the database
-            audioAnalyzer.analyzeAndSave(tempFile.toString(), data.fileName);
-
-            // get the category of the uploaded file
-            //String category = audioAnalyzer.categorize(tempFile.toString());
-
             Files.delete(tempFile); // Clean up the temporary file
 
             return Response.ok("File uploaded and analyzed successfully").build();
