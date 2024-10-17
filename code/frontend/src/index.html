@@ -11,9 +11,13 @@
 <h1>🕺Danceable💃</h1>
 <p>Working on it ...</p>
 
+<button id="recordBtn" >Start Recording (Max. 10 Sekunden)</button>
+<button id="recordStopBtn">Stop Recording</button>
+<button id="playAudioBtn">Play Audio</button>
+
 <form action="/api/upload" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" required />
-  <input type="text" name="fileName" placeholder="Enter file name" required />
+  <input type="file" id="file" name="file" accept=".wav" required />
+  <input type="text" id="filename" name="fileName" placeholder="Enter file name" required />
   <button type="submit">Upload</button>
 </form>
 
