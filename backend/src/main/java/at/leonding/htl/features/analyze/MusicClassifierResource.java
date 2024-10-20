@@ -20,11 +20,11 @@ public class MusicClassifierResource {
         // Prepare dataset from database records
         classifier.initDataset();
         for (MusicFeature feature : musicFeatures) {
-            classifier.addInstance(feature.featureVector, feature.genre);
+            classifier.addInstance(feature.getFeatureVector(), feature.getGenres());
         }
 
         // Train the classifier
-        classifier.trainModel();
+        classifier.trainModelFromDatabase();
         return "Model trained successfully!";
     }
 }
