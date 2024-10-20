@@ -54,7 +54,7 @@ public class AudioFeatureExtractor {
                     double real = fftData[2 * i];
                     double imag = fftData[2 * i + 1];
                     double magnitude = Math.sqrt(real * real + imag * imag);
-                    int binIndex = (int) Math.floor((double) i / (WINDOW_SIZE / 2) * NUM_BINS);
+                    int binIndex = (int) Math.floor((double) i / (WINDOW_SIZE / 2.0) * NUM_BINS);
                     featureVector[binIndex] += magnitude;
                 }
             }
