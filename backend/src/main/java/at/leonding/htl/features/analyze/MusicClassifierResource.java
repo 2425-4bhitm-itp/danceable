@@ -27,4 +27,6 @@ public class MusicClassifierResource {
         classifier.trainModelFromDatabase();
         return "Model trained successfully!";
     }
+
+    // curl -X POST http://localhost:8080/train
 }
