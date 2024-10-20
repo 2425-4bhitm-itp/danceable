@@ -10,7 +10,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,7 +25,7 @@ public class FileUploadResource {
     MusicFeatureService musicFeatureService;
 
     @Inject
-    AudioFeatureExtractor audioFeatureExtractor;  // Use AudioFeatureExtractor for feature extraction
+    AudioFeatureExtractor audioFeatureExtractor;
 
     private static final Logger LOGGER = Logger.getLogger(FileUploadResource.class.getName());
 
@@ -30,21 +33,33 @@ public class FileUploadResource {
     @Consumes("multipart/form-data")
     @Transactional
     public Response uploadFile(@MultipartForm MultipartBody data) {
-        // Extract features from the uploaded audio file using AudioFeatureExtractor
-        double[] features = audioFeatureExtractor.extractFeatures(data.file);
+        Instant start = Instant.now();
+
+        System.out.println("Received file: " + data.fileName);
+        // Step 1: Extract features from the uploaded audio file
+        Instant featureStart = Instant.now();
+        List<Double> features = audioFeatureExtractor.extractFeatures(data.file);
+        Instant featureEnd = Instant.now();
+        LOGGER.log(Level.INFO, "Feature extraction time: " + Duration.between(featureStart, featureEnd).toMillis() + " ms");
 
         if (features == null) {
             LOGGER.log(Level.SEVERE, "Feature extraction failed, features array is null");
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Feature extraction failed").build();
         }
 
-        // Save features with the provided genre
+        // Step 2: Save features with the provided genres
+        Instant saveStart = Instant.now();
         musicFeatureService.saveFeatureVector(features, data.fileName);
+        Instant saveEnd = Instant.now();
+        LOGGER.log(Level.INFO, "Database save time: " + Duration.between(saveStart, saveEnd).toMillis() + " ms");
 
-        // Prepare response data
+        // Step 3: Prepare response data
         Map<String, Object> responseData = new HashMap<>();
-        responseData.put("genre", data.fileName);
+        responseData.put("genres", data.fileName.split(","));
         responseData.put("featureVector", features);
+
+        Instant end = Instant.now();
+        LOGGER.log(Level.INFO, "Total upload time: " + Duration.between(start, end).toMillis() + " ms");
 
         return Response.ok(responseData).build();
     }
