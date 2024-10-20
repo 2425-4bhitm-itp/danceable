@@ -7,10 +7,12 @@ import org.jtransforms.fft.DoubleFFT_1D;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.BufferedInputStream;
-
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 @ApplicationScoped
 public class AudioFeatureExtractor {
@@ -20,7 +22,7 @@ public class AudioFeatureExtractor {
     private static final Logger LOGGER = Logger.getLogger(AudioFeatureExtractor.class.getName());
 
     // Method to extract features from an uploaded audio InputStream
-    public double[] extractFeatures(InputStream audioStream) {
+    public List<Double> extractFeatures(InputStream audioStream) {
         try (BufferedInputStream bufferedInputStream = new BufferedInputStream(audioStream)) {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedInputStream);
             int numSamples = (int) (audioInputStream.getFrameLength());
@@ -62,7 +64,8 @@ public class AudioFeatureExtractor {
                 featureVector[i] /= numWindows;
             }
 
-            return featureVector;
+            // Convert double[] to List<Double>
+            return DoubleStream.of(featureVector).boxed().collect(Collectors.toList());
 
         } catch (IOException | javax.sound.sampled.UnsupportedAudioFileException e) {
             LOGGER.log(Level.SEVERE, "Error extracting features from audio stream", e);

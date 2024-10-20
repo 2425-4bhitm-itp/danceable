@@ -2,6 +2,7 @@ package at.leonding.htl.features.analyze;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Arrays;
 import java.util.List;
 
 @ApplicationScoped
@@ -10,11 +11,12 @@ public class MusicFeatureService {
     @Inject
     MusicFeatureRepository repository;
 
-    // Save feature vector and genre in database
-    public void saveFeatureVector(double[] featureVector, String genre) {
+    // Save feature vector and genres in database
+    public void saveFeatureVector(List<Double> featureVector, String genreString) {
+        List<String> genres = Arrays.asList(genreString.split(","));
         MusicFeature musicFeature = new MusicFeature();
-        musicFeature.genre = genre;
-        musicFeature.featureVector = featureVector;  // Ensure this line is correctly setting the feature vector
+        musicFeature.setFeatureVector(featureVector);
+        musicFeature.setGenres(genres);
         repository.persist(musicFeature);
     }
 
