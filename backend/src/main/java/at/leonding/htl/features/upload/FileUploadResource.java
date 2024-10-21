@@ -1,7 +1,7 @@
 package at.leonding.htl.features.upload;
 
-import at.leonding.htl.features.analyze.AudioFeatureExtractor;
-import at.leonding.htl.features.analyze.MusicFeatureService;
+import at.leonding.htl.features.analyze.fourier.AudioFeatureExtractor;
+import at.leonding.htl.features.analyze.fourier.MusicFeatureService;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;

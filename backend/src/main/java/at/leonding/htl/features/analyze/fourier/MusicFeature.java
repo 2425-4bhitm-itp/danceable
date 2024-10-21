@@ -1,4 +1,4 @@
-package at.leonding.htl.features.analyze;
+package at.leonding.htl.features.analyze.fourier;
 
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;

@@ -1,5 +1,7 @@
-package at.leonding.htl.features.analyze;
+package at.leonding.htl.features.analyze.fourier.classifier;
 
+import at.leonding.htl.features.analyze.fourier.MusicFeature;
+import at.leonding.htl.features.analyze.fourier.MusicFeatureService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;

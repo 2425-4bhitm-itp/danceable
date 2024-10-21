@@ -1,4 +1,4 @@
-package at.leonding.htl.features.analyze;
+package at.leonding.htl.features.analyze.fourier;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import javax.sound.sampled.AudioInputStream;

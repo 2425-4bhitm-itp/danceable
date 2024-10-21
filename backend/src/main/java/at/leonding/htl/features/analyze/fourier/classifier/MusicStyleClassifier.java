@@ -1,5 +1,7 @@
-package at.leonding.htl.features.analyze;
+package at.leonding.htl.features.analyze.fourier.classifier;
 
+import at.leonding.htl.features.analyze.fourier.MusicFeature;
+import at.leonding.htl.features.analyze.fourier.MusicFeatureService;
 import jakarta.enterprise.context.ApplicationScoped;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
