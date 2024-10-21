@@ -35,11 +35,11 @@ export class Visualizer {
         this.analyser.fftSize = 32;
         //smoothing and fft size = anzahl frequenzbaender
 
-        this.initRenderLoop(this.analyser);
+        this.initRenderLoop();
     }
 
 
-    private initRenderLoop(analyser: AnalyserNode) {
+    private initRenderLoop() {
         const frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
         //create array storing frequency data
         const processFrame = this.processFrame || (() => {
