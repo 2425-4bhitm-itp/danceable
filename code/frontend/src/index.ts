@@ -1,13 +1,12 @@
 import './style/style.css';
-
-console.log("💃💃💃");
-
-// selins part (media recorder)
-
 import { _startRecording} from "./mediaRecorder";
 import {_stopRecording} from "./mediaRecorder";
 import {playAudio} from "./mediaRecorder";
 import {Visualizer} from "./Visualizer";
+
+console.log("💃💃💃");
+
+// selins part (media recorder)
 
 // Access DOM elements with appropriate type assertions
 const recordButton = document.getElementById('recordBtn') as HTMLButtonElement;
@@ -90,6 +89,6 @@ const init = () => {
     viualizer = new Visualizer(audioContext, processFrame, processError);
 };
 
-document.querySelector("#startVisualizer").addEventListener('click', () => {
+document.querySelector("#startVisualizer")!.addEventListener("click", () => {
     init();
-});
+})

@@ -9,6 +9,7 @@ export class Visualizer {
 
     constructor(audioContext: AudioContext, processFrame: (data: Uint8Array) => void, processError?: (error: Error) => void) {
         this.audioContext = audioContext;
+        this.analyser = this.audioContext.createAnalyser();
         this.processFrame = processFrame;
         this.connectStream = this.connectStream.bind(this);
         navigator.mediaDevices.getUserMedia({audio: true, video: false})
@@ -25,7 +26,6 @@ export class Visualizer {
 
     connectStream(stream: MediaStream) {
         // if stream is available call connectStream method
-        this.analyser = this.audioContext.createAnalyser();
         // Make an AnalyserNode to analyse the audio
         const source = this.audioContext.createMediaStreamSource(stream);
         //MediaStreamSource is being made out of the audio stream
