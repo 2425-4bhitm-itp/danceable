@@ -1,0 +1,46 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body, main {
+
+
+    margin: 0;
+    padding: 0;
+    min-width: 100%;
+    min-height: 100vh;
+    font-family: sans-serif;
+    text-align: center;
+    color: #5856D6;
+    background: #4444;
+}
+
+
+/*   &:hover {
+       box-shadow: 0 0 30px 5px rgba( 255, 255, 255, .75 );
+   }
+*/
+
+main {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    > div {
+        display: inline-block;
+        width: 3px;
+        height: 100px;
+        margin: 0 7px;
+        background: currentColor;
+        transform: scaleY( .5 );
+    }
+
+    &.error {
+        color: #f7451d;
+        min-width: 20em;
+        max-width: 30em;
+        margin: 0 auto;
+        white-space: pre-line;
+    }
+}
