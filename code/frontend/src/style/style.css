@@ -2,9 +2,7 @@
     box-sizing: border-box;
 }
 
-body, main {
-
-
+body {
     margin: 0;
     padding: 0;
     min-width: 100%;
@@ -21,7 +19,7 @@ body, main {
    }
 */
 
-main {
+#visualizer {
     position: relative;
     display: flex;
     justify-content: center;
