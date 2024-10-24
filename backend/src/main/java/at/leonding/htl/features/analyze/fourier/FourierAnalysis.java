@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class FourierAnalysis extends Application {
+    public static final double sampleRate = 44100.0;
+    public static final int bpmPoints = 4000;
 
     public static void main(String[] args) {
         launch(args);
@@ -21,7 +23,7 @@ public class FourierAnalysis extends Application {
     public void start(Stage stage) throws Exception {
         //File wavFile = new File("/home/it210190/Music/exampleMusic/50hz.wav");
         //File wavFile = new File("/home/it210190/Music/exampleMusic/Utility-4x4-Kick.wav");
-        //File wavFile = new File("/home/it210190/Music/exampleMusic/HighHopes.wav");
+        File wavFile = new File("/home/it210190/Music/exampleMusic/HighHopes.wav");
 
         // monotone
         //File wavFile = new File("/home/it210190/Music/monotone/0Hz.wav");
@@ -29,7 +31,7 @@ public class FourierAnalysis extends Application {
         //File wavFile = new File("/home/it210190/Music/monotone/98Hz.wav");
         //File wavFile = new File("/home/it210190/Music/monotone/988Hz.wav");
 
-        File wavFile = new File("/home/it210190/Music/exampleMusic/twospikes.wav");
+        //File wavFile = new File("/home/it210190/Music/exampleMusic/twospikes.wav");
 
         double[] audioData = readWavFile(wavFile);
 
@@ -41,24 +43,24 @@ public class FourierAnalysis extends Application {
         xAxis.setLabel("Frequency (Hz)");
         yAxis.setLabel("Magnitude");
 
-        xAxis.setAutoRanging(false);
-        xAxis.setLowerBound(0);
-        xAxis.setUpperBound(1000);
-
         final LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setTitle("Frequency Spectrum");
 
         XYChart.Series<Number, Number> series = new XYChart.Series<>();
         series.setName("Frequency Spectrum");
 
+        double highestMagnitude = getHighestMagnitude(fftData);
+
         for (int i = 0; i < fftData.length / 2; i++) {
-            double frequency = i * 44100 / fftData.length;
-            double magnitude = fftData[i].getAbs();
+            double frequency = i * sampleRate / fftData.length;
+            double magnitude = fftData[i].getAbs() / highestMagnitude;
 
             if (magnitude > 0.01) {
                 series.getData().add(new XYChart.Data<>(frequency, magnitude));
             }
         }
+        System.out.println(highestMagnitude);
+        System.out.println(calculateBPM(fftData, bpmPoints));
 
         lineChart.getData().add(series);
 
@@ -88,7 +90,7 @@ public class FourierAnalysis extends Application {
     }
 
     public static Complex[] performDFT(double[] audioData) {
-        int N = 2000;
+        int N = 5000;
         Complex[] result = new Complex[N];
 
         for (int k = 0; k < N; k++) {
@@ -100,8 +102,35 @@ public class FourierAnalysis extends Application {
                 imaginary -= audioData[t] * Math.sin(angle);
             }
             result[k] = new Complex(real, imaginary);
-            System.out.println("k: " + k + ", real: " + real + ", imaginary: " + imaginary);
         }
         return result;
+    }
+
+    private static int getPeakIndex(Complex[] fftData) {
+        double highestMagnitude = 0;
+        int peakIndex = 0;
+
+        for (int i = 0; i < fftData.length; i++) {
+            double magnitude = fftData[i].getAbs();
+            if (magnitude > highestMagnitude) {
+                highestMagnitude = magnitude;
+                peakIndex = i;
+            }
+        }
+
+        return peakIndex;
+    }
+
+    public static double calculateBPM(Complex[] fftData, int pointsToCalculate) {
+        int peakIndex = getPeakIndex(fftData);
+
+        double bpmFrequency = peakIndex * sampleRate / pointsToCalculate;
+
+        return bpmFrequency * 60;
+    }
+
+    public double getHighestMagnitude(Complex[] fftData) {
+        int peakIndex = getPeakIndex(fftData);
+        return fftData[peakIndex].getAbs();
     }
 }
