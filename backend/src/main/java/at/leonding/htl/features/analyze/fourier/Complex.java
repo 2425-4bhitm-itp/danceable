@@ -14,4 +14,18 @@ public class Complex {
     public double getAbs() {
         return this.abs;
     }
+
+    public Complex add(Complex other) {
+        return new Complex(this.real + other.real, this.imaginary + other.imaginary);
+    }
+
+    public Complex subtract(Complex other) {
+        return new Complex(this.real - other.real, this.imaginary - other.imaginary);
+    }
+
+    public Complex multiply(Complex other) {
+        double realPart = this.real * other.real - this.imaginary * other.imaginary;
+        double imaginaryPart = this.real * other.imaginary + this.imaginary * other.real;
+        return new Complex(realPart, imaginaryPart);
+    }
 }
