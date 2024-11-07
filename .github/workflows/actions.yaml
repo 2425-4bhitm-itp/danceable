@@ -11,7 +11,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-          cache-dependency-path: 'cicd/pom.xml'
+          cache-dependency-path: 'code/backend/pom.xml'
       - name: Build with Maven
-        working-directory: cicd
+        working-directory: code/backend
         run: mvn -B package --file pom.xml
