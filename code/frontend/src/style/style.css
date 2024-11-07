@@ -13,12 +13,6 @@ body {
     background: #4444;
 }
 
-
-/*   &:hover {
-       box-shadow: 0 0 30px 5px rgba( 255, 255, 255, .75 );
-   }
-*/
-
 #visualizer {
     position: relative;
     display: flex;

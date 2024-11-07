@@ -1,4 +1,5 @@
 import './style/style.css';
+import './style/tailwind.css';
 import {_startRecording, _stopRecording, playAudio} from "./mediaRecorder";
 import {Visualizer} from "./Visualizer";
 
