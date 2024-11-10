@@ -14,7 +14,6 @@ import java.io.IOException;
 
 public class FourierAnalysis extends Application {
     public static final double sampleRate = 44100.0;
-    public static final int bpmPoints = 4000;
 
     public static void main(String[] args) {
         launch(args);
@@ -34,11 +33,11 @@ public class FourierAnalysis extends Application {
 
         //File wavFile = new File("/home/it210190/Music/exampleMusic/twospikes.wav");
 
-        //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/120bpm_discofox_tom-gregory-footprints-2.wav");
+        File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/120bpm_discofox_tom-gregory-footprints-2.wav");
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/168bpm_foxtrott_lemo-tu-es-2.wav");
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/172bpm_jive_footloose-kenny-loggins-2.wav");
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/44bpm_jive_bad-moon-rising-creedence-clerwater-revival-1.wav");
-        File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/92bpm_foxtrott_diamonds-rihanna-2.wav");
+        //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/92bpm_foxtrott_diamonds-rihanna-2.wav");
 
 
         double[] audioData = readWavFile(wavFile);
@@ -59,7 +58,7 @@ public class FourierAnalysis extends Application {
 
         double highestMagnitude = getHighestMagnitude(fftData);
 
-        for (int i = 0; i < fftData.length / 2000; i++) {
+        for (int i = 0; i < fftData.length / 2; i++) {
             double frequency = i * sampleRate / fftData.length;
             double magnitude = fftData[i].getAbs() / highestMagnitude;
 
@@ -68,15 +67,7 @@ public class FourierAnalysis extends Application {
             }
         }
 
-        Complex[] fftDataLimited = new Complex[fftData.length / 2000];
-
-        for (int i = 0; i < fftData.length / 2000; i++) {
-            fftDataLimited[i] = fftData[i];
-        }
-
-        System.out.println(calculateBPM(fftDataLimited, fftData.length));
-
-
+        System.out.println(calculateBPM(fftData, fftData.length));
 
         lineChart.getData().add(series);
 
@@ -123,22 +114,11 @@ public class FourierAnalysis extends Application {
     }
 
     public static Complex[] performFFT(double[] audioData) {
-    int N = audioData.length;
-    if (N == 0) return new Complex[0];
+    int N = (int) Math.pow(2, 17);
 
-    // Find the next power of 2
-    int powerOf2 = 1;
-    while (powerOf2 < N) {
-        powerOf2 *= 2;
-    }
-
-    // Pad the audioData array with zeros
-    double[] paddedAudioData = new double[powerOf2];
-    System.arraycopy(audioData, 0, paddedAudioData, 0, N);
-
-    Complex[] result = new Complex[powerOf2];
-    for (int i = 0; i < powerOf2; i++) {
-        result[i] = new Complex(paddedAudioData[i], 0);
+    Complex[] result = new Complex[N];
+    for (int i = 0; i < N; i++) {
+        result[i] = new Complex(audioData[i], 0);
     }
 
     fft(result);
