@@ -1,5 +1,6 @@
 package at.leonding.htl.features.analyze.fourier;
 
+import at.leonding.htl.features.dance.Dance;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.chart.Axis;
@@ -11,6 +12,7 @@ import javafx.stage.Stage;
 import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class FourierAnalysis extends Application {
     public static final double sampleRate = 44100.0;
@@ -38,7 +40,7 @@ public class FourierAnalysis extends Application {
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/168bpm_foxtrott_lemo-tu-es-2.wav");
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/172bpm_jive_footloose-kenny-loggins-2.wav");
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/44bpm_jive_bad-moon-rising-creedence-clerwater-revival-1.wav");
-        File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/92bpm_foxtrott_diamonds-rihanna-2.wav");
+        File wavFile = new File("/home/tbit/Documents/testlieder/148bpm_jive_mr-brightside-the-killers-1.wav");
 
 
         double[] audioData = readWavFile(wavFile);
@@ -187,7 +189,7 @@ public class FourierAnalysis extends Application {
 
     public static double calculateBPM(Complex[] fftData, int pointsToCalculate) {
         int lowerBoundIndex = (int) (0.65 * pointsToCalculate / sampleRate);
-        int upperBoundIndex = (int) (5.0 * pointsToCalculate / sampleRate);
+        int upperBoundIndex = (int) (2.5 * pointsToCalculate / sampleRate);
 
         double highestMagnitude = 0;
         int peakIndex = lowerBoundIndex;
@@ -203,6 +205,43 @@ public class FourierAnalysis extends Application {
         double bpmFrequency = peakIndex * sampleRate / pointsToCalculate;
 
         return bpmFrequency * 60;
+    }
+
+    public static void mapBpmToDance(){
+        ArrayList<Dance> dances = initDanceTypes();
+
+    }
+
+    private static ArrayList<Dance> initDanceTypes(){
+        ArrayList<Dance> dances = new ArrayList<>();
+
+        Dance discofox = new Dance();
+        discofox.setMinBpm(115);
+        discofox.setMaxBpm(145);
+
+        Dance foxtrott = new Dance();
+        foxtrott.setMinBpm(80);
+        foxtrott.setMaxBpm(115);
+
+        Dance chacha = new Dance();
+        chacha.setMinBpm(115);
+        chacha.setMaxBpm(145);
+
+        Dance jive = new Dance();
+        jive.setMinBpm(115);
+        jive.setMaxBpm(145);
+
+        Dance rumba = new Dance();
+        rumba.setMinBpm(115);
+        rumba.setMaxBpm(145);
+
+        dances.add(discofox);
+        dances.add(foxtrott);
+        dances.add(chacha);
+        dances.add(jive);
+        dances.add(rumba);
+
+        return dances;
     }
 
     public double getHighestMagnitude(Complex[] fftData) {
