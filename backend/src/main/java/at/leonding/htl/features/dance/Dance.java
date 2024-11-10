@@ -48,7 +48,14 @@ public class Dance {
     }
 
     public boolean isBpmInRange(double bpmToCheck){
-        return bpmToCheck >= minBpm && bpmToCheck <= maxBpm;
+        boolean originalBpmIsInRange = bpmToCheck >= minBpm && bpmToCheck <= maxBpm;
+        if(!originalBpmIsInRange){
+            if(bpmToCheck * 2 >= minBpm && bpmToCheck * 2 <= maxBpm ||
+                bpmToCheck / 2 >= minBpm && bpmToCheck / 2 <= maxBpm){
+                return true;
+            }
+        }
+        return originalBpmIsInRange;
     }
 
     public Dance() {
