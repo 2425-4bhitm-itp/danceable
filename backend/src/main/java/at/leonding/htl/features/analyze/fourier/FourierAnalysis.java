@@ -40,7 +40,7 @@ public class FourierAnalysis extends Application {
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/168bpm_foxtrott_lemo-tu-es-2.wav");
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/172bpm_jive_footloose-kenny-loggins-2.wav");
         //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/44bpm_jive_bad-moon-rising-creedence-clerwater-revival-1.wav");
-        File wavFile = new File("/home/tbit/Documents/testlieder/148bpm_jive_mr-brightside-the-killers-1.wav");
+        File wavFile = new File("/home/tbit/Documents/testlieder/99bpm_rumba_backstreet-boys-i-want-it-that-way-2.wav");
 
 
         double[] audioData = readWavFile(wavFile);
@@ -76,7 +76,10 @@ public class FourierAnalysis extends Application {
             fftDataLimited[i] = fftData[i];
         }
 
-        System.out.println(calculateBPM(fftDataLimited, fftData.length));
+        double bpm = calculateBPM(fftDataLimited, fftData.length);
+        System.out.println("BPM: " + bpm);
+        System.out.println("--Dances in BPM Range--");
+        mapBpmToDance(bpm);
 
 
 
@@ -207,9 +210,13 @@ public class FourierAnalysis extends Application {
         return bpmFrequency * 60;
     }
 
-    public static void mapBpmToDance(){
+    public static void mapBpmToDance(double bpm){
         ArrayList<Dance> dances = initDanceTypes();
-
+        for(Dance dance : dances){
+            if(dance.isBpmInRange(bpm)){
+                System.out.println(dance.getName());
+            }
+        }
     }
 
     private static ArrayList<Dance> initDanceTypes(){
@@ -218,22 +225,27 @@ public class FourierAnalysis extends Application {
         Dance discofox = new Dance();
         discofox.setMinBpm(115);
         discofox.setMaxBpm(145);
+        discofox.setName("Discofox");
 
         Dance foxtrott = new Dance();
         foxtrott.setMinBpm(80);
         foxtrott.setMaxBpm(115);
+        foxtrott.setName("Foxtrott");
 
         Dance chacha = new Dance();
-        chacha.setMinBpm(115);
-        chacha.setMaxBpm(145);
+        chacha.setMinBpm(110);
+        chacha.setMaxBpm(140);
+        chacha.setName("Cha-Cha");
 
         Dance jive = new Dance();
-        jive.setMinBpm(115);
-        jive.setMaxBpm(145);
+        jive.setMinBpm(140);
+        jive.setMaxBpm(180);
+        jive.setName("Jive");
 
         Dance rumba = new Dance();
-        rumba.setMinBpm(115);
-        rumba.setMaxBpm(145);
+        rumba.setMinBpm(90);
+        rumba.setMaxBpm(120);
+        rumba.setName("Rumba");
 
         dances.add(discofox);
         dances.add(foxtrott);
