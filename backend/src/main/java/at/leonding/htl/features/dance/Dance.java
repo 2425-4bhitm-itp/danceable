@@ -47,6 +47,10 @@ public class Dance {
         this.maxBpm = maxBpm;
     }
 
+    public boolean isBpmInRange(int bpmToCheck){
+        return bpmToCheck >= minBpm && bpmToCheck <= maxBpm;
+    }
+
     public Dance() {
 
     }
