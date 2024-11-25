@@ -1,2 +1,6 @@
 ### GET request to boilerplate code
 GET http://localhost:8080/hello
+
+### TEST
+
+GET http://localhost:8080/upload/file?filePath=""
