@@ -1,35 +1,57 @@
 package at.leonding.htl.features.upload;
 
-import at.leonding.htl.features.analyze.BPMAnalyzer;
+import at.leonding.htl.features.analyze.fourier.FourierAnalysis;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.util.List;
+import java.util.Map;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 @Path("/upload")
 public class FileUploadResource {
 
+    @Inject
+    FourierAnalysis fourierAnalysis;
+
     @POST
     @Consumes("multipart/form-data")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
     public Response uploadFile(@MultipartForm MultipartBody data) {
         try {
-            java.nio.file.Path tempFile = Files.createTempFile("uploaded-", ".mp3");
-            Files.copy(data.file, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            fourierAnalysis.calculateValues(data.file);
 
-            BPMAnalyzer bpmAnalyzer = new BPMAnalyzer();
-            float bpm = bpmAnalyzer.getBPM(tempFile.toString());
+            Map<Double, Double> frequencyMagnitudeMap = fourierAnalysis.getFrequencyMagnitudeMap();
+            double bpm = fourierAnalysis.getBpm();
+            List<String> danceTypes = fourierAnalysis.getDanceTypes();
 
-            Files.delete(tempFile); // Clean up the temporary file
+            JsonNodeFactory factory = JsonNodeFactory.instance;
+            ObjectNode json = factory.objectNode();
 
-            return Response.ok("File uploaded successfully! BPM: "+bpm).build();
-        } catch (IOException e) {
+            json.put("bpm", bpm);
+            json.put("danceTypes", danceTypes.toString());
+            json.put("frequencyMagnitudeMap", frequencyMagnitudeMap.toString());
+
+            return Response
+                    .ok(json)
+                    .build();
+        } catch (UnsupportedAudioFileException | IOException e) {
             e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("File upload failed").build();
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error processing file").build();
         }
     }
 }
