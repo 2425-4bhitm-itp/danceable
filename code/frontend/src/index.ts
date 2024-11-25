@@ -23,9 +23,9 @@ stopRecordButton.addEventListener('click', () => {
     _stopRecording(fileInput, filenameInput);
 });
 
-playAudioButton.addEventListener('click', () => {
-    playAudio();
-});
+// playAudioButton.addEventListener('click', () => {
+//     playAudio();
+// });
 
 // audio visualizer
 
@@ -105,6 +105,6 @@ const init = () => {
     viualizer = new Visualizer(audioContext, processFrame, processError);
 };
 
-document.querySelector("#startVisualizer")!.addEventListener("click", () => {
+document.querySelector("#recordBtn")!.addEventListener("click", () => {
     init();
 })

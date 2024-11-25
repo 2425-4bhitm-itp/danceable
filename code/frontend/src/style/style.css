@@ -9,8 +9,8 @@ body {
     min-height: 100vh;
     font-family: sans-serif;
     text-align: center;
-    color: #5856D6;
-    background: #4444;
+
+    background: #ffffff;
 }
 
 #visualizer {
@@ -21,11 +21,14 @@ body {
 
     > div {
         display: inline-block;
-        width: 3px;
+        width: 6px;
+        border-radius: 2rem;
         height: 100px;
         margin: 0 7px;
         background: currentColor;
-        transform: scaleY( .5 );
+
+        color: #e5e7eb;
+        transform: scaleY( 2 );
     }
 
     &.error {

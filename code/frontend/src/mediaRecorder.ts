@@ -1,5 +1,3 @@
-
-
 // Declare necessary variables and their types
 let mediaRecorder: MediaRecorder | null = null;
 let audioChunks: Blob[] = [];
@@ -44,24 +42,44 @@ async function startRecording(): Promise<void> {
 
 // Function to handle recording logic with a timeout
 export async function _startRecording(fileInput:HTMLInputElement, filenameInput:HTMLInputElement): Promise<void> {
+  let recordingDescription = document.getElementById("recording-description");
+  let stopBtn = document.getElementById("recordStopBtn");
+  let svg = document.getElementById("svg");
+  let clearVisualizer = document.getElementById("visualizer")
+  if (clearVisualizer){
+    clearVisualizer.style.display="block";
+  }
+  if(recordingDescription && stopBtn && svg){
+    svg.style.display="none";
+    recordingDescription.style.display="none";
+    stopBtn.style.display="block";
+    //TODO set button to display block
+  }
   await startRecording();
+
   console.log("Audio Recording started!");
 
   // Automatically stop recording after 10 seconds
   timeout = window.setTimeout(async () => {
     await stopRecording();  // Make sure recording stops first
     console.log("Audio Recording stopped!");
-    await addToForm(fileInput, filenameInput);  // Only add to form once recording is stopped and audioBlob is ready
+    //await addToForm(fileInput, filenameInput);  // Only add to form once recording is stopped and audioBlob is ready
   }, 10 * 1000);  // 10 seconds
 }
 
 // Function to stop recording manually and clear timeout
 export async function _stopRecording(fileInput:HTMLInputElement, filenameInput:HTMLInputElement): Promise<void> {
+  let clearVisualizer = document.getElementById("visualizer");
+  if (clearVisualizer){
+    clearVisualizer.style.display="none";
+  }
   if (timeout) {
     clearTimeout(timeout);
     console.log("Audio Recording stopped manually!");
-    await stopRecording();  // Ensure recording is stopped before proceeding
-    await addToForm(fileInput, filenameInput);  // Only add to form once recording is stopped and audioBlob is ready
+    await stopRecording();
+
+    // Ensure recording is stopped before proceeding
+    //await addToForm(fileInput, filenameInput);  // Only add to form once recording is stopped and audioBlob is ready
   }
 }
 
