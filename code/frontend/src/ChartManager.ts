@@ -75,6 +75,38 @@ export class ChartManager {
     }
   }
 
+  async addDataSetFromAPI() {
+    const data = this.fetchDataFromAPI();
+
+    const frequencies: number[] = [];
+    const magnitudes: number[] = [];
+
+    for (const [key, value] of Object.entries(data)) {
+      frequencies.push(parseFloat(key)); // Convert the frequency (key) to a number
+      magnitudes.push(value as number); // Ensure the magnitude (value) is a number
+    }
+
+    this.addDataSet(frequencies, magnitudes);
+  }
+
+  private async fetchDataFromAPI(): Promise<any> {
+    const url = "/api/upload/file";
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      return data.frequencyMagnitudeMap;
+    } catch (error) {
+      throw new Error("daschias mi");
+    }
+  }
+
   clearCanvases() {
     this.canvases = document.getElementsByClassName(this.canvasesClassName) as HTMLCollectionOf<HTMLCanvasElement>;
 
@@ -107,4 +139,3 @@ export class ChartManager {
     }
   }
 }
-
