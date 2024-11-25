@@ -1,6 +1,11 @@
-import {
-  Chart, ChartData, ChartItem, ChartOptions
-} from "chart.js/auto";
+import { Chart, ChartData, ChartItem, ChartOptions } from "chart.js/auto";
+
+interface UploadFileResponse {
+  bpm: number;
+  danceTypes: string[];
+  frequencies: number[];
+  magnitudes: number[];
+}
 
 export class ChartManager {
   charts: Chart[] = [];
@@ -14,14 +19,14 @@ export class ChartManager {
       x: {
         title: {
           display: true,
-          text: 'Frequency (Hz)'
+          text: "Frequency (Hz)"
         },
         beginAtZero: true
       },
       y: {
         title: {
           display: true,
-          text: 'Magnitude'
+          text: "Magnitude"
         }
       }
     }
@@ -36,10 +41,10 @@ export class ChartManager {
       {
         labels: frequencies,
         datasets: [{
-          label: 'Magnitude vs Frequency',
+          label: "Magnitude vs Frequency",
           data: magnitudes,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
           tension: 0.1,
           fill: false
         }]
@@ -59,7 +64,7 @@ export class ChartManager {
     this.canvases = document.getElementsByClassName(this.canvasesClassName) as HTMLCollectionOf<HTMLCanvasElement>;
 
     for (let i = 0; i < Math.min(this.canvases.length, this.chartDatas.length); i++) {
-      const ctx = (this.canvases[i] as HTMLCanvasElement).getContext('2d');
+      const ctx = (this.canvases[i] as HTMLCanvasElement).getContext("2d");
 
       console.log(ctx);
       console.log(this.chartDatas[i]);
@@ -67,30 +72,25 @@ export class ChartManager {
       if (ctx) {
         this.charts.push(
           new Chart(ctx as ChartItem, {
-          type: 'line',
-          data: this.chartDatas[i],
-          options: this.options
-        }))
+            type: "line",
+            data: this.chartDatas[i],
+            options: this.options
+          }));
       }
     }
   }
 
   async addDataSetFromAPI() {
-    const data = this.fetchDataFromAPI();
+    const data = await this.fetchDataFromAPI();
 
-    const frequencies: number[] = [];
-    const magnitudes: number[] = [];
-
-    for (const [key, value] of Object.entries(data)) {
-      frequencies.push(parseFloat(key)); // Convert the frequency (key) to a number
-      magnitudes.push(value as number); // Ensure the magnitude (value) is a number
-    }
+    const frequencies: number[] = data.frequencies;
+    const magnitudes: number[] = data.magnitudes;
 
     this.addDataSet(frequencies, magnitudes);
   }
 
-  private async fetchDataFromAPI(): Promise<any> {
-    const url = "/api/upload/file";
+  async fetchDataFromAPI(): Promise<UploadFileResponse> {
+    const url = "/api/upload/file?filePath=/Users/samuelmayer/Downloads/long_footprints.wav";
 
     try {
       const response = await fetch(url);
@@ -101,9 +101,11 @@ export class ChartManager {
 
       const data = await response.json();
 
-      return data.frequencyMagnitudeMap;
+      console.log(data);
+
+      return data;
     } catch (error) {
-      throw new Error("daschias mi");
+      throw new Error("smth went wrong");
     }
   }
 
@@ -117,7 +119,7 @@ export class ChartManager {
     this.charts = [];
 
     for (let i = 0; i < this.canvases.length; i++) {
-      const ctx = (this.canvases[i] as HTMLCanvasElement).getContext('2d');
+      const ctx = (this.canvases[i] as HTMLCanvasElement).getContext("2d");
 
       if (ctx && this.canvases[i]) {
         ctx.clearRect(0, 0, this.canvases[i].width, this.canvases[i].height);
@@ -126,16 +128,16 @@ export class ChartManager {
   }
 
   drawChartToCanvas(canvas: HTMLCanvasElement, dataSetIndex: number = 0) {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     if (ctx) {
       this.charts.push(
         new Chart(ctx as ChartItem, {
-          type: 'line',
+          type: "line",
           data: this.chartDatas[dataSetIndex],
           options: this.options
         })
-      )
+      );
     }
   }
 }
