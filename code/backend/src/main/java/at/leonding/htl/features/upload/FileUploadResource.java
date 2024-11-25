@@ -15,6 +15,8 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 @Path("/upload")
@@ -64,18 +66,31 @@ public class FileUploadResource {
             fourierAnalysis.calculateValues(stream);
 
             Map<Double, Double> frequencyMagnitudeMap = fourierAnalysis.getFrequencyMagnitudeMap();
+
+            Map<Double, Double> filteredMap = frequencyMagnitudeMap.entrySet().stream()
+                    .filter(entry -> entry.getKey() <= 5)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
             double bpm = fourierAnalysis.getBpm();
             List<String> danceTypes = fourierAnalysis.getDanceTypes();
 
-            JsonNodeFactory factory = JsonNodeFactory.instance;
-            ObjectNode json = factory.objectNode();
+//            JsonNodeFactory factory = JsonNodeFactory.instance;
+//            ObjectNode json = factory.objectNode();
+//
+//            json.put("bpm", bpm);
+//            json.put("danceTypes", danceTypes.toString());
+//            json.put("frequencyMagnitudeMap", filteredMap.toString());
 
-            json.put("bpm", bpm);
-            json.put("danceTypes", danceTypes.toString());
-            json.put("frequencyMagnitudeMap", frequencyMagnitudeMap.toString());
+
+            Map<Double, Double> sortedTreeMap = new TreeMap<>(filteredMap);
+
 
             return Response
-                    .ok(json)
+                    .ok(
+                            new FourierAnalysisDataDto(
+                                    bpm, danceTypes, sortedTreeMap.keySet().toArray(new Double[0]), sortedTreeMap.values().toArray(new Double[0])
+                            )
+                    )
                     .build();
         } catch (UnsupportedAudioFileException | IOException e) {
             throw new RuntimeException(e);

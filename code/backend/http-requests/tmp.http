@@ -3,4 +3,4 @@ GET http://localhost:8080/hello
 
 ### TEST
 
-GET http://localhost:8080/upload/file?filePath=""
+GET http://localhost:8080/upload/file?filePath=/Users/samuelmayer/Downloads/long_footprints.wav
