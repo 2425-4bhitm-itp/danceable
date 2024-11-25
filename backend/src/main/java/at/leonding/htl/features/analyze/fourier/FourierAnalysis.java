@@ -1,97 +1,69 @@
 package at.leonding.htl.features.analyze.fourier;
 
 import at.leonding.htl.features.dance.Dance;
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.chart.Axis;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
-import javafx.stage.Stage;
+import jakarta.inject.Singleton;
 
 import javax.sound.sampled.*;
-import java.io.File;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.InputStream;
+import java.util.*;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
-public class FourierAnalysis extends Application {
+@Singleton
+public class FourierAnalysis {
     public static final double sampleRate = 44100.0;
-    public static final int bpmPoints = 4000;
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+    private final Map<Double, Double> frequencyMagnitudeMap = new HashMap<>();
+    private Double bpm = 0.0;
+    private static final List<String> danceTypes = new ArrayList<>();
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        //File wavFile = new File("/home/it210190/Music/exampleMusic/50hz.wav");
-        //File wavFile = new File("/home/it210190/Music/exampleMusic/Utility-4x4-Kick.wav");
-        //File wavFile = new File("/home/it210190/Music/exampleMusic/HighHopes.wav");
-
-        // monotone
-        //File wavFile = new File("/home/it210190/Music/monotone/0Hz.wav");
-        //File wavFile = new File("/home/it210190/Music/monotone/49Hz.wav");
-        //File wavFile = new File("/home/it210190/Music/monotone/98Hz.wav");
-        //File wavFile = new File("/home/it210190/Music/monotone/988Hz.wav");
-
-        //File wavFile = new File("/home/it210190/Music/exampleMusic/twospikes.wav");
-
-        //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/120bpm_discofox_tom-gregory-footprints-2.wav");
-        //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/168bpm_foxtrott_lemo-tu-es-2.wav");
-        //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/172bpm_jive_footloose-kenny-loggins-2.wav");
-        //File wavFile = new File("/media/it210190/UBUNTU 24_0/testlieder/44bpm_jive_bad-moon-rising-creedence-clerwater-revival-1.wav");
-        File wavFile = new File("/home/tbit/Documents/testlieder/99bpm_rumba_backstreet-boys-i-want-it-that-way-2.wav");
-
+    public void calculateValues(InputStream wavFile) throws UnsupportedAudioFileException, IOException {
+        clearValues();
 
         double[] audioData = readWavFile(wavFile);
 
         Complex[] fftData = performFFT(audioData);
 
-        stage.setTitle("Frequency Spectrum");
-        final NumberAxis xAxis = new NumberAxis();
-        final NumberAxis yAxis = new NumberAxis();
-        xAxis.setLabel("Frequency (Hz)");
-        yAxis.setLabel("Magnitude");
-
-        final LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
-        lineChart.setTitle("Frequency Spectrum");
-
-        XYChart.Series<Number, Number> series = new XYChart.Series<>();
-        series.setName("Frequency Spectrum");
-
         double highestMagnitude = getHighestMagnitude(fftData);
 
-        for (int i = 0; i < fftData.length / 2000; i++) {
+        for (int i = 0; i < fftData.length / 2; i++) {
             double frequency = i * sampleRate / fftData.length;
             double magnitude = fftData[i].getAbs() / highestMagnitude;
-
-            if (magnitude > 0.01) {
-                series.getData().add(new XYChart.Data<>(frequency, magnitude));
-            }
+            frequencyMagnitudeMap.put(frequency, magnitude);
         }
 
         Complex[] fftDataLimited = new Complex[fftData.length / 2000];
+        System.arraycopy(fftData, 0, fftDataLimited, 0, fftDataLimited.length);
 
-        for (int i = 0; i < fftData.length / 2000; i++) {
-            fftDataLimited[i] = fftData[i];
-        }
+        bpm = calculateBPM(fftDataLimited, fftData.length);
 
-        double bpm = calculateBPM(fftDataLimited, fftData.length);
-        System.out.println("BPM: " + bpm);
-        System.out.println("--Dances in BPM Range--");
         mapBpmToDance(bpm);
-
-
-
-        lineChart.getData().add(series);
-
-        Scene scene = new Scene(lineChart, 800, 600);
-        stage.setScene(scene);
-        stage.show();
     }
 
-    public static double[] readWavFile(File file) throws UnsupportedAudioFileException, IOException {
-        AudioInputStream audioStream = AudioSystem.getAudioInputStream(file);
+    private void clearValues() {
+        frequencyMagnitudeMap.clear();
+        bpm = 0.0;
+        danceTypes.clear();
+    }
+
+    public Map<Double, Double> getFrequencyMagnitudeMap() {
+        return Collections.unmodifiableMap(frequencyMagnitudeMap);
+    }
+
+    public Double getBpm() {
+        return bpm;
+    }
+
+    public List<String> getDanceTypes() {
+        return Collections.unmodifiableList(danceTypes);
+    }
+
+    public static double[] readWavFile(InputStream inputStream) throws UnsupportedAudioFileException, IOException {
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+        AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedInputStream);
         AudioFormat format = audioStream.getFormat();
         int bytesPerFrame = format.getFrameSize();
         long numFrames = audioStream.getFrameLength();
@@ -104,7 +76,7 @@ public class FourierAnalysis extends Application {
             for (int j = 0; j < buffer.length; j++) {
                 sample += buffer[j] << (8 * j);
             }
-            audioData[i] = sample / 32768.0;
+            audioData[i] = sample / 32768.0; // 16-BIT
         }
 
         return audioData;
@@ -127,28 +99,45 @@ public class FourierAnalysis extends Application {
         return result;
     }
 
+    public static double[] removeDCComponent(double[] audioData) {
+        double sum = 0;
+        for (double sample : audioData) {
+            sum += sample;
+        }
+        double mean = sum / audioData.length;
+
+        double[] adjustedAudioData = new double[audioData.length];
+        for (int i = 0; i < audioData.length; i++) {
+            adjustedAudioData[i] = audioData[i] - mean;
+        }
+
+        return adjustedAudioData;
+    }
+
     public static Complex[] performFFT(double[] audioData) {
-    int N = audioData.length;
-    if (N == 0) return new Complex[0];
+        double[] adjustedAudioData = removeDCComponent(audioData);
 
-    // Find the next power of 2
-    int powerOf2 = 1;
-    while (powerOf2 < N) {
-        powerOf2 *= 2;
+        int N = audioData.length;
+        if (N == 0) return new Complex[0];
+
+        // Find the next power of 2
+        int powerOf2 = 1;
+        while (powerOf2 < N) {
+            powerOf2 *= 2;
+        }
+
+        // Pad the audioData array with zeros
+        double[] paddedAudioData = new double[powerOf2];
+        System.arraycopy(adjustedAudioData, 0, paddedAudioData, 0, N);
+
+        Complex[] result = new Complex[powerOf2];
+        for (int i = 0; i < powerOf2; i++) {
+            result[i] = new Complex(paddedAudioData[i], 0);
+        }
+
+        fft(result);
+        return result;
     }
-
-    // Pad the audioData array with zeros
-    double[] paddedAudioData = new double[powerOf2];
-    System.arraycopy(audioData, 0, paddedAudioData, 0, N);
-
-    Complex[] result = new Complex[powerOf2];
-    for (int i = 0; i < powerOf2; i++) {
-        result[i] = new Complex(paddedAudioData[i], 0);
-    }
-
-    fft(result);
-    return result;
-}
 
     private static void fft(Complex[] x) {
         int N = x.length;
@@ -214,7 +203,7 @@ public class FourierAnalysis extends Application {
         ArrayList<Dance> dances = initDanceTypes();
         for(Dance dance : dances){
             if(dance.isBpmInRange(bpm)){
-                System.out.println(dance.getName());
+                danceTypes.add(dance.getName());
             }
         }
     }
