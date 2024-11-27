@@ -28,7 +28,9 @@ public class FileUploadResource {
     @GET
     @Path("/file")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getFourierDataOfFile(@QueryParam("filePath") String filePath){
+    public Response getFourierDataOfFile(
+            @QueryParam("filePath") String filePath
+    ){
         try {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
@@ -63,6 +65,24 @@ public class FileUploadResource {
                 )
                     .build();
         } catch (UnsupportedAudioFileException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/inputstream")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getFInputstreamOfFile(
+            @QueryParam("filePath") String filePath
+    ){
+        try {
+            File file = new File(filePath);
+            InputStream stream = new FileInputStream(file);
+
+            return Response
+                    .ok(stream)
+                    .build();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
