@@ -3,6 +3,7 @@ import './style/tailwind.css';
 import {_startRecording, _stopRecording, playAudio} from "./mediaRecorder";
 import {Visualizer} from "./Visualizer";
 
+
 console.log("💃💃💃");
 
 // selins part (media recorder)
@@ -14,15 +15,6 @@ const playAudioButton = document.getElementById('playAudioBtn') as HTMLButtonEle
 const fileInput = document.getElementById('file') as HTMLInputElement;
 const filenameInput = document.getElementById('filename') as HTMLInputElement;
 
-// Event listeners for the buttons
-recordButton.addEventListener('click', () => {
-    _startRecording(fileInput, filenameInput);
-});
-
-stopRecordButton.addEventListener('click', () => {
-    _stopRecording(fileInput, filenameInput);
-});
-
 // playAudioButton.addEventListener('click', () => {
 //     playAudio();
 // });
@@ -33,7 +25,7 @@ const visualMainElement = document.querySelector('#visualizer') as HTMLElement;
 const visualValueCount = 16;
 let visualElements: NodeListOf<HTMLDivElement>;
 
-let viualizer: Visualizer;
+let visualizer: Visualizer;
 
 // Main element is chosen and visualizing elements is set to 16
 const createDOMElements = () => {
@@ -102,9 +94,38 @@ const init = () => {
         // add error class to main
         visualMainElement.innerText = 'Please allow access to your microphone to record audio';
     };
-    viualizer = new Visualizer(audioContext, processFrame, processError);
+    visualizer = new Visualizer(audioContext, processFrame, processError);
 };
 
-document.querySelector("#recordBtn")!.addEventListener("click", () => {
+let isRecording = false;
+// Event listeners for the buttons
+recordButton.addEventListener('click', () => {
+    isRecording = true;
+    _startRecording(fileInput, filenameInput);
     init();
-})
+
+    setTimeout(() => {
+        if (isRecording) {
+            if (visualizer) {
+                visualizer.stopVisualizer();
+                document.querySelector("#visualizer")!.innerHTML = "";
+            }
+
+            _stopRecording(fileInput, filenameInput);
+            console.log("Audio Recording stopped!");
+        }
+
+    }, 1000 * 10);
+});
+
+stopRecordButton.addEventListener('click', () => {
+    isRecording = false;
+    console.log("stop")
+
+    if (visualizer) {
+        visualizer.stopVisualizer();
+        document.querySelector("#visualizer")!.innerHTML = "";
+    }
+
+    _stopRecording(fileInput, filenameInput);
+});

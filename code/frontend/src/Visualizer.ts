@@ -2,6 +2,7 @@ export class Visualizer {
     private audioContext: AudioContext;
     private analyser: AnalyserNode;
     private processFrame: (data: Uint8Array) => void;
+    private animationFrameId: number = 0;
 
     //audioContext object for processing audio
     //processFrame = function for processing audio file
@@ -52,10 +53,14 @@ export class Visualizer {
             processFrame(frequencyData);
             //processframe function is called with updated data
 
-            requestAnimationFrame(renderFrame);
+            this.animationFrameId = requestAnimationFrame(renderFrame);
             //get next animation loop
         };
-        requestAnimationFrame(renderFrame);
+        this.animationFrameId = requestAnimationFrame(renderFrame);
         //starting animation
+    }
+
+    stopVisualizer() {
+        cancelAnimationFrame(this.animationFrameId);
     }
 }
