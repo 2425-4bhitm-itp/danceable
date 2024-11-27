@@ -72,7 +72,7 @@ public class FileUploadResource {
     @GET
     @Path("/inputstream")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getFInputstreamOfFile(
+    public Response getInputstreamOfFile(
             @QueryParam("filePath") String filePath
     ){
         try {
@@ -85,5 +85,24 @@ public class FileUploadResource {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @GET
+    @Path("/doubles")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDoubleValuesOfFile(
+            @QueryParam("filePath") String filePath
+    ){
+        try {
+            File file = new File(filePath);
+            InputStream stream = new FileInputStream(file);
+
+            double[] values = fourierAnalysis.readWavFile(stream);
+
+            return Response
+                    .ok(values)
+                    .build();
+        } catch (UnsupportedAudioFileException | IOException e) {
+            throw new RuntimeException(e);
     }
 }
