@@ -25,36 +25,6 @@ public class FileUploadResource {
     @Inject
     FourierAnalysis fourierAnalysis;
 
-    @POST
-    @Consumes("multipart/form-data")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Transactional
-    public Response uploadFile(@MultipartForm MultipartBody data) {
-        try {
-            fourierAnalysis.calculateValues(data.file);
-
-            Map<Double, Double> frequencyMagnitudeMap = fourierAnalysis.getFrequencyMagnitudeMap();
-            double bpm = fourierAnalysis.getBpm();
-            List<String> danceTypes = fourierAnalysis.getDanceTypes();
-
-            JsonNodeFactory factory = JsonNodeFactory.instance;
-            ObjectNode json = factory.objectNode();
-
-            json.put("bpm", bpm);
-            json.put("danceTypes", danceTypes.toString());
-            json.put("frequencyMagnitudeMap", frequencyMagnitudeMap.toString());
-
-            return Response
-                    .ok(json)
-                    .build();
-        } catch (UnsupportedAudioFileException | IOException e) {
-            e.printStackTrace();
-            return Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("Error processing file").build();
-        }
-    }
-
     @GET
     @Path("/file")
     @Produces(MediaType.APPLICATION_JSON)
@@ -74,23 +44,23 @@ public class FileUploadResource {
             double bpm = fourierAnalysis.getBpm();
             List<String> danceTypes = fourierAnalysis.getDanceTypes();
 
-//            JsonNodeFactory factory = JsonNodeFactory.instance;
-//            ObjectNode json = factory.objectNode();
-//
-//            json.put("bpm", bpm);
-//            json.put("danceTypes", danceTypes.toString());
-//            json.put("frequencyMagnitudeMap", filteredMap.toString());
-
-
             Map<Double, Double> sortedTreeMap = new TreeMap<>(filteredMap);
 
 
             return Response
-                    .ok(
-                            new FourierAnalysisDataDto(
-                                    bpm, danceTypes, sortedTreeMap.keySet().toArray(new Double[0]), sortedTreeMap.values().toArray(new Double[0])
-                            )
+                .ok(
+                    new FourierAnalysisDataDto(
+                            bpm,
+                            danceTypes,
+                            sortedTreeMap
+                                    .keySet()
+                                    .toArray(
+                                            new Double[0]),
+                            sortedTreeMap
+                                    .values()
+                                    .toArray(new Double[0])
                     )
+                )
                     .build();
         } catch (UnsupportedAudioFileException | IOException e) {
             throw new RuntimeException(e);
