@@ -570,6 +570,10 @@ video {
   margin: auto;
 }
 
+.m-9 {
+  margin: 2.25rem;
+}
+
 .-my-16 {
   margin-top: -4rem;
   margin-bottom: -4rem;
@@ -598,6 +602,21 @@ video {
 .my-9 {
   margin-top: 2.25rem;
   margin-bottom: 2.25rem;
+}
+
+.mx-9 {
+  margin-left: 2.25rem;
+  margin-right: 2.25rem;
+}
+
+.my-6 {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.my-16 {
+  margin-top: 4rem;
+  margin-bottom: 4rem;
 }
 
 .mb-32 {
