@@ -1,7 +1,8 @@
 import './style/style.css';
 import './style/tailwind.css';
-import {_startRecording, _stopRecording, playAudio} from "./mediaRecorder";
+import {_startRecording, _stopRecording} from "./mediaRecorder";
 import {Visualizer} from "./Visualizer";
+import {BASE_URI} from "mini-css-extract-plugin/types/utils";
 
 
 console.log("💃💃💃");
@@ -11,13 +12,9 @@ console.log("💃💃💃");
 // Access DOM elements with appropriate type assertions
 const recordButton = document.getElementById('recordBtn') as HTMLButtonElement;
 const stopRecordButton = document.getElementById('recordStopBtn') as HTMLButtonElement;
-const playAudioButton = document.getElementById('playAudioBtn') as HTMLButtonElement;
 const fileInput = document.getElementById('file') as HTMLInputElement;
 const filenameInput = document.getElementById('filename') as HTMLInputElement;
 
-// playAudioButton.addEventListener('click', () => {
-//     playAudio();
-// });
 
 // audio visualizer
 
@@ -75,6 +72,7 @@ const init = () => {
         15: 14
     };
     // create Mapping object for sorting frequency data for visualizing
+
     const processFrame = (data: Uint8Array): void => {
         const values = Array.from(data);
         // frequencydata in array
@@ -100,17 +98,17 @@ const init = () => {
 let isRecording = false;
 // Event listeners for the buttons
 recordButton.addEventListener('click', () => {
+    changeButtonStylingWhenRecordingStarted();
     isRecording = true;
     _startRecording(fileInput, filenameInput);
     init();
-
     setTimeout(() => {
         if (isRecording) {
             if (visualizer) {
                 visualizer.stopVisualizer();
                 document.querySelector("#visualizer")!.innerHTML = "";
             }
-
+            changeRecordButtonStylingWhenRecordingStopped();
             _stopRecording(fileInput, filenameInput);
             console.log("Audio Recording stopped!");
         }
@@ -120,12 +118,41 @@ recordButton.addEventListener('click', () => {
 
 stopRecordButton.addEventListener('click', () => {
     isRecording = false;
-    console.log("stop")
+    console.log("button clicked")
 
     if (visualizer) {
         visualizer.stopVisualizer();
         document.querySelector("#visualizer")!.innerHTML = "";
     }
-
+    changeRecordButtonStylingWhenRecordingStopped();
     _stopRecording(fileInput, filenameInput);
 });
+
+
+function changeRecordButtonStylingWhenRecordingStopped(): void {
+    let recordIcon = document.getElementById("svg");
+    let recordingDescription = document.getElementById("recording-description");
+    let stopBtn = document.getElementById('recordStopBtn');
+
+    if (recordIcon && recordingDescription && stopBtn) {
+        recordIcon.style.display = "block";
+        recordingDescription.style.display = "block";
+        stopBtn.classList.remove('block');
+        stopBtn.classList.add('hidden');
+    }
+
+
+}
+
+function changeButtonStylingWhenRecordingStarted(): void {
+    let recordingDescription = document.getElementById("recording-description");
+    let stopBtn = document.getElementById("recordStopBtn");
+    let svg = document.getElementById("svg");
+    if (recordingDescription && stopBtn && svg) {
+        svg.style.display = "none";
+        recordingDescription.style.display = "none";
+        stopBtn.classList.remove('hidden');
+        stopBtn.classList.add('block');
+    }
+}
+
