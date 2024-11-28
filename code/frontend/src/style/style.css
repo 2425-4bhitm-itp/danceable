@@ -23,12 +23,12 @@ body {
         display: inline-block;
         width: 6px;
         border-radius: 2rem;
-        height: 100px;
+        height: calc(24rem - 6rem);
         margin: 0 7px;
         background: currentColor;
 
         color: #e5e7eb;
-        transform: scaleY( 2 );
+        transform: scaleY( 0 );
     }
 
     &.error {
