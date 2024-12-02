@@ -1,9 +1,7 @@
 import './style/style.css';
 import './style/tailwind.css';
-import {_startRecording, _stopRecording} from "./mediaRecorder";
+import { startRecording, stopRecording, sendRecordedAudio } from "./mediaRecorder";
 import {Visualizer} from "./Visualizer";
-import {BASE_URI} from "mini-css-extract-plugin/types/utils";
-
 
 console.log("💃💃💃");
 
@@ -12,9 +10,6 @@ console.log("💃💃💃");
 // Access DOM elements with appropriate type assertions
 const recordButton = document.getElementById('recordBtn') as HTMLButtonElement;
 const stopRecordButton = document.getElementById('recordStopBtn') as HTMLButtonElement;
-const fileInput = document.getElementById('file') as HTMLInputElement;
-const filenameInput = document.getElementById('filename') as HTMLInputElement;
-
 
 // audio visualizer
 
@@ -23,6 +18,8 @@ const visualValueCount = 16;
 let visualElements: NodeListOf<HTMLDivElement>;
 
 let visualizer: Visualizer;
+
+let timeoutId: number | any = null;
 
 // Main element is chosen and visualizing elements is set to 16
 const createDOMElements = () => {
@@ -95,39 +92,44 @@ const init = () => {
     visualizer = new Visualizer(audioContext, processFrame, processError);
 };
 
-let isRecording = false;
 // Event listeners for the buttons
 recordButton.addEventListener('click', () => {
     changeButtonStylingWhenRecordingStarted();
-    isRecording = true;
-    _startRecording(fileInput, filenameInput);
+    console.log("record button clicked");
+    startRecording();
     init();
-    setTimeout(() => {
-        if (isRecording) {
-            if (visualizer) {
-                visualizer.stopVisualizer();
-                document.querySelector("#visualizer")!.innerHTML = "";
-            }
-            changeRecordButtonStylingWhenRecordingStopped();
-            _stopRecording(fileInput, filenameInput);
-            console.log("Audio Recording stopped!");
-        }
 
-    }, 1000 * 10);
+    clearTimeoutIfExists();
+
+    timeoutId = setTimeout(async () => {
+        clearTimeoutIfExists();
+
+        if (visualizer) {
+            visualizer.stopVisualizer();
+            document.querySelector("#visualizer")!.innerHTML = "";
+        }
+        changeRecordButtonStylingWhenRecordingStopped();
+        await stopRecording();
+        await sendRecordedAudio();
+        console.log("Audio Recording stopped!");
+
+    }, 1000 * 5);
+    console.log("add timeout with id " + timeoutId);
 });
 
-stopRecordButton.addEventListener('click', () => {
-    isRecording = false;
-    console.log("button clicked")
+stopRecordButton.addEventListener('click', async () => {
+    console.log("stop record button clicked");
+
+    clearTimeoutIfExists();
 
     if (visualizer) {
         visualizer.stopVisualizer();
         document.querySelector("#visualizer")!.innerHTML = "";
     }
     changeRecordButtonStylingWhenRecordingStopped();
-    _stopRecording(fileInput, filenameInput);
+    await stopRecording();
+    await sendRecordedAudio();
 });
-
 
 function changeRecordButtonStylingWhenRecordingStopped(): void {
     let recordIcon = document.getElementById("svg");
@@ -140,8 +142,6 @@ function changeRecordButtonStylingWhenRecordingStopped(): void {
         stopBtn.classList.remove('block');
         stopBtn.classList.add('hidden');
     }
-
-
 }
 
 function changeButtonStylingWhenRecordingStarted(): void {
@@ -156,3 +156,11 @@ function changeButtonStylingWhenRecordingStarted(): void {
     }
 }
 
+function clearTimeoutIfExists() {
+    if (timeoutId) {
+        console.log("clear timeout with id " + timeoutId);
+
+        clearTimeout(timeoutId);
+        timeoutId = null;
+    }
+}
