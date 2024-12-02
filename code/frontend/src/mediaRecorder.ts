@@ -1,14 +1,8 @@
-// Declare necessary variables and their types
-
 let mediaRecorder: MediaRecorder | null = null;
 let audioChunks: Blob[] = [];
 let audioBlob: Blob | null = null;  // Initialize as null for safety
-let timeout: number | undefined;
 
-
-// Function to start recording audio
-
-async function startRecording(): Promise<void> {
+export async function startRecording(): Promise<void> {
     try {
         // Request permission and access to the microphone
         const stream: MediaStream = await navigator.mediaDevices.getUserMedia({
@@ -43,33 +37,7 @@ async function startRecording(): Promise<void> {
     }
 }
 
-// Function to handle recording logic with a timeout
-export async function _startRecording(fileInput: HTMLInputElement, filenameInput: HTMLInputElement): Promise<void> {
-
-    await startRecording();
-
-    console.log("Audio Recording started!");
-
-    // handeling recording stop after 10 secs in index.ts
-}
-
-// Function to stop recording manually and clear timeout
-export async function _stopRecording(fileInput: HTMLInputElement, filenameInput: HTMLInputElement): Promise<void> {
-
-    if (timeout) {
-        clearTimeout(timeout);
-        console.log("Audio Recording stopped manually!");
-        await stopRecording();
-
-        // Ensure recording is stopped before proceeding
-        // await addToForm(fileInput, filenameInput);  // Only add to form once recording is stopped and audioBlob is ready
-    }
-}
-
-
-
-// Function to stop the media recording
-async function stopRecording(): Promise<void> {
+export async function stopRecording(): Promise<void> {
     return new Promise<void>((resolve) => {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             // Stop the media recorder
@@ -102,45 +70,51 @@ async function stopRecording(): Promise<void> {
 // }
 
 // Function to add the audio blob to a form as a file
-export async function addToForm(fileInput: HTMLInputElement, filenameInput: HTMLInputElement): Promise<void> {
+// export async function addToForm(fileInput: HTMLInputElement, filenameInput: HTMLInputElement): Promise<void> {
+//     if (audioBlob) {
+//         const file = new File([audioBlob], "recorded_audio.wav", {type: 'audio/wav'});
+//
+//         // Create a DataTransfer object to hold the file
+//         const dataTransfer = new DataTransfer();
+//         dataTransfer.items.add(file);
+//
+//         // Assign the file to the file input
+//         fileInput.files = dataTransfer.files;
+//
+//         // Set the filename value
+//         filenameInput.value = "recorded_audio.wav";
+//     } else {
+//         console.error('No audio blob available to add to form');
+//     }
+// }
+
+export async function sendRecordedAudio(){
     if (audioBlob) {
-        const file = new File([audioBlob], "recorded_audio.wav", {type: 'audio/wav'});
+        console.log('sending recording');
+        const url = '/api/upload';
+        const file = new File([audioBlob!], "recorded_audio.wav", {type: 'audio/wav'});
+        console.log(file);
 
-        // Create a DataTransfer object to hold the file
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', "recorded_audio.wav");
 
-        // Assign the file to the file input
-        fileInput.files = dataTransfer.files;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+            });
 
-        // Set the filename value
-        filenameInput.value = "recorded_audio.wav";
-    } else {
-        console.error('No audio blob available to add to form');
-    }
-}
+            if (!response.ok) {
+                throw new Error('Failed to upload file');
+            }
 
-async function sendRecordedAudio(){
-    console.log('sending recording');
-    const url = '/api/upload';
-    const file = new File([audioBlob!], "recorded_audio.wav", {type: 'audio/wav'});
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to upload file');
+            const responseData = await response.json();
+            console.log('Response:', responseData);
+        } catch (error) {
+            console.error('Error uploading file:', error);
         }
-
-        const responseData = await response.json();
-        console.log('Response:', responseData);
-    } catch (error) {
-        console.error('Error uploading file:', error);
+    } else {
+        console.log("no audio blob found!!");
     }
 }
