@@ -1,18 +1,11 @@
 package at.leonding.htl.features.upload;
 
 import at.leonding.htl.features.analyze.fourier.FourierAnalysis;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.List;
@@ -24,7 +17,6 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 @Path("/upload")
 public class FileUploadResource {
 
-    private static final Logger log = LoggerFactory.getLogger(FileUploadResource.class);
     @Inject
     FourierAnalysis fourierAnalysis;
 
@@ -101,7 +93,7 @@ public class FileUploadResource {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
 
-            double[] values = fourierAnalysis.readWavFile(stream);
+            double[] values = FourierAnalysis.readWavFile(stream);
 
             return Response
                     .ok(values)
