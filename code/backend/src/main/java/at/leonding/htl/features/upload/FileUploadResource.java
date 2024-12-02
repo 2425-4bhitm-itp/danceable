@@ -30,7 +30,7 @@ public class FileUploadResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getFourierDataOfFile(
             @QueryParam("filePath") String filePath
-    ){
+    ) {
         try {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
@@ -50,19 +50,19 @@ public class FileUploadResource {
 
 
             return Response
-                .ok(
-                    new FourierAnalysisDataDto(
-                            bpm,
-                            danceTypes,
-                            sortedTreeMap
-                                    .keySet()
-                                    .toArray(
-                                            new Double[0]),
-                            sortedTreeMap
-                                    .values()
-                                    .toArray(new Double[0])
+                    .ok(
+                            new FourierAnalysisDataDto(
+                                    bpm,
+                                    danceTypes,
+                                    sortedTreeMap
+                                            .keySet()
+                                            .toArray(
+                                                    new Double[0]),
+                                    sortedTreeMap
+                                            .values()
+                                            .toArray(new Double[0])
+                            )
                     )
-                )
                     .build();
         } catch (UnsupportedAudioFileException | IOException e) {
             throw new RuntimeException(e);
@@ -74,7 +74,7 @@ public class FileUploadResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInputstreamOfFile(
             @QueryParam("filePath") String filePath
-    ){
+    ) {
         try {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
@@ -92,7 +92,7 @@ public class FileUploadResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDoubleValuesOfFile(
             @QueryParam("filePath") String filePath
-    ){
+    ) {
         try {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
@@ -104,5 +104,6 @@ public class FileUploadResource {
                     .build();
         } catch (UnsupportedAudioFileException | IOException e) {
             throw new RuntimeException(e);
+        }
     }
 }
