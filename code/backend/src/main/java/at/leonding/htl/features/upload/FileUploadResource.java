@@ -8,6 +8,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 
 import java.io.*;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -116,7 +117,7 @@ public class FileUploadResource {
             throw new RuntimeException("No files found in directory");
         }
 
-        FourierAnalysisDataDto[] fourierAnalysisDataDtos = new FourierAnalysisDataDto[files.length];
+        List<FourierAnalysisDataDto> fourierAnalysisDataDtos = new LinkedList<>();
 
         for (int i = 0; i < files.length; i++) {
             File file = files[i];
@@ -140,17 +141,19 @@ public class FileUploadResource {
 
                     Map<Double, Double> sortedTreeMap = new TreeMap<>(filteredMap);
 
-                    fourierAnalysisDataDtos[i] = new FourierAnalysisDataDto(
-                            bpm,
-                            danceTypes,
-                            sortedTreeMap
-                                    .keySet()
-                                    .toArray(
-                                            new Double[i]),
-                            sortedTreeMap
-                                    .values()
-                                    .toArray(new Double[i]),
-                            file.getName()
+                    fourierAnalysisDataDtos.add(
+                            new FourierAnalysisDataDto(
+                                bpm,
+                                danceTypes,
+                                sortedTreeMap
+                                        .keySet()
+                                        .toArray(
+                                                new Double[i]),
+                                sortedTreeMap
+                                        .values()
+                                        .toArray(new Double[i]),
+                                file.getName()
+                            )
                     );
                 } catch (UnsupportedAudioFileException | IOException e) {
                     throw new RuntimeException(e);
