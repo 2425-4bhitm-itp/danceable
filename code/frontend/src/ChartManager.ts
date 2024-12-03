@@ -82,8 +82,8 @@ export class ChartManager {
     const magnitudes: number[] = [];
 
     for (const [key, value] of Object.entries(data)) {
-      frequencies.push(parseFloat(key)); // Convert the frequency (key) to a number
-      magnitudes.push(value as number); // Ensure the magnitude (value) is a number
+      frequencies.push(parseFloat(key));
+      magnitudes.push(value as number);
     }
 
     this.addDataSet(frequencies, magnitudes);
@@ -91,9 +91,10 @@ export class ChartManager {
 
   private async fetchDataFromAPI(): Promise<any> {
     const url = "/api/upload/file";
+    const filePath = "";
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url + "?filePath=" + filePath);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
