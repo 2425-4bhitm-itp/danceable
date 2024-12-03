@@ -6,6 +6,7 @@ public record FourierAnalysisDataDto(
         double bpm,
         List<String> danceTypes,
         Double[] frequencies,
-        Double[] magnitudes
+        Double[] magnitudes,
+        String fileName
 ) {
 }
