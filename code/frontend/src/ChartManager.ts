@@ -158,18 +158,4 @@ export class ChartManager {
       }
     }
   }
-
-  drawChartToCanvas(canvas: HTMLCanvasElement, dataSetIndex: number = 0) {
-    const ctx = canvas.getContext("2d");
-
-    if (ctx) {
-      this.charts.push(
-        new Chart(ctx as ChartItem, {
-          type: "line",
-          data: this.chartDatas[dataSetIndex],
-          options: this.options
-        })
-      );
-    }
-  }
 }
