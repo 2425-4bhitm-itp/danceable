@@ -56,6 +56,8 @@ export class ChartManager {
   }
 
   drawCharts() {
+    this.clearCanvases();
+
     this.canvases = document.getElementsByClassName(this.canvasesClassName) as HTMLCollectionOf<HTMLCanvasElement>;
 
     for (let i = 0; i < Math.min(this.canvases.length, this.chartDatas.length); i++) {
@@ -75,23 +77,22 @@ export class ChartManager {
     }
   }
 
-  async addDataSetFromAPI() {
-    const data = await this.fetchDataFromAPI();
+  async addDataSetFromAPI(filePath: string) {
+    const data = await this.fetchDataFromAPI(filePath);
 
-    const frequencies: number[] = [];
-    const magnitudes: number[] = [];
+    const frequencies: number[] = data.frequencies || [];
+    const magnitudes: number[] = data.magnitudes || [];
 
-    for (const [key, value] of Object.entries(data)) {
-      frequencies.push(parseFloat(key));
-      magnitudes.push(value as number);
+    if (frequencies.length !== magnitudes.length) {
+      console.error("Mismatch between frequencies and magnitudes length");
+    } else {
+      this.addDataSet(frequencies, magnitudes);
     }
-
-    this.addDataSet(frequencies, magnitudes);
   }
 
-  private async fetchDataFromAPI(): Promise<any> {
+  private async fetchDataFromAPI(filePath: string): Promise<any> {
+    console.log("fetch");
     const url = "/api/upload/file";
-    const filePath = "";
 
     try {
       const response = await fetch(url + "?filePath=" + filePath);
@@ -100,11 +101,9 @@ export class ChartManager {
         throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
-
-      return data.frequencyMagnitudeMap;
+      return await response.json();
     } catch (error) {
-      throw new Error("daschias mi");
+      throw new Error("Error when fetching data");
     }
   }
 
