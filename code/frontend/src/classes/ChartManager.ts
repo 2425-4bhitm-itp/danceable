@@ -1,18 +1,17 @@
 import { Chart, ChartData, ChartItem, ChartOptions } from "chart.js/auto";
-
-interface FourierAnalysisData {
-  bpm: number;
-  danceTypes: string[];
-  frequencies: number[];
-  magnitudes: number[];
-  fileName: string;
-}
+import { FourierAnalysisData } from "../FourierAnalysisData";
 
 export class ChartManager {
   charts: Chart[] = [];
-  canvases: HTMLCollectionOf<HTMLCanvasElement> | [] = [];
+
   chartDatas: ChartData[] = [];
+  fourierAnalysisDatas: FourierAnalysisData[] = [];
+
+  canvases: HTMLCollectionOf<HTMLCanvasElement> | [] = [];
   canvasesClassName: string;
+
+  infoElements: HTMLCollectionOf<HTMLElement> | [] = [];
+  infoClassName: string;
 
   options: ChartOptions = {
     responsive: true,
@@ -33,17 +32,22 @@ export class ChartManager {
     }
   };
 
-  constructor(canvasesClassName: string = "chart") {
+  constructor(canvasesClassName: string = "chart", infoClassName: string = "info") {
     this.canvasesClassName = canvasesClassName;
+    this.infoClassName = infoClassName;
   }
 
-  addDataSet(frequencies: number[], magnitudes: number[]) {
+  addDataSet(fourierAnalysisData: FourierAnalysisData) {
+    this.fourierAnalysisDatas.push(fourierAnalysisData);
+
+    console.log(fourierAnalysisData.frequencies);
+
     this.chartDatas.push(
       {
-        labels: frequencies,
+        labels: fourierAnalysisData.frequencies.map((f) => {return f.toFixed(2)}),
         datasets: [{
           label: "Magnitude vs Frequency",
-          data: magnitudes,
+          data: fourierAnalysisData.magnitudes,
           borderColor: "rgba(75, 192, 192, 1)",
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           tension: 0.1,
@@ -54,25 +58,35 @@ export class ChartManager {
   }
 
   removeDataSet(index: number) {
-    this.chartDatas.splice(index, 1);
+    if (index <= Math.min(this.fourierAnalysisDatas.length, this.chartDatas.length) && index >= 0) {
+      this.chartDatas.splice(index, 1);
+      this.fourierAnalysisDatas.splice(index, 1);
+    } else {
+      throw Error("Index must be between 0 and " + Math.min(this.fourierAnalysisDatas.length, this.chartDatas.length));
+    }
   }
 
-  removeAllDataSets() {
+  removeAllData() {
     this.chartDatas = [];
+    this.fourierAnalysisDatas = [];
   }
 
   drawCharts() {
     this.clearCanvases();
 
     this.canvases = document.getElementsByClassName(this.canvasesClassName) as HTMLCollectionOf<HTMLCanvasElement>;
+    this.infoElements = document.getElementsByClassName("info") as HTMLCollectionOf<HTMLElement>;
 
-    for (let i = 0; i < Math.min(this.canvases.length, this.chartDatas.length); i++) {
+    for (let i = 0; i < Math.min(this.canvases.length, this.chartDatas.length, this.fourierAnalysisDatas.length); i++) {
       const ctx = (this.canvases[i] as HTMLCanvasElement).getContext("2d");
 
-      console.log(ctx);
-      console.log(this.chartDatas[i]);
-
       if (ctx) {
+        console.log(this.fourierAnalysisDatas[i]);
+
+        if (i <= this.infoElements.length && this.infoElements[i]) {
+          this.infoElements[i].innerHTML = `<b>${this.fourierAnalysisDatas[i].fileName}</b> (${this.fourierAnalysisDatas[i].bpm})`;
+        }
+
         this.charts.push(
           new Chart(ctx as ChartItem, {
             type: "line",
@@ -83,36 +97,12 @@ export class ChartManager {
     }
   }
 
-  async addDataSetFromFilePathApi(filePath: string) {
-    const data = await this.fetchDataFromAPI(filePath);
-
-    if (data.frequencies.length !== data.magnitudes.length) {
-      console.error("Mismatch between frequencies and magnitudes length");
-    } else {
-      this.addDataSet(data.frequencies, data.magnitudes);
-    }
-  }
-
-  async addDataSetsFromDirectoryPathApi(directoryPath: string): Promise<number> {
-    const data = await this.fetchDatasFromAPI(directoryPath);
-
-    for (let i = 0; i < data.length; i++) {
-      if (data[i].frequencies.length !== data[i].magnitudes.length) {
-        console.error("Mismatch between frequencies and magnitudes length");
-      } else {
-        this.addDataSet(data[i].frequencies, data[i].magnitudes);
-      }
-    }
-
-    return data.length;
-  }
-
-  private async fetchDataFromAPI(path: string): Promise<FourierAnalysisData> {
+  private async fetchDataByFilePathFromAPI(filePath: string): Promise<FourierAnalysisData> {
     console.log("fetch");
     const url = "/api/upload/file";
 
     try {
-      const response = await fetch(url + "?filePath=" + path);
+      const response = await fetch(url + "?filePath=" + filePath);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
@@ -124,7 +114,17 @@ export class ChartManager {
     }
   }
 
-  private async fetchDatasFromAPI(directoryPath: string): Promise<[FourierAnalysisData]> {
+  async addDataSetFromFilePathApi(filePath: string) {
+    const data: FourierAnalysisData = await this.fetchDataByFilePathFromAPI(filePath);
+
+    if (data.frequencies.length !== data.magnitudes.length) {
+      console.error("Mismatch between frequencies and magnitudes length");
+    } else {
+      this.addDataSet(data);
+    }
+  }
+
+  private async fetchDataByDirPathFromAPI(directoryPath: string): Promise<[FourierAnalysisData]> {
     console.log("fetch datas");
     const url = "/api/upload/dir";
 
@@ -139,6 +139,20 @@ export class ChartManager {
     } catch (error) {
       throw new Error("Error when fetching data");
     }
+  }
+
+  async addDataSetsFromDirectoryPathApi(directoryPath: string): Promise<number> {
+    const data = await this.fetchDataByDirPathFromAPI(directoryPath);
+
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].frequencies.length !== data[i].magnitudes.length) {
+        console.error("Mismatch between frequencies and magnitudes length");
+      } else {
+        this.addDataSet(data[i]);
+      }
+    }
+
+    return data.length;
   }
 
   clearCanvases() {

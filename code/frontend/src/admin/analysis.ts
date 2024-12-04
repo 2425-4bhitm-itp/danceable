@@ -1,29 +1,30 @@
 import "../style/tailwind.css";
 
-import { ChartManager } from "../ChartManager";
+import { ChartManager } from "../classes/ChartManager";
 
-const CANVAS_CLASS_NAME = "chart";
+const CHART_CANVAS_CLASS_NAME = "chart";
+const CHART_INFO_CLASS_NAME = "info";
 
-const chartManager: ChartManager = new ChartManager(CANVAS_CLASS_NAME);
+const chartManager: ChartManager = new ChartManager(CHART_CANVAS_CLASS_NAME, CHART_INFO_CLASS_NAME);
 
 window.onload = (e) => {
   const loadChart = document.getElementById("loadChartButton");
-  const canvasContainer = document.getElementById("canvasContainer");
+  const canvasContainerParent = document.getElementById("canvasContainerParent");
   const pathLocationInput: HTMLInputElement | null = document.querySelector("input#pathLocationInput");
 
-  if (loadChart && canvasContainer && pathLocationInput) {
+  if (loadChart && canvasContainerParent && pathLocationInput) {
     loadChart.addEventListener("click", () => {
       const locationPath = pathLocationInput.value;
 
       if (locationPath.endsWith(".wav")) {
         chartManager.addDataSetFromFilePathApi(locationPath).then(() => {
-          createNumberOfCanvasElements(1, canvasContainer);
+          createNumberOfGraphContainers(1, canvasContainerParent);
 
           chartManager.drawCharts();
         });
       } else {
         chartManager.addDataSetsFromDirectoryPathApi(locationPath).then((numberOfDataSets) => {
-          createNumberOfCanvasElements(numberOfDataSets, canvasContainer);
+          createNumberOfGraphContainers(numberOfDataSets, canvasContainerParent);
 
           chartManager.drawCharts();
         });
@@ -32,16 +33,28 @@ window.onload = (e) => {
   }
 };
 
-function createNumberOfCanvasElements(numberOfCanvesElements: number, parentElement: HTMLElement) {
+function createNumberOfGraphContainers(numberOfGraphs: number, parentElement: HTMLElement) {
   parentElement.innerHTML = "";
 
-  let canvases: HTMLCanvasElement[] = [];
+  let graphContainers: HTMLElement[] = [];
 
-  for (let i = 0; i < numberOfCanvesElements; i++) {
+  for (let i = 0; i < numberOfGraphs; i++) {
+    const graphContainer: HTMLElement = document.createElement("div");
+    graphContainer.classList.add("graphContainer");
+
+    graphContainer.classList.add(numberOfGraphs > 1 ? "w-1/2" : "w-full");
+
     const canvas: HTMLCanvasElement = document.createElement("canvas");
-    canvas.classList.add(CANVAS_CLASS_NAME);
-    canvases.push(canvas);
+    canvas.classList.add(CHART_CANVAS_CLASS_NAME);
+
+    const info: HTMLElement = document.createElement("div");
+    info.classList.add("info");
+
+    graphContainer.appendChild(canvas);
+    graphContainer.appendChild(info);
+
+    graphContainers.push(graphContainer);
   }
 
-  parentElement.append(...canvases);
+  parentElement.append(...graphContainers);
 }
