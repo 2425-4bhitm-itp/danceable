@@ -1,11 +1,10 @@
 import './style/style.css';
 import './style/tailwind.css';
-import { startRecording, stopRecording, sendRecordedAudio } from "./mediaRecorder";
-import {Visualizer} from "./Visualizer";
+// import { startRecording, stopRecording, sendRecordedAudio } from "./mediaRecorder";
+import {Visualizer} from "./classes/Visualizer";
+import { StreamRecorder } from "./classes/StreamRecorder";
 
-console.log("💃💃💃");
-
-// selins part (media recorder)
+let recorder = new StreamRecorder();
 
 // Access DOM elements with appropriate type assertions
 const recordButton = document.getElementById('recordBtn') as HTMLButtonElement;
@@ -14,40 +13,27 @@ const stopRecordButton = document.getElementById('recordStopBtn') as HTMLButtonE
 // audio visualizer
 
 const visualMainElement = document.querySelector('#visualizer') as HTMLElement;
-const visualValueCount = 16;
+const visualValueCount = 16; // do not change
 let visualElements: NodeListOf<HTMLDivElement>;
 
 let visualizer: Visualizer;
 
 let timeoutId: number | any = null;
 
-// Main element is chosen and visualizing elements is set to 16
 const createDOMElements = () => {
-    //function for creating DOM elements
-    let i;
-    for (i = 0; i < visualValueCount; ++i) {
-        //loop for 16 iterations
-        const elm = document.createElement('div');
-        visualMainElement.appendChild(elm);
-        // div is created and added to main
-
+    for (let i = 0; i < visualValueCount; ++i) {
+        visualMainElement.appendChild(document.createElement('div'));
     }
-    visualElements = document.querySelectorAll('#visualizer div');
-    // all divs in main are saved in visualElements
-};
 
-// createDOMElements();
-//show ausgangsstellung
+    visualElements = document.querySelectorAll('#visualizer div');
+};
 
 const init = () => {
     // Creating initial DOM elements
     const audioContext = new AudioContext();
-    const initDOM = () => {
-        visualMainElement.innerHTML = '';
-        createDOMElements();
-    };
-    // clear main and create new DOM elements
-    initDOM();
+
+    visualMainElement.innerHTML = '';
+    createDOMElements();
 
     //Swapping values around for a better visual effect
     const dataMap: { [key: number]: number } = {
@@ -74,9 +60,9 @@ const init = () => {
         const values = Array.from(data);
         // frequencydata in array
         for (let i = 0; i < visualValueCount; ++i) {
-            //loop for number of visualizingElements
+            // loop for number of visualizingElements
             const value = values[dataMap[i]] / 255;
-            //get values form dataMap-object and normalise
+            // get values form dataMap-object and normalise
             const elmStyles = visualElements[i].style;
             elmStyles.transform = `scaleY(${value})`;
             // elmStyles.opacity = Math.max(0, value);
@@ -89,47 +75,41 @@ const init = () => {
         // add error class to main
         visualMainElement.innerText = 'Please allow access to your microphone to record audio';
     };
+
     visualizer = new Visualizer(audioContext, processFrame, processError);
 };
 
-// Event listeners for the buttons
 recordButton.addEventListener('click', () => {
     changeButtonStylingWhenRecordingStarted();
-    console.log("record button clicked");
-    startRecording();
+    recorder.startRecording().then();
     init();
 
     clearTimeoutIfExists();
 
     timeoutId = setTimeout(async () => {
-        clearTimeoutIfExists();
-
-        if (visualizer) {
-            visualizer.stopVisualizer();
-            document.querySelector("#visualizer")!.innerHTML = "";
-        }
-        changeRecordButtonStylingWhenRecordingStopped();
-        await stopRecording();
-        await sendRecordedAudio();
-        console.log("Audio Recording stopped!");
-
+        await stopRecordingAndVisualizer();
     }, 1000 * 5);
-    console.log("add timeout with id " + timeoutId);
 });
 
 stopRecordButton.addEventListener('click', async () => {
-    console.log("stop record button clicked");
+    await stopRecordingAndVisualizer();
+});
 
+async function stopRecordingAndVisualizer() {
     clearTimeoutIfExists();
 
     if (visualizer) {
         visualizer.stopVisualizer();
         document.querySelector("#visualizer")!.innerHTML = "";
     }
+
     changeRecordButtonStylingWhenRecordingStopped();
-    await stopRecording();
-    await sendRecordedAudio();
-});
+
+    await recorder.stopRecording();
+    recorder.playAudio();
+
+    await recorder.sendRecordedAudio();
+}
 
 function changeRecordButtonStylingWhenRecordingStopped(): void {
     let recordIcon = document.getElementById("svg");
@@ -158,8 +138,6 @@ function changeButtonStylingWhenRecordingStarted(): void {
 
 function clearTimeoutIfExists() {
     if (timeoutId) {
-        console.log("clear timeout with id " + timeoutId);
-
         clearTimeout(timeoutId);
         timeoutId = null;
     }
