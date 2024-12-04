@@ -2,8 +2,8 @@ import "../style/tailwind.css";
 
 import { FourierChartManger } from "../classes/FourierChartManger";
 
-const CHART_CANVAS_CLASS_NAME = "chart";
-const CHART_INFO_CLASS_NAME = "info";
+const CHART_CANVAS_CLASS_NAME = "fourierChart";
+const CHART_INFO_CLASS_NAME = "fourierChartInfo";
 
 const chartManager: FourierChartManger = new FourierChartManger(CHART_CANVAS_CLASS_NAME, CHART_INFO_CLASS_NAME);
 
@@ -18,13 +18,15 @@ window.onload = (_) => {
 
       if (locationPath.endsWith(".wav")) {
         chartManager.addDataSetFromFilePathApi(locationPath).then(() => {
-          createNumberOfGraphContainers(1, canvasContainerParent);
+          canvasContainerParent.innerHTML = "";
+          canvasContainerParent.append(...createNumberOfChartContainers(1));
 
           chartManager.drawFourierCharts();
         });
       } else {
         chartManager.addDataSetsFromDirectoryPathApi(locationPath).then((numberOfDataSets) => {
-          createNumberOfGraphContainers(numberOfDataSets, canvasContainerParent);
+          canvasContainerParent.innerHTML = "";
+          canvasContainerParent.append(...createNumberOfChartContainers(numberOfDataSets));
 
           chartManager.drawFourierCharts();
         });
@@ -33,28 +35,30 @@ window.onload = (_) => {
   }
 };
 
-function createNumberOfGraphContainers(numberOfGraphs: number, parentElement: HTMLElement) {
-  parentElement.innerHTML = "";
+function createNumberOfChartContainers(numberOfCharts: number): HTMLElement[] {
+  let chartContainers: HTMLElement[] = [];
 
-  let graphContainers: HTMLElement[] = [];
-
-  for (let i = 0; i < numberOfGraphs; i++) {
-    const graphContainer: HTMLElement = document.createElement("div");
-    graphContainer.classList.add("graphContainer");
-
-    graphContainer.classList.add(numberOfGraphs > 1 ? "w-1/2" : "w-full");
-
-    const canvas: HTMLCanvasElement = document.createElement("canvas");
-    canvas.classList.add(CHART_CANVAS_CLASS_NAME);
-
-    const info: HTMLElement = document.createElement("div");
-    info.classList.add("info");
-
-    graphContainer.appendChild(canvas);
-    graphContainer.appendChild(info);
-
-    graphContainers.push(graphContainer);
+  for (let i = 0; i < numberOfCharts; i++) {
+    chartContainers.push(createChartContainer(numberOfCharts == 1));
   }
 
-  parentElement.append(...graphContainers);
+  return chartContainers;
+}
+
+function createChartContainer(isSingleContainer: boolean): HTMLElement {
+  const chartContainer: HTMLElement = document.createElement("div");
+  chartContainer.classList.add("graphContainer");
+
+  chartContainer.classList.add(isSingleContainer ? "w-full" : "w-1/2");
+
+  const canvas: HTMLCanvasElement = document.createElement("canvas");
+  canvas.classList.add(CHART_CANVAS_CLASS_NAME);
+
+  const info: HTMLElement = document.createElement("div");
+  info.classList.add(CHART_INFO_CLASS_NAME);
+
+  chartContainer.appendChild(canvas);
+  chartContainer.appendChild(info);
+
+  return chartContainer;
 }
