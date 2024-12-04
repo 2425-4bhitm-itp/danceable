@@ -1,13 +1,13 @@
 import "../style/tailwind.css";
 
-import { ChartManager } from "../classes/ChartManager";
+import { FourierChartManger } from "../classes/FourierChartManger";
 
 const CHART_CANVAS_CLASS_NAME = "chart";
 const CHART_INFO_CLASS_NAME = "info";
 
-const chartManager: ChartManager = new ChartManager(CHART_CANVAS_CLASS_NAME, CHART_INFO_CLASS_NAME);
+const chartManager: FourierChartManger = new FourierChartManger(CHART_CANVAS_CLASS_NAME, CHART_INFO_CLASS_NAME);
 
-window.onload = (e) => {
+window.onload = (_) => {
   const loadChart = document.getElementById("loadChartButton");
   const canvasContainerParent = document.getElementById("canvasContainerParent");
   const pathLocationInput: HTMLInputElement | null = document.querySelector("input#pathLocationInput");
@@ -20,13 +20,13 @@ window.onload = (e) => {
         chartManager.addDataSetFromFilePathApi(locationPath).then(() => {
           createNumberOfGraphContainers(1, canvasContainerParent);
 
-          chartManager.drawCharts();
+          chartManager.drawFourierCharts();
         });
       } else {
         chartManager.addDataSetsFromDirectoryPathApi(locationPath).then((numberOfDataSets) => {
           createNumberOfGraphContainers(numberOfDataSets, canvasContainerParent);
 
-          chartManager.drawCharts();
+          chartManager.drawFourierCharts();
         });
       }
     });
