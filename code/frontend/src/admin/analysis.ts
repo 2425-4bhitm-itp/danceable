@@ -7,7 +7,7 @@ const CHART_INFO_CLASS_NAME = "fourierChartInfo";
 
 const chartManager: FourierChartManger = new FourierChartManger(CHART_CANVAS_CLASS_NAME, CHART_INFO_CLASS_NAME);
 
-window.onload = (_) => {
+window.onload = (_: Event) => {
   const loadChart = document.getElementById("loadChartButton");
   const canvasContainerParent = document.getElementById("canvasContainerParent");
   const pathLocationInput: HTMLInputElement | null = document.querySelector("input#pathLocationInput");

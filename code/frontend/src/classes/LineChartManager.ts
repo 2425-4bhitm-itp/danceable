@@ -13,7 +13,7 @@ export abstract class LineChartManager {
 
   options: ChartOptions;
 
-  constructor(canvasesClassName: string = "chart", xAxisText: string, yAxisText: string) {
+  protected constructor(canvasesClassName: string = "chart", xAxisText: string, yAxisText: string) {
     this.canvasesClassName = canvasesClassName;
     this.xAxisText = xAxisText;
     this.yAxisText = yAxisText;

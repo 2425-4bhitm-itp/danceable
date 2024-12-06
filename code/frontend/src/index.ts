@@ -1,12 +1,11 @@
 import './style/style.css';
 import './style/tailwind.css';
-// import { startRecording, stopRecording, sendRecordedAudio } from "./mediaRecorder";
+
 import {Visualizer} from "./classes/Visualizer";
 import { StreamRecorder } from "./classes/StreamRecorder";
 
 let recorder = new StreamRecorder();
 
-// Access DOM elements with appropriate type assertions
 const recordButton = document.getElementById('recordBtn') as HTMLButtonElement;
 const stopRecordButton = document.getElementById('recordStopBtn') as HTMLButtonElement;
 
@@ -29,7 +28,6 @@ const createDOMElements = () => {
 };
 
 const init = () => {
-    // Creating initial DOM elements
     const audioContext = new AudioContext();
 
     visualMainElement.innerHTML = '';
@@ -72,7 +70,6 @@ const init = () => {
 
     const processError = (): void => {
         visualMainElement.classList.add('error');
-        // add error class to main
         visualMainElement.innerText = 'Please allow access to your microphone to record audio';
     };
 
@@ -112,7 +109,7 @@ async function stopRecordingAndVisualizer() {
 }
 
 function changeRecordButtonStylingWhenRecordingStopped(): void {
-    let recordIcon = document.getElementById("svg");
+    let recordIcon = document.getElementById("recordIcon");
     let recordingDescription = document.getElementById("recording-description");
     let stopBtn = document.getElementById('recordStopBtn');
 
@@ -128,6 +125,7 @@ function changeButtonStylingWhenRecordingStarted(): void {
     let recordingDescription = document.getElementById("recording-description");
     let stopBtn = document.getElementById("recordStopBtn");
     let svg = document.getElementById("svg");
+
     if (recordingDescription && stopBtn && svg) {
         svg.style.display = "none";
         recordingDescription.style.display = "none";
