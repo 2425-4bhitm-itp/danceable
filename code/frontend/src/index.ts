@@ -18,6 +18,7 @@ let visualElements: NodeListOf<HTMLDivElement>;
 let visualizer: Visualizer;
 
 let timeoutId: number | any = null;
+let intervalId: NodeJS.Timeout | null = null;
 
 const createDOMElements = () => {
     for (let i = 0; i < visualValueCount; ++i) {
@@ -138,5 +139,28 @@ function clearTimeoutIfExists() {
     if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
+    }
+}
+
+function startTimer(secs: number) {
+    let timerBox = document.getElementById("timer");
+    let counter = secs
+    timerBox!.innerHTML = String(counter);
+
+    intervalId = setInterval(() => {
+        counter -= 1
+        timerBox!.innerHTML = String(counter);
+        if (counter === 0) {
+            stopTimer();
+        }
+    }, secs)
+}
+
+function stopTimer() {
+    let timerBox = document.getElementById("timer");
+    if (intervalId) {
+        clearInterval(intervalId);  // stop timer
+        intervalId = null;
+        timerBox!.innerHTML = '';
     }
 }
