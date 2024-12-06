@@ -124,7 +124,7 @@ function changeRecordButtonStylingWhenRecordingStopped(): void {
 function changeButtonStylingWhenRecordingStarted(): void {
     let recordingDescription = document.getElementById("recording-description");
     let stopBtn = document.getElementById("recordStopBtn");
-    let svg = document.getElementById("svg");
+    let svg = document.getElementById("recordIcon");
 
     if (recordingDescription && stopBtn && svg) {
         svg.style.display = "none";
