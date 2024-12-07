@@ -153,7 +153,7 @@ function startTimer(secs: number) {
         if (counter === 0) {
             stopTimer();
         }
-    }, secs)
+    }, 1000)
 }
 
 function stopTimer() {
