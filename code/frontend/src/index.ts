@@ -3,6 +3,7 @@ import './style/tailwind.css';
 
 import {Visualizer} from "./classes/Visualizer";
 import { StreamRecorder } from "./classes/StreamRecorder";
+import { resolve } from "chart.js/helpers";
 
 let recorder = new StreamRecorder();
 
@@ -17,7 +18,7 @@ let visualElements: NodeListOf<HTMLDivElement>;
 
 let visualizer: Visualizer;
 
-let timeoutId: number | any = null;
+let timeoutId: NodeJS.Timeout | null = null;
 let intervalId: NodeJS.Timeout | null = null;
 
 const createDOMElements = () => {
@@ -82,11 +83,15 @@ recordButton.addEventListener('click', () => {
     recorder.startRecording().then();
     init();
 
-    clearTimeoutIfExists();
+    // clearTimeoutIfExists();
 
-    timeoutId = setTimeout(async () => {
+    startTimer(5, async () => {
         await stopRecordingAndVisualizer();
-    }, 1000 * 5);
+    });
+
+    // timeoutId = setTimeout(async () => {
+    //     await stopRecordingAndVisualizer();
+    // }, 1000 * 5);
 });
 
 stopRecordButton.addEventListener('click', async () => {
@@ -94,7 +99,7 @@ stopRecordButton.addEventListener('click', async () => {
 });
 
 async function stopRecordingAndVisualizer() {
-    clearTimeoutIfExists();
+    stopTimer();
 
     if (visualizer) {
         visualizer.stopVisualizer();
@@ -142,25 +147,29 @@ function clearTimeoutIfExists() {
     }
 }
 
-function startTimer(secs: number) {
+function startTimer(timeInSeconds: number, toDowWhenTimerOver: Function) {
     let timerBox = document.getElementById("timer");
-    let counter = secs
-    timerBox!.innerHTML = String(counter);
 
-    intervalId = setInterval(() => {
-        counter -= 1
-        timerBox!.innerHTML = String(counter);
-        if (counter === 0) {
-            stopTimer();
-        }
-    }, 1000)
+    if (timerBox) {
+        timerBox.innerHTML = String(timeInSeconds);
+
+        intervalId = setInterval(() => {
+            timeInSeconds -= 1
+            timerBox.innerHTML = String(timeInSeconds);
+            if (timeInSeconds <= 0) {
+                stopTimer();
+                toDowWhenTimerOver();
+            }
+        }, 1000);
+    }
 }
 
 function stopTimer() {
     let timerBox = document.getElementById("timer");
-    if (intervalId) {
+
+    if (timerBox && intervalId) {
         clearInterval(intervalId);  // stop timer
         intervalId = null;
-        timerBox!.innerHTML = '';
+        timerBox.innerHTML = '';
     }
 }
