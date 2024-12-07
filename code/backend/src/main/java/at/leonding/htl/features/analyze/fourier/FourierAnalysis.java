@@ -1,6 +1,7 @@
 package at.leonding.htl.features.analyze.fourier;
 
 import at.leonding.htl.features.dance.Dance;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Singleton;
 
 import javax.sound.sampled.*;
@@ -12,7 +13,7 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-@Singleton
+@Dependent
 public class FourierAnalysis {
     public static final double sampleRate = 44100.0;
 
