@@ -9,9 +9,13 @@
 </head>
 <body>
 <main class="flex flex-col py-5 px-16">
-  <label for="pathLocationInput">file path input</label>
-  <input class="border" type="text" id="pathLocationInput">
-  <button id="loadChartButton">load Chart</button>
+  <div class="flex gap-3">
+    <label for="pathLocationInput" class="p-1">Path:</label>
+    <input class="border w-full p-1" type="text" id="pathLocationInput">
+    <button id="loadChartButton" class="whitespace-nowrap mx-auto border p-1 rounded-lg">load Chart</button>
+  </div>
+  <span id="systemMessage" class="text-red-400"></span>
+
   <div id="canvasContainerParent" class="flex flex-wrap">
   </div>
 </main>

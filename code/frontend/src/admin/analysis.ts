@@ -5,6 +5,8 @@ import { FourierChartManger } from "../classes/FourierChartManger";
 const CHART_CANVAS_CLASS_NAME = "fourierChart";
 const CHART_INFO_CLASS_NAME = "fourierChartInfo";
 
+const GENERAL_INFO_MESSAGE = "Please provide the path to a `.wav` file or a directory containing `.wav` files.";
+
 const chartManager: FourierChartManger = new FourierChartManger(CHART_CANVAS_CLASS_NAME, CHART_INFO_CLASS_NAME);
 
 window.onload = (_: Event) => {
@@ -12,24 +14,39 @@ window.onload = (_: Event) => {
   const canvasContainerParent = document.getElementById("canvasContainerParent");
   const pathLocationInput: HTMLInputElement | null = document.querySelector("input#pathLocationInput");
 
-  if (loadChart && canvasContainerParent && pathLocationInput) {
-    loadChart.addEventListener("click", () => {
-      const locationPath = pathLocationInput.value;
+  const systemMessageContainer = document.getElementById("systemMessage");
 
-      if (locationPath.endsWith(".wav")) {
-        chartManager.addDataSetFromFilePathApi(locationPath).then(() => {
-          canvasContainerParent.innerHTML = "";
+
+  if (loadChart && canvasContainerParent && pathLocationInput && systemMessageContainer) {
+    displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
+
+    loadChart.addEventListener("click", async () => {
+      if (pathLocationInput.value == "") {
+        displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
+        return;
+      }
+
+      try {
+        displayInfo("Loading...", systemMessageContainer);
+        canvasContainerParent.innerHTML = "";
+
+        const locationPath = pathLocationInput.value;
+
+        if (locationPath.endsWith(".wav")) {
           canvasContainerParent.append(...createNumberOfChartContainers(1));
+          await chartManager.addDataSetFromFilePathApi(locationPath);
 
           chartManager.drawFourierCharts();
-        });
-      } else {
-        chartManager.addDataSetsFromDirectoryPathApi(locationPath).then((numberOfDataSets) => {
-          canvasContainerParent.innerHTML = "";
+        } else {
+          const numberOfDataSets = await chartManager.addDataSetsFromDirectoryPathApi(locationPath);
           canvasContainerParent.append(...createNumberOfChartContainers(numberOfDataSets));
 
           chartManager.drawFourierCharts();
-        });
+        }
+
+        displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
+      } catch (e) {
+        displayError((e as Error).message, systemMessageContainer);
       }
     });
   }
@@ -61,4 +78,16 @@ function createChartContainer(isSingleContainer: boolean): HTMLElement {
   chartContainer.appendChild(info);
 
   return chartContainer;
+}
+
+function displayError(errorMessage: string, errorContainer: HTMLElement) {
+  errorContainer.classList.add("text-red-400");
+  errorContainer.classList.remove("text-blue-400");
+  errorContainer.innerHTML = errorMessage;
+}
+
+function displayInfo(infoMessage: string, infoContainer: HTMLElement) {
+  infoContainer.classList.add("text-blue-400");
+  infoContainer.classList.remove("text-red-400");
+  infoContainer.innerHTML = infoMessage;
 }
