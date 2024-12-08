@@ -62,24 +62,24 @@ export class FourierChartManger extends LineChartManager {
     }
   }
 
-  private async fetchDataByDirPathFromAPI(directoryPath: string): Promise<[FourierAnalysisData]> {
-    const url = "/api/upload/dir";
+  private async fetchDataByDirPathFromAPI(directoryPath: string, concurrent: boolean = false): Promise<[FourierAnalysisData]> {
+    const url = "/api/upload/dir" + (concurrent ? "-concurrent" : "");
 
     try {
       const response = await fetch(url + "?dirPath=" + directoryPath);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+        throw new Error(`(${response.status}) ${response.statusText}`);
       }
 
       return await response.json();
     } catch (error) {
-      throw new Error("Error when fetching data");
+      throw new Error("Error when fetching data: " + (error as Error).message);
     }
   }
 
   async addDataSetsFromDirectoryPathApi(directoryPath: string): Promise<number> {
-    const data = await this.fetchDataByDirPathFromAPI(directoryPath);
+    const data = await this.fetchDataByDirPathFromAPI(directoryPath, true);
 
     for (let i = 0; i < data.length; i++) {
       if (data[i].frequencies.length !== data[i].magnitudes.length) {
@@ -100,5 +100,9 @@ export class FourierChartManger extends LineChartManager {
     for (let i = 0; i < Math.min(infoElements.length, this.fourierAnalysisDatas.length); i++) {
       infoElements[i].innerHTML = `<b>${this.fourierAnalysisDatas[i].fileName}</b> (${this.fourierAnalysisDatas[i].bpm}) bpm`;
     }
+  }
+
+  clearAllFourierCharts() {
+    super.clearCharts();
   }
 }
