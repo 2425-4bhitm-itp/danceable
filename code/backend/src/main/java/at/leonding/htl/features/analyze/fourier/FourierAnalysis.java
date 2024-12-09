@@ -1,16 +1,11 @@
 package at.leonding.htl.features.analyze.fourier;
 
 import at.leonding.htl.features.dance.Dance;
+import at.leonding.htl.features.upload.ReadFile;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Singleton;
-
-import javax.sound.sampled.*;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 @Dependent
@@ -24,7 +19,7 @@ public class FourierAnalysis {
     public void calculateValues(InputStream wavFile) throws UnsupportedAudioFileException, IOException {
         clearValues();
 
-        double[] audioData = readWavFile(wavFile);
+        double[] audioData = ReadFile.readWavFile(wavFile);
 
         Complex[] fftData = performFFT(audioData);
 
@@ -60,27 +55,6 @@ public class FourierAnalysis {
 
     public List<String> getDanceTypes() {
         return Collections.unmodifiableList(danceTypes);
-    }
-
-    public static double[] readWavFile(InputStream inputStream) throws UnsupportedAudioFileException, IOException {
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-        AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedInputStream);
-        AudioFormat format = audioStream.getFormat();
-        int bytesPerFrame = format.getFrameSize();
-        long numFrames = audioStream.getFrameLength();
-        double[] audioData = new double[(int) numFrames];
-
-        byte[] buffer = new byte[bytesPerFrame];
-        for (int i = 0; i < numFrames; i++) {
-            audioStream.read(buffer, 0, bytesPerFrame);
-            int sample = 0;
-            for (int j = 0; j < buffer.length; j++) {
-                sample += buffer[j] << (8 * j);
-            }
-            audioData[i] = sample / 32768.0; // 16-BIT
-        }
-
-        return audioData;
     }
 
     public static Complex[] performDFT(double[] audioData) {
