@@ -1,32 +1,56 @@
 # **Danceable Project**
 
 **Project Name:** Danceable  
-**Developers:** Zinhobel, Hussein, Mayer, Öllinger, Huch
-
-## **Overview:**
-
-Danceable is an innovative application designed to identify the most suitable dance styles for any song playing in the background. It analyzes the music and provides a danceability score, making it easy to discover the perfect dance match for each tune.
-
-## **Technologies**
-
-- Quarkus (Backend)
-- Webpack + Typescript (Web app)
-- Swift (Mobile app)
-
-## **Key Features:**
-
-- **Music Recording & Uploading:** Users can either record music directly through their mobile devices or upload a song via the website for analysis.
-- **Dance Type Suggestions:** The app analyzes the music and suggests suitable dance styles that align with the rhythm and tempo of the song.
-- **Danceability Score:** After processing the song, Danceable generates a score reflecting how danceable the song is based on various metrics.
-
-## **Target Audience:**
-
-Danceable caters to dancers of all skill levels—whether you're a beginner, intermediate, or professional, the app helps you discover the perfect dance style for any song.
-
-## **Platform Availability:**
-
-Currently, Danceable is only available as a web application. However, we are working on expanding its accessibility, and in the future, it will be available both as a web and mobile app, ensuring seamless access across all devices.
+**Developers:** Zinhobel, Hussein, Mayer, Öllinger, Huch  
 
 ---
 
-*Thank you for supporting Danceable. We hope it brings rhythm to your steps and joy to your dancing journey!*
+## **Overview**
+
+Danceable is an innovative application designed to help you find the perfect dance style for any song playing in the background. By analyzing the music, the app provides a **danceability score** and suggests dance styles that best match the rhythm and tempo. Whether you're a beginner or a seasoned dancer, Danceable enhances your dancing experience and helps you connect with the music like never before.
+
+---
+
+## **Technologies**
+
+- **Backend:** Quarkus  
+- **Web Application:** Webpack + Typescript  
+  
+
+## **Upcoming Technologies**
+
+- **Mobile Application:** Swift (upcoming)
+---
+
+
+## **Key Features**
+
+### **1. Music Recording & Uploading**
+Easily record music through your mobile device or upload a song via the web app for instant analysis.  
+
+### **2. Dance Type Suggestions**
+Get tailored dance style suggestions that align with the rhythm and tempo of the song.  
+
+### **3. Danceability Score**
+Danceable generates a detailed score indicating how danceable the song is, using advanced music analysis metrics.  
+
+---
+
+## **Target Audience**
+
+Danceable is designed for dancers of all skill levels:  
+- **Beginners** looking to discover suitable dance styles.  
+- **Intermediate dancers** aiming to explore new rhythms.  
+- **Professionals** seeking precise dance-style suggestions for various genres.  
+
+---
+
+## **Platform Availability**
+
+Danceable is currently available exclusively as a **web application**.  
+We are actively working on expanding accessibility. A **mobile app for Apple devices** (Swift-based) is planned.  
+Our long-term goal is to make Danceable available on **all devices and platforms**, ensuring a seamless experience for everyone.  
+
+---
+
+Thank you for supporting **Danceable**—bringing rhythm to your steps and joy to your dancing journey!  
