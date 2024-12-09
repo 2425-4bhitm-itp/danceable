@@ -19,7 +19,7 @@ Danceable is an innovative application designed to help you find the perfect dan
 
 ## **Upcoming Technologies**
 
-- **Mobile Application:** Swift (upcoming)
+- **Mobile Application:** Swift 
 ---
 
 
