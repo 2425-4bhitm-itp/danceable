@@ -17,11 +17,12 @@ window.onload = (_: Event) => {
   const systemMessageContainer = document.getElementById("systemMessage");
 
 
-  if (loadChart && canvasContainerParent && pathLocationInput && systemMessageContainer) {
+  if (loadChart instanceof HTMLButtonElement && canvasContainerParent && pathLocationInput && systemMessageContainer) {
     displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
 
     loadChart.addEventListener("click", async () => {
       if (pathLocationInput.value == "") {
+        loadChart.disabled = false;
         displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
         return;
       }
@@ -29,6 +30,8 @@ window.onload = (_: Event) => {
       try {
         displayInfo("Loading...", systemMessageContainer);
         canvasContainerParent.innerHTML = "";
+
+        loadChart.disabled = true;
 
         const locationPath = pathLocationInput.value;
 
@@ -44,6 +47,7 @@ window.onload = (_: Event) => {
           chartManager.drawFourierCharts();
         }
 
+        loadChart.disabled = false;
         displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
       } catch (e) {
         displayError((e as Error).message, systemMessageContainer);
