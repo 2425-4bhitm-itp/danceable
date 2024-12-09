@@ -1,8 +1,11 @@
 package at.leonding.htl.features.upload;
 
 import at.leonding.htl.features.analyze.fourier.FourierAnalysis;
+import io.smallrye.mutiny.Multi;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -10,6 +13,12 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
+
+import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,6 +31,50 @@ public class FileUploadResource {
 
     @Inject
     FourierAnalysis fourierAnalysis;
+
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDataFromUploadedFile(
+            @MultipartForm MultipartBody fileUploadBody
+    ) {
+        try {
+            if (fileUploadBody == null || 
+            fileUploadBody.file == null || 
+            fileUploadBody.fileName == null
+            ) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Invalid upload body\"}")
+                        .build();
+            }
+
+            InputStream stream;
+
+            // Check file type and process accordingly
+            if (fileUploadBody.fileName.endsWith(".webm")) {
+                stream = ReadFile.convertWebmToWav(
+                        new ByteArrayInputStream(
+                                fileUploadBody.file.readAllBytes()));
+            } else if (fileUploadBody.fileName.endsWith(".wav")) {
+                stream = new ByteArrayInputStream(fileUploadBody.file.readAllBytes());
+            } else {
+                return Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE)
+                        .entity("{\"error\": \"File format not supported\"}")
+                        .build();
+            }
+
+            // Perform Fourier analysis
+            fourierAnalysis.calculateValues(stream);
+
+            // Create and return the response DTO
+            File tempFile = new File(fileUploadBody.fileName);
+            return Response.ok(fillFourierAnalysisDataDto(tempFile)).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
 
     @GET
     @Path("/file")
@@ -73,7 +126,7 @@ public class FileUploadResource {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
 
-            double[] values = FourierAnalysis.readWavFile(stream);
+            double[] values = ReadFile.readWavFile(stream);
 
             return Response
                     .ok(values)
