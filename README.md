@@ -13,17 +13,16 @@ Danceable is an innovative application designed to help you find the perfect dan
 
 ## **Technologies**
 
-- **Backend:** Quarkus  
-- **Web Application:** Webpack + Typescript  
-  
+![](documentation/technology_stack.png)
+
+- **Backend:** Quarkus (Java)
+- **Web Application:** Webpack (Typescript) + TailwindCSS
+- **Database:** PostgreSQL (Docker)
 
 ## **Upcoming Technologies**
 
 - **Mobile Application:** Swift
-
-  ![](documentation/technology_stack.png) 
 ---
-
 
 ## **Key Features**
 
@@ -56,3 +55,47 @@ Our long-term goal is to make Danceable available on **all devices and platforms
 ---
 
 Thank you for supporting **Danceable**—bringing rhythm to your steps and joy to your dancing journey!  
+
+# Getting Started
+
+## Requirements
+Ensure you have the following installed:
+
+- **[Docker](https://www.docker.com/products/docker-desktop/)**
+- **[Java](https://www.java.com/de/download/manual.jsp)** + **[Maven](https://maven.apache.org/download.cgi)**
+- **[Node.js](https://nodejs.org/en/download/package-manager)** + **[npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)**
+
+---
+
+## Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/2425-4bhitm-itp/danceable.git
+   cd danceable
+   ```
+
+2. Start services in separate terminals:
+
+  - **Terminal 1**:
+    ```bash
+    cd db
+    ./start.sh
+    ```
+  - **Terminal 2**:
+    ```bash
+    cd backend
+    mvn quarkus:dev
+    ```
+  - **Terminal 3**:
+    ```bash
+    cd frontend
+    npm run dev
+    ```
+---
+
+## Access the App
+Open [http://localhost:4200](http://localhost:4200) in your browser.
+
+### Fourier Analysis
+For fourier analyzing .wav files access [http://localhost:4200/analysis.html](http://localhost:4200/analysis.html)
