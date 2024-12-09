@@ -98,7 +98,7 @@ export class FourierChartManger extends LineChartManager {
     const infoElements = document.getElementsByClassName(this.infoClassName);
 
     for (let i = 0; i < Math.min(infoElements.length, this.fourierAnalysisDatas.length); i++) {
-      infoElements[i].innerHTML = `<b>${this.fourierAnalysisDatas[i].fileName}</b> (${this.fourierAnalysisDatas[i].bpm}) bpm`;
+      infoElements[i].innerHTML = `<b>${this.fourierAnalysisDatas[i].fileName}</b> (${this.fourierAnalysisDatas[i].bpm} <bpm></bpm>)`;
     }
   }
 
