@@ -50,6 +50,7 @@ window.onload = (_: Event) => {
         loadChart.disabled = false;
         displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
       } catch (e) {
+        loadChart.disabled = false;
         displayError((e as Error).message, systemMessageContainer);
       }
     });

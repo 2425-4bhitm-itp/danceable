@@ -168,7 +168,7 @@ function stopTimer() {
     let timerBox = document.getElementById("timer");
 
     if (timerBox && intervalId) {
-        clearInterval(intervalId);  // stop timer
+        clearInterval(intervalId);
         intervalId = null;
         timerBox.innerHTML = '';
     }

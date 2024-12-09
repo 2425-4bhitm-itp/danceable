@@ -32,7 +32,12 @@ const config = {
         pathRewrite: { "^/api": "" }
       }
     ],
-    historyApiFallback: true
+    historyApiFallback: {
+      rewrites: [
+        { from: /^\/$/, to: "/index.html" },
+        { from: /^\/analysis$/, to: "/analysis.html" },
+      ],
+    },
   },
   plugins: [
     new HtmlWebpackPlugin({
