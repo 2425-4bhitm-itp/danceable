@@ -98,4 +98,4 @@ Ensure you have the following installed:
 Open [http://localhost:4200](http://localhost:4200) in your browser.
 
 ### Fourier Analysis
-For fourier analyzing .wav files access [http://localhost:4200/analysis.html](http://localhost:4200/analysis.html)
+View [http://localhost:4200/analysis](http://localhost:4200/analysis) in your browser to fourier analyze .wav files.
