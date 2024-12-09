@@ -21,7 +21,7 @@ Danceable is an innovative application designed to help you find the perfect dan
 
 ## **Upcoming Technologies**
 
-- **Mobile Application:** Swift
+- **Mobile Application:** Swift (SwitfUI), Kotlin (Jetpack Compose)
 ---
 
 ## **Key Features**
@@ -54,7 +54,7 @@ Our long-term goal is to make Danceable available on **all devices and platforms
 
 ---
 
-Thank you for supporting **Danceable**—bringing rhythm to your steps and joy to your dancing journey!  
+Thank you for supporting **Danceable** - bringing rhythm to your steps and joy to your dancing journey!  
 
 # Getting Started
 
