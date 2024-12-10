@@ -13,7 +13,7 @@ Danceable is an innovative application designed to help you find the perfect dan
 
 ## **Technologies**
 
-![](documentation/technology_stack.png)
+![](documentation/technology_stack.jpg)
 
 - **Backend:** Quarkus (Java)
 - **Web Application:** Webpack (Typescript) + TailwindCSS
