@@ -78,7 +78,8 @@ export class StreamRecorder {
         });
 
         if (!response.ok) {
-            throw new Error("Failed to upload file" + response.statusText);
+            console.log(response)
+            throw new Error("Failed to upload file: (" + response.status + ") \"" + response.statusText + "\"");
         }
 
         const responseData = await response.json();
