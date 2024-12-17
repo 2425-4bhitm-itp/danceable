@@ -1,7 +1,6 @@
 package at.leonding.htl.features.upload;
 
 import at.leonding.htl.features.analyze.fourier.FourierAnalysis;
-import io.smallrye.mutiny.Multi;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -14,20 +13,25 @@ import jakarta.ws.rs.core.Response;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Path("/upload")
 public class FileUploadResource {
+
+    @ConfigProperty(name = "UPLOAD_DIRECTORY", defaultValue = "./")
+    String UPLOAD_DIRECTORY;
 
     @Inject
     FourierAnalysis fourierAnalysis;
@@ -36,13 +40,11 @@ public class FileUploadResource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDataFromUploadedFile(
-            @MultipartForm MultipartBody fileUploadBody
-    ) {
+            @MultipartForm MultipartBody fileUploadBody) {
         try {
-            if (fileUploadBody == null || 
-            fileUploadBody.file == null || 
-            fileUploadBody.fileName == null
-            ) {
+            if (fileUploadBody == null ||
+                    fileUploadBody.file == null ||
+                    fileUploadBody.fileName == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("{\"error\": \"Invalid upload body\"}")
                         .build();
@@ -76,12 +78,54 @@ public class FileUploadResource {
         }
     }
 
+    @Path("/save")
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response saveAudioFile(@MultipartForm MultipartBody multipartBody) {
+        if (multipartBody.fileName == null || multipartBody.fileName.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("{\"error\":\"File name is required.\"}")
+                    .build();
+        }
+
+        InputStream uploadedInputStream = multipartBody.file;
+        String uploadedFileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-ss")) + "_"
+                + multipartBody.fileName;
+
+        File outputFile = new File(UPLOAD_DIRECTORY, uploadedFileName);
+
+        try (FileOutputStream outStream = new FileOutputStream(outputFile)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = uploadedInputStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, bytesRead);
+            }
+
+            List<String> cmds = new ArrayList<>();
+            cmds.add("ffmpeg");
+            cmds.add("-i");
+            cmds.add(outputFile.getAbsolutePath());
+            cmds.add(UPLOAD_DIRECTORY + "/" + uploadedFileName.split("\\.")[0] + ".wav");
+
+            ProcessBuilder pb = new ProcessBuilder(cmds);
+            Process p = pb.start();
+            p.waitFor();
+
+            return Response.ok().build();
+        } catch (IOException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @GET
     @Path("/file")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getFourierDataOfFile(
-            @QueryParam("filePath") String filePath
-    ) {
+            @QueryParam("filePath") String filePath) {
         try {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
@@ -90,8 +134,7 @@ public class FileUploadResource {
 
             return Response
                     .ok(
-                            fillFourierAnalysisDataDto(file)
-                    )
+                            fillFourierAnalysisDataDto(file))
                     .build();
         } catch (UnsupportedAudioFileException | IOException e) {
             throw new RuntimeException(e);
@@ -102,8 +145,7 @@ public class FileUploadResource {
     @Path("/inputstream")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInputstreamOfFile(
-            @QueryParam("filePath") String filePath
-    ) {
+            @QueryParam("filePath") String filePath) {
         try {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
@@ -120,8 +162,7 @@ public class FileUploadResource {
     @Path("/doubles")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDoubleValuesOfFile(
-            @QueryParam("filePath") String filePath
-    ) {
+            @QueryParam("filePath") String filePath) {
         try {
             File file = new File(filePath);
             InputStream stream = new FileInputStream(file);
@@ -140,8 +181,7 @@ public class FileUploadResource {
     @Path("/dir")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getFourierFromDirectory(
-            @QueryParam("dirPath") String dirPath
-    ) {
+            @QueryParam("dirPath") String dirPath) {
         Long startTime = System.currentTimeMillis();
         File dir = new File(dirPath);
         File[] files = dir.listFiles();
@@ -163,7 +203,8 @@ public class FileUploadResource {
 
         Long endTime = System.currentTimeMillis();
 
-        System.out.println((startTime - endTime) / 1000 + " seconds elapsed for analyzing " + fourierAnalysisDataDtos.size() + " out of " + files.length + " files in directory.");
+        System.out.println((startTime - endTime) / 1000 + " seconds elapsed for analyzing "
+                + fourierAnalysisDataDtos.size() + " out of " + files.length + " files in directory.");
 
         return Response
                 .ok(fourierAnalysisDataDtos)
@@ -174,8 +215,7 @@ public class FileUploadResource {
     @Path("/dir-concurrent")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getFourierFromDirectoryConcurrent(
-            @QueryParam("dirPath") String dirPath
-    ) {
+            @QueryParam("dirPath") String dirPath) {
         Long startTime = System.currentTimeMillis();
         File dir = new File(dirPath);
         File[] files = dir.listFiles();
@@ -184,7 +224,8 @@ public class FileUploadResource {
             throw new RuntimeException("No files found in directory");
         }
 
-        List<FourierAnalysisDataDto> concurrentFourierAnalysisDataDtos = Collections.synchronizedList(new ArrayList<>());
+        List<FourierAnalysisDataDto> concurrentFourierAnalysisDataDtos = Collections
+                .synchronizedList(new ArrayList<>());
         List<Thread> threads = new ArrayList<>();
 
         for (File file : files) {
@@ -213,7 +254,8 @@ public class FileUploadResource {
 
         Long endTime = System.currentTimeMillis();
 
-        System.out.println((startTime - endTime) / 1000 + " seconds elapsed for analyzing " + concurrentFourierAnalysisDataDtos.size() + " out of " + files.length + " files in directory.");
+        System.out.println((startTime - endTime) / 1000 + " seconds elapsed for analyzing "
+                + concurrentFourierAnalysisDataDtos.size() + " out of " + files.length + " files in directory.");
 
         return Response
                 .ok(concurrentFourierAnalysisDataDtos)
@@ -227,10 +269,8 @@ public class FileUploadResource {
     private FourierAnalysisDataDto fillFourierAnalysisDataDto(File file, FourierAnalysis fourierAnalysis) {
         FourierAnalysisDataDto fourierAnalysisDataDto = null;
 
-        if (
-                file.isFile() &&
-                        file.getName().endsWith(".wav")
-        ) {
+        if (file.isFile() &&
+                file.getName().endsWith(".wav")) {
             try {
                 InputStream stream = new FileInputStream(file);
 
@@ -257,8 +297,7 @@ public class FileUploadResource {
                         sortedTreeMap
                                 .values()
                                 .toArray(new Double[0]),
-                        file.getName()
-                );
+                        file.getName());
             } catch (UnsupportedAudioFileException | IOException e) {
                 throw new RuntimeException(e);
             }
