@@ -2,28 +2,54 @@
 title Danceable Microservice Architecture
 
 package "Frontend" {
-  [Webpack Frontend]
+  [Website]
+  note bottom of [Website]
+      - Technology: Webpack (TypeScript)
+      - Purpose:
+        - Admin Board
+        - User Interface
+    end note
 }
 
 package "Backend" {
-  [Quarkus Backend]
+  [Server]
+  note bottom of [Server]
+      - Technology: Quarkus (Java)
+      - Purpose:
+        - /admin: 
+        - /user: 
+    end note
 }
 
 package "Database" {
-  [Postgres DB]
+  [DB]
+  note bottom of [DB]
+      - Technology: PostgreSQL
+      - Purpose: store information about songs
+    end note
 }
 
 package "Volume" {
   [Song Storage]
+  note bottom of [Song Storage]
+      - Technology: Directory
+      - Purpose: store songs for training
+    end note
 }
 
 package "Machine Learning" {
-  [Python AI]
+  [AI]
+  note bottom of [AI]
+      - Technology: Python lib (?)
+      - Purpose:
+        - train
+        - recognize dance styles
+    end note
 }
 
-[Webpack Frontend] --> [Quarkus Backend] : REST
-[Quarkus Backend] --> [Postgres DB] : REST
-[Quarkus Backend] -up-> [Python AI] : REST
-[Quarkus Backend] --> [Song Storage] : volume
-[Python AI] --> [Song Storage] : volume
+[Website] --> [Server] : REST
+[Server] --> [DB] : REST
+[Server] -up-> [AI] : REST
+[Server] --> [Song Storage] : volume
+[AI] --> [Song Storage] : volume
 @enduml
