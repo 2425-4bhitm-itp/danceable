@@ -1,0 +1,29 @@
+@startuml
+title Danceable Microservice Architecture
+
+package "Frontend" {
+  [Webpack Frontend]
+}
+
+package "Backend" {
+  [Quarkus Backend]
+}
+
+package "Database" {
+  [Postgres DB]
+}
+
+package "Volume" {
+  [Song Storage]
+}
+
+package "Machine Learning" {
+  [Python AI]
+}
+
+[Webpack Frontend] --> [Quarkus Backend] : REST
+[Quarkus Backend] --> [Postgres DB] : REST
+[Quarkus Backend] -up-> [Python AI] : REST
+[Quarkus Backend] --> [Song Storage] : volume
+[Python AI] --> [Song Storage] : volume
+@enduml
