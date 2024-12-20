@@ -5,7 +5,7 @@ package "Frontend" {
   [Website]
   note bottom of [Website]
       - Technology: Webpack (TypeScript)
-      - Purpose:
+      - Features:
         - Admin Board
         - User Interface
     end note
@@ -15,9 +15,9 @@ package "Backend" {
   [Server]
   note bottom of [Server]
       - Technology: Quarkus (Java)
-      - Purpose:
-        - /admin: 
-        - /user: 
+      - Feature:
+        - /admin: train AI based on fourier analysis
+        - /user: recognition based on fourier analysis
     end note
 }
 
@@ -25,23 +25,23 @@ package "Database" {
   [DB]
   note bottom of [DB]
       - Technology: PostgreSQL
-      - Purpose: store information about songs
+      - Feature: store information about songs
     end note
 }
 
 package "Volume" {
   [Song Storage]
   note bottom of [Song Storage]
-      - Technology: Directory
-      - Purpose: store songs for training
+      - Technology: directory
+      - Feature: store songs for training
     end note
 }
 
 package "Machine Learning" {
   [AI]
   note bottom of [AI]
-      - Technology: Python lib (?)
-      - Purpose:
+      - Technology: ? (Python)
+      - Features:
         - train
         - recognize dance styles
     end note
@@ -50,6 +50,6 @@ package "Machine Learning" {
 [Website] --> [Server] : REST
 [Server] --> [DB] : REST
 [Server] -up-> [AI] : REST
-[Server] --> [Song Storage] : volume
-[AI] --> [Song Storage] : volume
+[Server] --> [Song Storage]
+[AI] --> [Song Storage]
 @enduml
