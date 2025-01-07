@@ -1,49 +1,42 @@
 @startuml
 title Danceable Microservice Architecture
 
-package "Frontend" {
+package "Web Frontend" {
   [Website]
   note bottom of [Website]
-      - Technology: Webpack (TypeScript)
-      - Features:
-        - Admin Board
-        - User Interface
+    - Admin Board
+    - Recorder and Dances
     end note
+
 }
 
 package "Backend" {
   [Server]
   note bottom of [Server]
-      - Technology: Quarkus (Java)
-      - Feature:
-        - /admin: train AI based on fourier analysis
-        - /user: recognition based on fourier analysis
+    - /admin: train AI based on fourier analysis
+    - /user: recognition based on fourier analysis
     end note
 }
 
 package "Database" {
   [DB]
   note bottom of [DB]
-      - Technology: PostgreSQL
-      - Feature: store information about songs
+    store information about songs
     end note
 }
 
 package "Volume" {
   [Song Storage]
   note bottom of [Song Storage]
-      - Technology: directory
-      - Feature: store songs for training
+    store songs for training
     end note
 }
 
 package "Machine Learning" {
   [AI]
   note bottom of [AI]
-      - Technology: ? (Python)
-      - Features:
-        - train
-        - recognize dance styles
+    - train with fourier data
+    - recognize dance styles
     end note
 }
 
