@@ -26,4 +26,20 @@ public class ReadFile {
 
         return audioData;
     }
+
+    public static InputStream convertWebmToWav(ByteArrayInputStream byteArrayInputStream) {
+        try {
+            File tempFile = File.createTempFile("temp", ".webm");
+            FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
+            byteArrayInputStream.transferTo(fileOutputStream);
+            fileOutputStream.close();
+
+            ProcessBuilder processBuilder = new ProcessBuilder("ffmpeg", "-i", tempFile.getAbsolutePath(), "-f", "wav", "-");
+            Process process = processBuilder.start();
+            return process.getInputStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
