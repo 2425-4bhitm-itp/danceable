@@ -6,38 +6,37 @@ package "Web Frontend" {
   note bottom of [Website]
     - Admin Board
     - Recorder and Dances
-    end note
-
+  end note
 }
 
 package "Backend" {
   [Server]
   note bottom of [Server]
-    - /admin: train AI based on fourier analysis
-    - /user: recognition based on fourier analysis
-    end note
+    - /admin: Train AI based on Fourier analysis
+    - /user: Recognition based on Fourier analysis
+  end note
 }
 
 package "Database" {
   [DB]
   note bottom of [DB]
-    store information about songs
-    end note
+    Stores information about songs
+  end note
 }
 
 package "Volume" {
   [Song Storage]
   note bottom of [Song Storage]
-    store songs for training
-    end note
+    Stores songs for training
+  end note
 }
 
 package "Machine Learning" {
   [AI]
   note bottom of [AI]
-    - train with fourier data
-    - recognize dance styles
-    end note
+    - Train with Fourier data
+    - Recognize dance styles
+  end note
 }
 
 [Website] --> [Server] : REST
