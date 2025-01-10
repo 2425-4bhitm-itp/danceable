@@ -1,0 +1,14 @@
+services:
+  nginx:
+    image: frontend
+    ports:
+      - "4200:80"
+    healthcheck:
+      test: curl --fail --head -fsS http://localhost || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 2
+      start_period: 10s
+    depends_on:
+      backend:
+        condition: service_healthy

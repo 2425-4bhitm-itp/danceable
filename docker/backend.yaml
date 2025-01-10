@@ -1,0 +1,18 @@
+services:
+  backend:
+    #    container_name: backend
+    image: backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - quarkus.datasource.jdbc.url=jdbc:postgresql://postgres:5432/admin
+      - quarkus.datasource.username=admin
+      - quarkus.datasource.password=admin
+    healthcheck:
+      test: curl -f http://localhost:8080/q/health/live
+      start_period: 30s
+      start_interval: 2s
+      retries: 10
