@@ -11,6 +11,8 @@ services:
       - quarkus.datasource.jdbc.url=jdbc:postgresql://postgres:5432/admin
       - quarkus.datasource.username=admin
       - quarkus.datasource.password=admin
+    volumes:
+      - ./local-song-storage:/app/song-storage
     healthcheck:
       test: curl -f http://localhost:8080/q/health/live
       start_period: 30s
