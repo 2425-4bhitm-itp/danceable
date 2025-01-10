@@ -1,0 +1,15 @@
+### The application is up and running.
+
+http://localhost:8080/q/health/live
+
+### The application is ready to serve requests.
+
+http://localhost:8080/q/health/ready
+
+### The application is started.
+
+http://localhost:8080/q/health/started
+
+### Accumulating all health check procedures in the application.
+
+http://localhost:8080/q/health
