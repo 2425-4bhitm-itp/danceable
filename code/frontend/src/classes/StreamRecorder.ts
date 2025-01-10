@@ -5,6 +5,7 @@ export class StreamRecorder {
 
     async startRecording() {
         try {
+            console.log("start recording")
             // Request permission and access to the microphone
             const stream: MediaStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -20,12 +21,15 @@ export class StreamRecorder {
 
             this.mediaRecorder.addEventListener("dataavailable", (event: BlobEvent) => {
                 this.audioChunks.push(event.data);
+                console.log("pushing chunks", this.audioChunks)
             });
 
             this.mediaRecorder.addEventListener("stop", () => {
                 if (this.audioChunks.length > 0) {
                     this.audioBlob = new Blob(this.audioChunks, {type: "audio/webm"});
+                    console.log("set blob")
                 }
+                console.log("stop recording")
             });
         } catch (error) {
             console.error("Error accessing microphone:", error);

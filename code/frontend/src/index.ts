@@ -78,9 +78,9 @@ const init = () => {
     visualizer = new Visualizer(audioContext, processFrame, processError);
 };
 
-recordButton.addEventListener('click', () => {
+recordButton.addEventListener('click', async () => {
     changeButtonStylingWhenRecordingStarted();
-    recorder.startRecording().then();
+    await recorder.startRecording();
     init();
 
     // clearTimeoutIfExists();
