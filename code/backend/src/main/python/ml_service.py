@@ -4,10 +4,10 @@ app = Flask(__name__)
 
 @app.route('/process', methods=['POST'])
 def process():
-    data = request.get_json()  # Accept JSON data from the request
-    print(f"Received data: {data}")
-    # Return a static response
-    return jsonify({"response": "This is a placeholder response"}), 200
+    data = request.get_json()
+    #print(f"Received data: {data}")
+
+    return jsonify({"response": data.get('fileName', 'No filename found')}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
