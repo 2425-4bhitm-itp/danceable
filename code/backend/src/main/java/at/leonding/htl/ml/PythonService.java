@@ -1,7 +1,11 @@
 package at.leonding.htl.ml;
 
+import at.leonding.htl.features.analyze.fourier.FourierAnalysis;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -13,11 +17,17 @@ import jakarta.ws.rs.Path;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.ShutdownEvent;
 
+import javax.sound.sampled.UnsupportedAudioFileException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 @Path("/ml")
 @ApplicationScoped
 public class PythonService {
 
-    private Client client;
+    private static Client client;
     final private static String pythonUrl = "http://localhost:5000/process";
 
     void onStart(@Observes StartupEvent ev) {
@@ -31,9 +41,11 @@ public class PythonService {
     }
 
     @GET
-    public String sendJson() {
-        String jsonPayload = "{\"key\": \"value\"}";
-
+    @Produces(MediaType.APPLICATION_JSON)
+    public String sendJson(String jsonPayload) {
+        if (client == null) {
+            return "Client is not initialized.";
+        }
         try {
             Response response = client.target(pythonUrl)
                     .request(MediaType.APPLICATION_JSON)
@@ -42,7 +54,7 @@ public class PythonService {
             if (response.getStatus() == 200) {
                 String responseBody = response.readEntity(String.class);
                 response.close();
-                return "Response from Python: " + responseBody;
+                return responseBody;
             } else {
                 response.close();
                 return "Failed to contact Python backend. HTTP status: " + response.getStatus();
