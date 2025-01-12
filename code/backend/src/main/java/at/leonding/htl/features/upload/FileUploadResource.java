@@ -1,6 +1,8 @@
 package at.leonding.htl.features.upload;
 
 import at.leonding.htl.features.analyze.fourier.FourierAnalysis;
+import at.leonding.htl.ml.PythonService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -132,83 +134,17 @@ public class FileUploadResource {
 
             fourierAnalysis.calculateValues(stream);
 
-            return Response
-                    .ok(
-                            fillFourierAnalysisDataDto(file))
-                    .build();
+            // create dto make a json, stringify json and call the sendJson in PythonService, return python answer
+            FourierAnalysisDataDto dto = fillFourierAnalysisDataDto(file);
+
+            String jsonPayload = new ObjectMapper().writeValueAsString(dto);
+            String pythonResponse = new PythonService().sendJson(jsonPayload);
+
+            return Response.ok(pythonResponse).build();
+
         } catch (UnsupportedAudioFileException | IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @GET
-    @Path("/inputstream")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getInputstreamOfFile(
-            @QueryParam("filePath") String filePath) {
-        try {
-            File file = new File(filePath);
-            InputStream stream = new FileInputStream(file);
-
-            return Response
-                    .ok(stream)
-                    .build();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @GET
-    @Path("/doubles")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getDoubleValuesOfFile(
-            @QueryParam("filePath") String filePath) {
-        try {
-            File file = new File(filePath);
-            InputStream stream = new FileInputStream(file);
-
-            double[] values = ReadFile.readWavFile(stream);
-
-            return Response
-                    .ok(values)
-                    .build();
-        } catch (UnsupportedAudioFileException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @GET
-    @Path("/dir")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getFourierFromDirectory(
-            @QueryParam("dirPath") String dirPath) {
-        Long startTime = System.currentTimeMillis();
-        File dir = new File(dirPath);
-        File[] files = dir.listFiles();
-
-        if (files == null) {
-            throw new RuntimeException("No files found in directory");
-        }
-
-        List<FourierAnalysisDataDto> fourierAnalysisDataDtos = new LinkedList<>();
-
-        for (int i = 0; i < files.length; i++) {
-            FourierAnalysisDataDto fourierAnalysisDataDto = fillFourierAnalysisDataDto(files[i]);
-
-            if (fourierAnalysisDataDto != null) {
-                System.out.println((i + 1) + ". fourier analysis is finished!");
-                fourierAnalysisDataDtos.add(fourierAnalysisDataDto);
-            }
-        }
-
-        Long endTime = System.currentTimeMillis();
-
-        System.out.println((startTime - endTime) / 1000 + " seconds elapsed for analyzing "
-                + fourierAnalysisDataDtos.size() + " out of " + files.length + " files in directory.");
-
-        return Response
-                .ok(fourierAnalysisDataDtos)
-                .build();
     }
 
     @GET
