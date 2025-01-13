@@ -1,8 +1,10 @@
-package at.leonding.htl.features.library.audiofile;
+package at.leonding.htl.features.library.songsnippet;
 
 import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.song.Song;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 
 import java.util.Objects;
 import java.util.Set;
@@ -21,8 +23,10 @@ public class SongSnippet {
 
     private int songIndex = 0;
 
+    @Min(0)
     private int speed;
 
+    @NotEmpty
     private String fileName;
 
     public void setId(Long id) {

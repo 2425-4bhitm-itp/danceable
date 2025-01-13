@@ -1,12 +1,13 @@
 package at.leonding.htl.features.library;
 
-import at.leonding.htl.features.library.audiofile.SongSnippet;
-import at.leonding.htl.features.library.audiofile.SongSnippetRepository;
+import at.leonding.htl.features.library.songsnippet.SongSnippet;
+import at.leonding.htl.features.library.songsnippet.SongSnippetRepository;
 import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.dance.DanceRepository;
 import at.leonding.htl.features.library.song.Song;
 import at.leonding.htl.features.library.song.SongRepository;
 import io.quarkus.logging.Log;
+import io.quarkus.runtime.LaunchMode;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
@@ -14,6 +15,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +25,9 @@ import java.util.stream.Collectors;
 @Path("/library")
 @Produces(MediaType.APPLICATION_JSON)
 public class LibraryResource {
-    private static final String DEFAULT_LIBRARY_DIRECTORY_NAME = "/app/song-storage"; // for prod in (volume)
+    private static final String DEV_SONG_STORAGE_DIRECTORY_PATH = "./song-storage";
+
+    private static final String PROD_SONG_STORAGE_DIRECTORY_PATH = "/app/song-storage";
 
     @Inject
     DanceRepository danceRepository;
@@ -37,18 +41,35 @@ public class LibraryResource {
     @POST
     @Path("/feedin")
     @Transactional
-    public Response feedInAudioFiles(
-            @QueryParam("pathName") @DefaultValue(DEFAULT_LIBRARY_DIRECTORY_NAME) String libraryFilePath
+    public Response feedInSongSnippetFiles(
+            @QueryParam("pathName") String songStorage
     ) {
-        List<File> files = getWavFilesInDirectory(libraryFilePath);
+        if (songStorage == null || songStorage.isBlank()) {
+            if (LaunchMode.current() == LaunchMode.DEVELOPMENT) {
+                songStorage = DEV_SONG_STORAGE_DIRECTORY_PATH;
+            } else if (LaunchMode.current() == LaunchMode.NORMAL) {
+                songStorage = PROD_SONG_STORAGE_DIRECTORY_PATH;
+            }
+        }
+
+        List<File> files = getWavFilesInDirectory(songStorage + "/feedin");
 
         if (files != null) {
             for (File file : files) {
                 try {
-                    this.parseFileNameToFeedIn(file.getName());
-                } catch (Exception e) {
+                    this.moveFile(songStorage + "/library", file);
+                    this.feedInSongSnippetFile(file);
+                }
+                catch (IOException e) {
+                    Log.error("File ("
+                            + file.getName()
+                            + ") can not be moved: "
+                            + e.getMessage()
+                    );
+                }
+                catch (IllegalArgumentException e) {
                     Log.error(
-                            "Wav file ("
+                            "File ("
                                     + file.getName()
                                     + ") does not correspond to naming convention: "
                                     + e.getMessage()
@@ -83,10 +104,11 @@ public class LibraryResource {
         return dances;
     }
 
-    private void parseFileNameToFeedIn(String fileName) throws Exception {
+    private void feedInSongSnippetFile(File file) throws IllegalArgumentException {
+        String fileName = file.getName();
         String[] fileNameSplit = fileName.split("_");
 
-        if (fileNameSplit.length == 3) { // naming convention: 00bpm_dancestyleA-dancestyleB_song-name-indexX.wav
+        if (fileNameSplit.length == 3) {
             int speedInBpm = Integer.parseInt(fileNameSplit[0].substring(0, fileNameSplit[0].length() - 3));
             Set<String> danceNames = Set.of(fileNameSplit[1].split("-"));
 
@@ -109,10 +131,15 @@ public class LibraryResource {
             SongSnippet songSnippet = songSnippetRepository.persistOrUpdateSongSnippet(
                     song, songSnippetIndex, speedInBpm, dances, fileName
             );
-
-            Log.info(songSnippet);
         } else {
-            throw new Exception(fileName);
+            throw new IllegalArgumentException(fileName);
+        }
+    }
+
+    private void moveFile(String directoryPath, File file) throws IOException {
+        File destination = new File(directoryPath);
+        if (!file.renameTo(new File(destination, file.getName()))) {
+            throw new IOException("Failed to move file to " + directoryPath);
         }
     }
 }

@@ -1,4 +1,4 @@
-package at.leonding.htl.features.library.audiofile;
+package at.leonding.htl.features.library.songsnippet;
 
 import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.song.Song;
@@ -20,8 +20,13 @@ public class SongSnippetRepository implements PanacheRepository<SongSnippet> {
 
         if (songSnippet == null) {
             songSnippet = new SongSnippet(song, dances, songSnippetIndex, speedInBpm, path);
-            this.persist(songSnippet);
+        } else {
+            songSnippet.setSpeed(speedInBpm);
+            songSnippet.setDances(dances);
+            songSnippet.setFileName(path);
         }
+
+        this.persist(songSnippet);
 
         return songSnippet;
     }
