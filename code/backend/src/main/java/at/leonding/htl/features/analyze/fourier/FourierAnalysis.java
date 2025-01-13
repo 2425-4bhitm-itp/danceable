@@ -1,6 +1,6 @@
 package at.leonding.htl.features.analyze.fourier;
 
-import at.leonding.htl.features.dance.Dance;
+import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.upload.ReadFile;
 import jakarta.enterprise.context.Dependent;
 import java.io.IOException;

@@ -5,4 +5,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class SongRepository implements PanacheRepository<Song> {
+    public Song findSongByTitle(String title) {
+        return find("title", title).stream().findFirst().orElse(null);
+    }
+
+    public Song persistOrUpdateSong(String songName) {
+        Song song = this.findSongByTitle(songName);
+
+        if (song == null) {
+            song = new Song(songName);
+            this.persist(song);
+        }
+
+        return song;
+    }
 }

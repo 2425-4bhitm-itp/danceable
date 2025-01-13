@@ -1,4 +1,4 @@
-package at.leonding.htl.features.dance;
+package at.leonding.htl.features.library.dance;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;

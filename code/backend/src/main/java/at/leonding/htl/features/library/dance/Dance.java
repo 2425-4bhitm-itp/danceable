@@ -1,4 +1,4 @@
-package at.leonding.htl.features.dance;
+package at.leonding.htl.features.library.dance;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -60,5 +60,9 @@ public class Dance {
 
     public Dance() {
 
+    }
+
+    public Dance(String name) {
+        this.name = name;
     }
 }
