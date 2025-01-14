@@ -12,7 +12,7 @@ services:
       - quarkus.datasource.username=admin
       - quarkus.datasource.password=admin
     volumes:
-      - ./local-song-storage:/app/song-storage
+      - ./song-storage:/app/song-storage
     healthcheck:
       test: curl -f http://localhost:8080/q/health/live
       start_period: 30s
