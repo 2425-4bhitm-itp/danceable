@@ -44,8 +44,7 @@ Danceable is designed for dancers of all skill levels:
 == Platform Availability
 
 Danceable is currently available exclusively as a *web application*.
-We are actively working on expanding accessibility. A *mobile app for Apple devices* (Swift-based) is planned.
-Our long-term goal is to make Danceable available on *all devices and platforms*, ensuring a seamless experience for everyone.
+We are actively working on expanding accessibility. A *mobile app* for apple as well as android applications is planned.
 
 Thank you for supporting *Danceable* - bringing rhythm to your steps and joy to your dancing journey!
 
@@ -66,6 +65,9 @@ Clone the repository:
 git clone https://github.com/2425-4bhitm-itp/danceable.git
 cd danceable
 ----
+
+=== Development
+
 Start services in separate terminals:
 
 **Terminal 1:**
@@ -90,6 +92,15 @@ mvn quarkus:dev
 ----
 cd frontend
 npm run dev
+----
+
+=== Production
+Build, package into Images and run Containers.
+
+[source]
+----
+cd docker
+./start.sh
 ----
 
 == Access the App
