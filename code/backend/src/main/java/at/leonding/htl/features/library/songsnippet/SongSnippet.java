@@ -21,7 +21,7 @@ public class SongSnippet {
     @ManyToMany
     private Set<Dance> dances;
 
-    private int songIndex = 0;
+    private int songSnippetIndex = 0;
 
     @Min(0)
     private int speed;
@@ -53,12 +53,12 @@ public class SongSnippet {
         this.dances = dances;
     }
 
-    public int getSongIndex() {
-        return songIndex;
+    public int getSongSnippetIndex() {
+        return songSnippetIndex;
     }
 
-    public void setSongIndex(int songIndex) {
-        this.songIndex = songIndex;
+    public void setSongSnippetIndex(int songSnippetIndex) {
+        this.songSnippetIndex = songSnippetIndex;
     }
 
     public void addDance(Dance dance) {
@@ -92,21 +92,21 @@ public class SongSnippet {
         this.song = song;
     }
 
-    public SongSnippet(Song song, int songIndex) {
+    public SongSnippet(Song song, int songSnippetIndex) {
         this.song = song;
-        this.songIndex = songIndex;
+        this.songSnippetIndex = songSnippetIndex;
     }
 
-    public SongSnippet(Song song, int songIndex, Set<Dance> dances) {
-        this.songIndex = songIndex;
+    public SongSnippet(Song song, int songSnippetIndex, Set<Dance> dances) {
+        this.songSnippetIndex = songSnippetIndex;
         this.dances = dances;
         this.song = song;
     }
 
-    public SongSnippet(Song song, Set<Dance> dances, int songIndex, int speed, String fileName) {
+    public SongSnippet(Song song, Set<Dance> dances, int songSnippetIndex, int speed, String fileName) {
         this.song = song;
         this.dances = dances;
-        this.songIndex = songIndex;
+        this.songSnippetIndex = songSnippetIndex;
         this.speed = speed;
         this.fileName = fileName;
     }
@@ -129,7 +129,7 @@ public class SongSnippet {
                 "id=" + id +
                 ", song=" + song +
                 ", dances=" + dances +
-                ", songIndex=" + songIndex +
+                ", songSnippetIndex=" + songSnippetIndex +
                 '}';
     }
 }

@@ -10,7 +10,7 @@ import java.util.Set;
 @ApplicationScoped
 public class SongSnippetRepository implements PanacheRepository<SongSnippet> {
     public SongSnippet findSongSnippetBySongAndIndex(Song song, int index) {
-        return find("song = ?1 and songIndex = ?2", song, index).list().stream()
+        return find("song = ?1 and songSnippetIndex = ?2", song, index).list().stream()
                 .findFirst()
                 .orElse(null);
     }
