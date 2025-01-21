@@ -1,0 +1,16 @@
+services:
+  ml:
+    image: ml
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+    volumes:
+      - ./song-storage:/app/song-storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      start_period: 30s
+      interval: 2s
+      retries: 10

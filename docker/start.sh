@@ -2,5 +2,6 @@
 
 ../code/backend/build.sh
 ../code/frontend/build.sh
+../code/ml/build.sh
 
 docker compose up --build
