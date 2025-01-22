@@ -4,4 +4,4 @@
 ../code/frontend/build.sh
 ../code/ml/build.sh
 
-docker compose up --build
+docker compose -f docker-compose.networks.yaml -f database.yaml -f backend.yaml -f frontend.yaml -f ml.yaml up --build

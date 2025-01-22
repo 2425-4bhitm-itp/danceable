@@ -1,6 +1,5 @@
 services:
   postgres:
-    #    container_name: postgres
     image: postgres:14-alpine
     ports:
       - "5432:5432"
@@ -16,6 +15,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-      start_interval: 2s
+    networks:
+      - my-network
+
 volumes:
   postgres:
+
+networks:
+  my-network:
+    external: true

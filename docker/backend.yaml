@@ -1,6 +1,5 @@
 services:
   backend:
-    #    container_name: backend
     image: backend
     depends_on:
       postgres:
@@ -14,7 +13,13 @@ services:
     volumes:
       - ./song-storage:/app/song-storage
     healthcheck:
-      test: curl -f http://localhost:8080/q/health/live
+      test: curl -f http://backend:8080/q/health/live
       start_period: 30s
-      start_interval: 2s
+      interval: 2s
       retries: 10
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    external: true

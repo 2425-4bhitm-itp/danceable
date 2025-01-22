@@ -4,7 +4,7 @@ services:
     ports:
       - "4200:80"
     healthcheck:
-      test: curl --fail --head -fsS http://localhost || exit 1
+      test: curl --fail --head -fsS http://nginx || exit 1
       interval: 40s
       timeout: 30s
       retries: 2
@@ -12,3 +12,9 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    external: true
