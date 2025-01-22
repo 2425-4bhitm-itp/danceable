@@ -1,1 +1,4 @@
 flask
+numpy
+matplotlib
+scipy
