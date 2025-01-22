@@ -19,7 +19,7 @@ import io.quarkus.runtime.ShutdownEvent;
 public class PythonService {
 
     private static Client client;
-    final private static String pythonUrl = "http://localhost:5000/process";
+    private String pythonUrl = "http://ml:5000/";
 
     void onStart(@Observes StartupEvent ev) {
         client = ClientBuilder.newClient();
@@ -33,14 +33,15 @@ public class PythonService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String sendJson(String jsonPayload) {
+    public String generateSpectogramFromFile(String fileNameJson) {
         if (client == null) {
             return "Client is not initialized.";
         }
+        pythonUrl += "spectogramFromFile";
         try {
             Response response = client.target(pythonUrl)
                     .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.entity(jsonPayload, MediaType.APPLICATION_JSON));
+                    .post(Entity.entity(fileNameJson, MediaType.APPLICATION_JSON));
 
             if (response.getStatus() == 200) {
                 String responseBody = response.readEntity(String.class);

@@ -131,19 +131,17 @@ public class FileUploadResource {
             @QueryParam("filePath") String filePath) {
         try {
             File file = new File(filePath);
-            InputStream stream = new FileInputStream(file);
 
-            fourierAnalysis.calculateValues(stream);
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, String> jsonMap = new HashMap<>();
+            jsonMap.put("fileName", file.getAbsolutePath());
+            String fileNameJson = objectMapper.writeValueAsString(jsonMap);
 
-            // create dto make a json, stringify json and call the sendJson in PythonService, return python answer
-            FourierAnalysisDataDto dto = fillFourierAnalysisDataDto(file);
-
-            String jsonPayload = new ObjectMapper().writeValueAsString(dto);
-            String pythonResponse = new PythonService().sendJson(jsonPayload);
+            String pythonResponse = new PythonService().generateSpectogramFromFile(fileNameJson);
 
             return Response.ok(pythonResponse).build();
 
-        } catch (UnsupportedAudioFileException | IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
