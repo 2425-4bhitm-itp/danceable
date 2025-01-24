@@ -31,3 +31,17 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Ignore all .png, .wav, and .mp3 files
+*.png
+*.wav
+*.mp3
+
+# Do not ignore the directories
+!song-storage/
+!song-storage/songs/
+!song-storage/spectogram/
+
+# Ensure the directories are tracked
+song-storage/songs/.gitkeep
+song-storage/spectogram/.gitkeep
