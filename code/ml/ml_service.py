@@ -11,16 +11,25 @@ app = Flask(__name__)
 @app.route('/spectogramFromFile', methods=['POST'])
 def spectogramFromFile():
     fileName = request.json['fileName']
-    generate_spectrogram(fileName, fileName + '_spectogram')
+
+    # Force correct paths to avoid issues with incorrect input
+    input_path = os.path.join('/app/song-storage/songs', os.path.basename(fileName))
+    output_path = os.path.join('/app/song-storage/spectogram', os.path.basename(fileName) + '_spectogram')
+
+    print("Input path:", input_path)
+    print("Output path:", output_path)
+
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"File {input_path} not found!")
+
+    generate_spectrogram(input_path, output_path)
 
     return jsonify({'result': 'generated successfully'}), 200
 
 def generate_spectrogram(wav_filename, output_filename='spectrogram'):
-    # Ensure the /spectograms directory exists
-    os.makedirs('spectograms', exist_ok=True)
-
-    # Prepend the /spectograms directory to the output filename
-    output_filename = os.path.join('spectograms', output_filename)
+    print('Generating spectrogram for', wav_filename)
+    # Ensure the /app/song-storage/spectogram directory exists
+    os.makedirs('/app/song-storage/spectogram', exist_ok=True)
 
     if output_filename[-4:] != '.png':
         output_filename += '.png'
@@ -58,8 +67,6 @@ def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     plt.colorbar(label='Normalized Power')
     plt.savefig(output_filename)
     plt.close()
-
-
 
 @app.route('/health', methods=['GET'])
 def health_check():
