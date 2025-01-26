@@ -4,3 +4,8 @@ GET http://localhost:4200/api/dances
 ### TEST
 
 GET http://localhost:8080/upload/file?filePath=/Users/samuelmayer/Downloads/long_footprints.wav
+
+### test 2
+
+GET http://localhost:8080/upload/file?filePath=bad_moon_rising_boogie.wav
+Content-Type: */*
