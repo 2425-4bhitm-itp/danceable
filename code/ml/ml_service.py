@@ -14,10 +14,9 @@ def spectogramFromFile():
 
     # Force correct paths to avoid issues with incorrect input
     input_path = os.path.join('/app/song-storage/songs', os.path.basename(fileName))
-    output_path = os.path.join('/app/song-storage/spectogram', os.path.basename(fileName) + '_spectogram')
 
-    print("Input path:", input_path)
-    print("Output path:", output_path)
+    file_name_without_ext = os.path.splitext(os.path.basename(fileName))[0]
+    output_path = os.path.join('/app/song-storage/spectrogram', file_name_without_ext + '_spectogram')
 
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"File {input_path} not found!")
@@ -27,9 +26,8 @@ def spectogramFromFile():
     return jsonify({'result': 'generated successfully'}), 200
 
 def generate_spectrogram(wav_filename, output_filename='spectrogram'):
-    print('Generating spectrogram for', wav_filename)
-    # Ensure the /app/song-storage/spectogram directory exists
-    os.makedirs('/app/song-storage/spectogram', exist_ok=True)
+    # Ensure the /app/song-storage/spectrogram directory exists
+    os.makedirs('/app/song-storage/spectrogram', exist_ok=True)
 
     if output_filename[-4:] != '.png':
         output_filename += '.png'
@@ -57,6 +55,11 @@ def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     Sxx = 10 * np.log10(Sxx)
     Sxx -= Sxx.min()  # Shift to start from zero
     Sxx /= Sxx.max()  # Normalize to 0-1 range
+
+    # Cap the frequency to 20kHz
+    max_frequency = 20000
+    frequencies = frequencies[frequencies <= max_frequency]
+    Sxx = Sxx[:len(frequencies), :]
 
     # Plot the spectrogram
     plt.figure(figsize=(12, 8))
