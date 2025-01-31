@@ -82,4 +82,4 @@ def health_check():
     return jsonify(status="healthy", message="Service is running"), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=5001, debug=True, threaded=True)
