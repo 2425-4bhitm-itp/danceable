@@ -16,18 +16,20 @@ def spectogramFromFile():
     input_path = os.path.join('/app/song-storage/songs', os.path.basename(fileName))
 
     file_name_without_ext = os.path.splitext(os.path.basename(fileName))[0]
-    output_path = os.path.join('/app/song-storage/spectrogram', file_name_without_ext + '_spectogram')
+    output_path = os.path.join('/app/song-storage/spectrogram', file_name_without_ext + '_spectogram.png')
 
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"File {input_path} not found!")
 
     generate_spectrogram(input_path, output_path)
 
-    return jsonify({'result': 'generated successfully'}), 200
+    return jsonify({'result': 'generated successfully', 'imagePath': output_path}), 200
 
 def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     # Ensure the /app/song-storage/spectrogram directory exists
-    os.makedirs('/app/song-storage/spectrogram', exist_ok=True)
+    dir_name = os.path.basename(os.path.dirname(wav_filename))  # Get the directory name of the song
+    output_dir = os.path.join('/app/song-storage/spectrogram', dir_name)
+    os.makedirs(output_dir, exist_ok=True)
 
     if output_filename[-4:] != '.png':
         output_filename += '.png'
@@ -68,12 +70,16 @@ def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     plt.xlabel('Time [sec]')
     plt.title('Spectrogram of ' + wav_filename)
     plt.colorbar(label='Normalized Power')
-    plt.savefig(output_filename)
+
+    # Save the spectrogram to the new folder
+    output_file = os.path.join(output_dir, os.path.basename(wav_filename) + '_spectrogram.png')
+    plt.savefig(output_file)
     plt.close()
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify(status="healthy", message="Service is running"), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
