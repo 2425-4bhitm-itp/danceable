@@ -1,6 +1,5 @@
 package at.leonding.htl.features.upload;
 
-import at.leonding.htl.features.analyze.fourier.FourierAnalysis;
 import at.leonding.htl.features.ml.PythonService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,9 +32,6 @@ public class FileUploadResource {
 
     @ConfigProperty(name = "UPLOAD_DIRECTORY", defaultValue = "./")
     String UPLOAD_DIRECTORY;
-
-    @Inject
-    FourierAnalysis fourierAnalysis;
 
     @Inject
     PythonService pythonService;
