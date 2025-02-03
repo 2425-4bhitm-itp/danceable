@@ -10,4 +10,4 @@ EXPOSE 5001
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "ml_service.py"]
+CMD ["python", "app.py"]
