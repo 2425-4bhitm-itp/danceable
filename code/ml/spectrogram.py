@@ -1,3 +1,10 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io import wavfile
+from scipy.signal import spectrogram
+import warnings
+import os
+
 def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     # Ensure the /app/song-storage/spectrogram directory exists
     dir_name = os.path.basename(os.path.dirname(wav_filename))  # Get the directory name of the song

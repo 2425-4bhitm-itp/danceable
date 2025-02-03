@@ -1,9 +1,4 @@
 from flask import Flask, request, jsonify
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.io import wavfile
-from scipy.signal import spectrogram
-import warnings
 import os
 import spectrogram
 
