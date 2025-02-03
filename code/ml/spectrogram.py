@@ -1,4 +1,3 @@
-from flask import Flask, request, jsonify
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
@@ -6,30 +5,11 @@ from scipy.signal import spectrogram
 import warnings
 import os
 
-app = Flask(__name__)
-
-@app.route('/spectogramFromFile', methods=['POST'])
-def spectogramFromFile():
-    fileName = request.json['fileName']
-
-    # Force correct paths to avoid issues with incorrect input
-    input_path = os.path.join('/app/song-storage/songs', os.path.basename(fileName))
-    output_path = os.path.join('/app/song-storage/spectogram', os.path.basename(fileName) + '_spectogram')
-
-    print("Input path:", input_path)
-    print("Output path:", output_path)
-
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(f"File {input_path} not found!")
-
-    generate_spectrogram(input_path, output_path)
-
-    return jsonify({'result': 'generated successfully'}), 200
-
 def generate_spectrogram(wav_filename, output_filename='spectrogram'):
-    print('Generating spectrogram for', wav_filename)
-    # Ensure the /app/song-storage/spectogram directory exists
-    os.makedirs('/app/song-storage/spectogram', exist_ok=True)
+    # Ensure the /app/song-storage/spectrogram directory exists
+    dir_name = os.path.basename(os.path.dirname(wav_filename))  # Get the directory name of the song
+    output_dir = os.path.join('/app/song-storage/spectrogram', dir_name)
+    os.makedirs(output_dir, exist_ok=True)
 
     if output_filename[-4:] != '.png':
         output_filename += '.png'
@@ -58,6 +38,11 @@ def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     Sxx -= Sxx.min()  # Shift to start from zero
     Sxx /= Sxx.max()  # Normalize to 0-1 range
 
+    # Cap the frequency to 20kHz
+    max_frequency = 20000
+    frequencies = frequencies[frequencies <= max_frequency]
+    Sxx = Sxx[:len(frequencies), :]
+
     # Plot the spectrogram
     plt.figure(figsize=(12, 8))
     plt.pcolormesh(times, frequencies, Sxx, shading='gouraud')
@@ -65,12 +50,8 @@ def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     plt.xlabel('Time [sec]')
     plt.title('Spectrogram of ' + wav_filename)
     plt.colorbar(label='Normalized Power')
-    plt.savefig(output_filename)
+
+    # Save the spectrogram to the new folder
+    output_file = os.path.join(output_dir, os.path.basename(wav_filename) + '_spectrogram.png')
+    plt.savefig(output_file)
     plt.close()
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify(status="healthy", message="Service is running"), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)

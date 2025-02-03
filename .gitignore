@@ -40,8 +40,8 @@ replay_pid*
 # Do not ignore the directories
 !song-storage/
 !song-storage/songs/
-!song-storage/spectogram/
+!song-storage/spectrogram/
 
 # Ensure the directories are tracked
 song-storage/songs/.gitkeep
-song-storage/spectogram/.gitkeep
+song-storage/spectrogram/.gitkeep

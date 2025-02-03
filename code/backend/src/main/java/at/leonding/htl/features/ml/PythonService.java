@@ -19,7 +19,7 @@ import io.quarkus.runtime.ShutdownEvent;
 public class PythonService {
 
     private static Client client;
-    private String pythonUrl = "http://ml:5000/";
+    private String pythonUrl = "http://ml:5001/";
 
     void onStart(@Observes StartupEvent ev) {
         client = ClientBuilder.newClient();
