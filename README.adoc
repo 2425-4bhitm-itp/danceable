@@ -54,8 +54,12 @@ Thank you for supporting *Danceable* - bringing rhythm to your steps and joy to 
 Ensure you have the following installed:
 
 - link:https://www.docker.com/products/docker-desktop/[Docker]
+
+Only needed for development:
+
 - link:https://www.java.com/de/download/manual.jsp[Java] + link:https://maven.apache.org/download.cgi[Maven]
 - link:https://nodejs.org/en/download/package-manager[Node.js] + link:https://docs.npmjs.com/downloading-and-installing-node-js-and-npm[npm]
+- link:https://www.python.org/downloads/[Python] + link:https://pip.pypa.io/en/stable/installation/[pip]
 
 == Setup
 
@@ -106,6 +110,3 @@ cd docker
 == Access the App
 
 Open link:http://localhost:4200[http://localhost:4200] in your browser.
-
-=== Fourier Analysis
-View link:http://localhost:4200/analysis[http://localhost:4200/analysis] in your browser to Fourier analyze `.wav` files.

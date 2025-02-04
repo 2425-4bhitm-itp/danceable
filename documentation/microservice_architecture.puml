@@ -15,9 +15,10 @@ package "Backend" {
   [Server]
   note bottom of [Server]
       - Technology: Quarkus (Java)
-      - Feature:
-        - /admin: train AI based on fourier analysis
-        - /user: recognition based on fourier analysis
+      - Features:
+        - manage song snippets
+        - command ML
+        - recognize songs using ML
     end note
 }
 
@@ -25,7 +26,7 @@ package "Database" {
   [DB]
   note bottom of [DB]
       - Technology: PostgreSQL
-      - Feature: store information about songs
+      - Feature: store information about song snippets
     end note
 }
 
@@ -33,14 +34,14 @@ package "Volume" {
   [Song Storage]
   note bottom of [Song Storage]
       - Technology: directory
-      - Feature: store songs for training
+      - Feature: store song snippets for training
     end note
 }
 
 package "Machine Learning" {
-  [AI]
-  note bottom of [AI]
-      - Technology: ? (Python)
+  [ML]
+  note bottom of [ML]
+      - Technology: Keras (Python)
       - Features:
         - train
         - recognize dance styles
@@ -49,7 +50,7 @@ package "Machine Learning" {
 
 [Website] --> [Server] : REST
 [Server] -up-> [DB] : REST
-[Server] --> [AI] : REST
+[Server] --> [ML] : REST
 [Server] --> [Song Storage]
-[AI] -left-> [Song Storage]
+[ML] -left-> [Song Storage]
 @enduml
