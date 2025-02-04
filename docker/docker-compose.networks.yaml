@@ -1,3 +1,0 @@
-networks:
-  my-network:
-    driver: bridge

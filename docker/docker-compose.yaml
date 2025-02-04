@@ -1,5 +1,4 @@
 include:
-  - docker-compose.networks.yaml
   - database.yaml
   - backend.yaml
   - frontend.yaml

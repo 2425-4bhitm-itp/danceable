@@ -12,9 +12,3 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    networks:
-      - my-network
-
-networks:
-  my-network:
-    external: true

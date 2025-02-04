@@ -9,13 +9,7 @@ services:
     volumes:
       - ./song-storage:/app/song-storage
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://ml:5001/health"]
+      test: curl -f http://ml:5001/health
       start_period: 30s
       interval: 2s
       retries: 10
-    networks:
-      - my-network
-
-networks:
-  my-network:
-    external: true
