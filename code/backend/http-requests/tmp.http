@@ -1,11 +1,18 @@
-### GET request to boilerplate code
-GET http://localhost:4200/api/dances
+### test backend db connection (and get dances)
 
-### TEST
+GET http://localhost:8080/dances
 
-GET http://localhost:8080/upload/file?filePath=/Users/samuelmayer/Downloads/long_footprints.wav
+### test backend and ml service
 
-### test 2
+POST http://localhost:8080/upload/file
+Content-Type: multipart/form-data; boundary=boundary
 
-GET http://localhost:8080/upload/file?filePath=bad_moon_rising_boogie.wav
-Content-Type: */*
+--boundary
+Content-Disposition: form-data; name="file"; filename="44bpm_jive_bad-moon-rising-creedence-clerwater-revival-1.wav"
+Content-Type: audio/wav
+
+< (your_path) /testlieder/0-100/44bpm_jive_bad-moon-rising-creedence-clerwater-revival-1.wav
+--boundary
+Content-Disposition: form-data; name="fileName"
+
+44bpm_jive_bad-moon-rising-creedence-clerwater-revival-1.wav

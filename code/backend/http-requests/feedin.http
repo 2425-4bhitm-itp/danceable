@@ -1,1 +1,1 @@
-POST http://localhost:8080/library/feedin?pathName=
+POST http://localhost:8080/library/feedin
