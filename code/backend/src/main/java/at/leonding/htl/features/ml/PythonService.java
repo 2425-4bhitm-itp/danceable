@@ -33,7 +33,7 @@ public class PythonService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String generateSpectogramFromFile(String fileNameJson) {
+    public String generateSpectrogramFromFile(String fileNameJson) {
         if (client == null) {
             return "Client is not initialized.";
         }
