@@ -1,9 +1,6 @@
 services:
   ml:
     image: ml
-    depends_on:
-      backend:
-        condition: service_healthy
     ports:
       - "5001:5001"
     volumes:
