@@ -5,6 +5,7 @@ package "Frontend" {
   [Website]
   note bottom of [Website]
       - Technology: Webpack (TypeScript)
+         served by Nginx
       - Features:
         - Admin Board
         - User Interface
@@ -26,14 +27,15 @@ package "Database" {
   [DB]
   note bottom of [DB]
       - Technology: PostgreSQL
-      - Feature: store information about song snippets
+      - Feature: store song snippets metadata
+         and corresponding dance styles
     end note
 }
 
 package "Volume" {
   [Song Storage]
   note bottom of [Song Storage]
-      - Technology: directory
+      - Technology: mapped docker volume
       - Feature: store song snippets for training
     end note
 }

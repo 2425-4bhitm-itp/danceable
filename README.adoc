@@ -75,6 +75,7 @@ cd danceable
 Start services in separate terminals:
 
 **Terminal 1:**
+Database
 
 [source]
 ----
@@ -83,6 +84,7 @@ cd db
 ----
 
 **Terminal 2:**
+Backend
 
 [source]
 ----
@@ -91,11 +93,12 @@ mvn quarkus:dev
 ----
 
 **Terminal 3:**
+Frontend
 
 [source]
 ----
 cd frontend
-npm run dev
+npm install && npm run dev
 ----
 
 === Production
