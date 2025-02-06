@@ -2,3 +2,5 @@ flask
 numpy
 matplotlib
 scipy
+pytest
+pytest-mock

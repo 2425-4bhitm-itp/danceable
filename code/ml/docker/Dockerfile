@@ -11,4 +11,6 @@ EXPOSE 5001
 
 ENV PYTHONUNBUFFERED=1
 
+RUN pytest --exitfirst --disable-warnings
+
 CMD ["python", "app.py"]
