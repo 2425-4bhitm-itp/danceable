@@ -1,18 +1,42 @@
 #!/usr/bin/env bash
 
-echo "Building backend..."
-../code/backend/build.sh || { echo "Backend build failed!"; exit 1; }
+BUILD=true
+DEPLOY=true
 
-echo "Building frontend..."
-../code/frontend/build.sh || { echo "Frontend build failed!"; exit 1; }
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -sb|--skip-build) BUILD=false ;;
+        -sd|--skip-deploy) DEPLOY=false ;;
+        -h|--help)
+            echo "Usage: $0 [options]"
+            echo "  -sb, --skip-build       Skip building code and images"
+            echo "  -sd, --skip-deploy      Skip deploying containers"
+            exit 0
+            ;;
+        *) echo "Unknown parameter: $1"; exit 1 ;;
+    esac
+    shift
+done
 
-echo "Building machine learning service..."
-../code/ml/build.sh || { echo "ML build failed!"; exit 1; }
+if [ "$BUILD" = true ]
+then
+  echo "Building backend..."
+  ../code/backend/build.sh || { echo "Backend build failed!"; exit 1; }
 
-echo "Starting Docker services..."
-docker compose up --build
+  echo "Building frontend..."
+  ../code/frontend/build.sh || { echo "Frontend build failed!"; exit 1; }
 
-if [ $? -ne 0 ]; then
-  echo "Failed to start Docker services!"
-  exit 1
-fi
+  echo "Building machine learning service..."
+  ../code/ml/build.sh || { echo "ML build failed!"; exit 1; }
+fi;
+
+if [ "$DEPLOY" = true ]
+then
+  echo "Starting Docker services..."
+  docker compose up --build
+
+  if [ $? -ne 0 ]; then
+    echo "Failed to start Docker services!"
+    exit 1
+  fi
+fi;
