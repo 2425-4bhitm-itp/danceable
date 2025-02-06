@@ -1,18 +1,17 @@
 package at.leonding.htl.features.library;
 
-import at.leonding.htl.features.library.songsnippet.SongSnippet;
 import at.leonding.htl.features.library.songsnippet.SongSnippetRepository;
 import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.dance.DanceRepository;
 import at.leonding.htl.features.library.song.Song;
 import at.leonding.htl.features.library.song.SongRepository;
 import io.quarkus.logging.Log;
-import io.quarkus.runtime.LaunchMode;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,9 +24,9 @@ import java.util.stream.Collectors;
 @Path("/library")
 @Produces(MediaType.APPLICATION_JSON)
 public class LibraryResource {
-    private static final String DEV_SONG_STORAGE_DIRECTORY_PATH = "./song-storage";
 
-    private static final String PROD_SONG_STORAGE_DIRECTORY_PATH = "/app/song-storage";
+    @ConfigProperty(name = "song.storage.directory")
+    String songStorageDirectoryPath;
 
     @Inject
     DanceRepository danceRepository;
@@ -45,11 +44,7 @@ public class LibraryResource {
             @QueryParam("pathName") String songStorage
     ) {
         if (songStorage == null || songStorage.isBlank()) {
-            if (LaunchMode.current() == LaunchMode.DEVELOPMENT) {
-                songStorage = DEV_SONG_STORAGE_DIRECTORY_PATH;
-            } else if (LaunchMode.current() == LaunchMode.NORMAL) {
-                songStorage = PROD_SONG_STORAGE_DIRECTORY_PATH;
-            }
+            songStorage = songStorageDirectoryPath;
         }
 
         List<File> files = getWavFilesInDirectory(songStorage + "/feedin");
@@ -128,7 +123,7 @@ public class LibraryResource {
 
             Song song = songRepository.persistOrUpdateSong(songName);
 
-            SongSnippet songSnippet = songSnippetRepository.persistOrUpdateSongSnippet(
+            songSnippetRepository.persistOrUpdateSongSnippet(
                     song, songSnippetIndex, speedInBpm, dances, fileName
             );
         } else {

@@ -13,13 +13,16 @@ import jakarta.ws.rs.Path;
 
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.ShutdownEvent;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @Path("/ml")
 @ApplicationScoped
 public class PythonService {
 
     private static Client client;
-    private String pythonUrl = "http://ml:5001/";
+
+    @ConfigProperty(name = "ML_URL", defaultValue = "http://ml:5001/")
+    String pythonUrl;
 
     void onStart(@Observes StartupEvent ev) {
         client = ClientBuilder.newClient();
