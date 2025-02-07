@@ -5,7 +5,7 @@ services:
       - "4200:80"
     healthcheck:
       test: curl --fail --head -fsS http://nginx || exit 1
-      interval: 40s
+      interval: 60s
       timeout: 30s
       retries: 2
       start_period: 10s
