@@ -6,5 +6,3 @@ cd "$(dirname "$0")"
 mvn clean package -Dquarkus.config.locations=./src/main/resources/application.properties
 
 docker build -t "backend" -f docker/Dockerfile .
-
-#docker run -p 8080:80 backend

@@ -8,5 +8,3 @@ npm run tailwind
 npm run build
 
 docker build -t "frontend" -f docker/Dockerfile .
-
-#docker run -p 4200:80 frontend
