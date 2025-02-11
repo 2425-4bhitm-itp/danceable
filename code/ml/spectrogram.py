@@ -7,7 +7,11 @@ import os
 
 def generate_spectrogram(wav_filename, output_filename='spectrogram'):
     # Ensure the /app/song-storage/spectrogram directory exists
-    dir_name = os.path.basename(os.path.dirname(wav_filename))  # Get the directory name of the song
+    dir_name = os.path.basename(os.path.dirname(wav_filename))
+
+    if 'songs' in dir_name:
+        dir_name = dir_name.replace('songs', '')
+
     output_dir = os.path.join('/app/song-storage/spectrogram', dir_name)
     os.makedirs(output_dir, exist_ok=True)
 
