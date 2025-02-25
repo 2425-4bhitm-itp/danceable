@@ -23,4 +23,4 @@
 .cspellcache
 package-lock.json
 
-/src/style/tailwind.css
+/src/features/style/tailwind.css

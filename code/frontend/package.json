@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "concurrently \"npm run serve\" \"npm run tailwind:watch\"",
     "serve": "webpack serve --open",
-    "tailwind:watch": "npx @tailwindcss/cli -i ./tailwindBase.css -o ./src/style/tailwind.css --watch",
-    "tailwind": "npx @tailwindcss/cli -i ./tailwindBase.css -o ./src/style/tailwind.css",
+    "tailwind:watch": "npx @tailwindcss/cli -i ./tailwindBase.css -o src/features/style/tailwind.css --watch",
+    "tailwind": "npx @tailwindcss/cli -i ./tailwindBase.css -o src/features/style/tailwind.css",
     "build": "webpack --mode=production --node-env=production",
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",

@@ -1,6 +1,6 @@
 import "../style/tailwind.css";
 
-import { FourierChartManger } from "../classes/FourierChartManger";
+import { FourierChartManger } from "../client/classes/FourierChartManger";
 
 const CHART_CANVAS_CLASS_NAME = "fourierChart";
 const CHART_INFO_CLASS_NAME = "fourierChartInfo";

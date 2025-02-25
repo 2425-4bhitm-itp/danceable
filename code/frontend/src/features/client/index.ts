@@ -1,5 +1,5 @@
-import './style/style.css';
-import './style/tailwind.css';
+import '../../style/style.css';
+import '../style/tailwind.css';
 
 import {Visualizer} from "./classes/Visualizer";
 import { StreamRecorder } from "./classes/StreamRecorder";

@@ -12,8 +12,9 @@ const stylesHandler = isProduction ? MiniCssExtractPlugin.loader : "style-loader
 
 const config = {
   entry: {
-    main: "./src/index.ts",
-    analysis: "./src/admin/analysis.ts",
+    main: "./src/features/client/index.ts",
+    analysis: "./src/features/admin/analysis.ts",
+    controlPanel: "./src/features/control-panel/control-panel.ts",
   },
   output: {
     path: path.resolve(__dirname, "dist")
@@ -36,19 +37,25 @@ const config = {
       rewrites: [
         { from: /^\/$/, to: "/index.html" },
         { from: /^\/analysis$/, to: "/analysis.html" },
+        { from: /^\/control-panel$/, to: "/control-panel.html" },
       ],
     },
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "./src/index.html",
+      template: "./src/features/client/index.html",
       filename: "index.html",
       chunks: ["main"]
     }),
     new HtmlWebpackPlugin({
-      template: "./src/admin/analysis.html",
+      template: "./src/features/admin/analysis.html",
       filename: "analysis.html",
       chunks: ["analysis"]
+    }),
+    new HtmlWebpackPlugin({
+      template: "./src/features/control-panel/control-panel.html",
+      filename: "control-panel.html",
+      chunks: ["controlPanel"]
     })
 
     // Add your plugins here
