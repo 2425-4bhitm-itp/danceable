@@ -1,23 +1,35 @@
-import "../style/tailwind.css";
+import "../../style/tailwind.css";
 
 import { FourierChartManger } from "../client/classes/FourierChartManger";
 
 const CHART_CANVAS_CLASS_NAME = "fourierChart";
 const CHART_INFO_CLASS_NAME = "fourierChartInfo";
 
-const GENERAL_INFO_MESSAGE = "Please provide the path to a `.wav` file or a directory containing `.wav` files.";
+const GENERAL_INFO_MESSAGE =
+  "Please provide the path to a `.wav` file or a directory containing `.wav` files.";
 
-const chartManager: FourierChartManger = new FourierChartManger(CHART_CANVAS_CLASS_NAME, CHART_INFO_CLASS_NAME);
+const chartManager: FourierChartManger = new FourierChartManger(
+  CHART_CANVAS_CLASS_NAME,
+  CHART_INFO_CLASS_NAME,
+);
 
 window.onload = (_: Event) => {
   const loadChart = document.getElementById("loadChartButton");
-  const canvasContainerParent = document.getElementById("canvasContainerParent");
-  const pathLocationInput: HTMLInputElement | null = document.querySelector("input#pathLocationInput");
+  const canvasContainerParent = document.getElementById(
+    "canvasContainerParent",
+  );
+  const pathLocationInput: HTMLInputElement | null = document.querySelector(
+    "input#pathLocationInput",
+  );
 
   const systemMessageContainer = document.getElementById("systemMessage");
 
-
-  if (loadChart instanceof HTMLButtonElement && canvasContainerParent && pathLocationInput && systemMessageContainer) {
+  if (
+    loadChart instanceof HTMLButtonElement &&
+    canvasContainerParent &&
+    pathLocationInput &&
+    systemMessageContainer
+  ) {
     displayInfo(GENERAL_INFO_MESSAGE, systemMessageContainer);
 
     loadChart.addEventListener("click", async () => {
@@ -41,8 +53,11 @@ window.onload = (_: Event) => {
 
           chartManager.drawFourierCharts();
         } else {
-          const numberOfDataSets = await chartManager.addDataSetsFromDirectoryPathApi(locationPath);
-          canvasContainerParent.append(...createNumberOfChartContainers(numberOfDataSets));
+          const numberOfDataSets =
+            await chartManager.addDataSetsFromDirectoryPathApi(locationPath);
+          canvasContainerParent.append(
+            ...createNumberOfChartContainers(numberOfDataSets),
+          );
 
           chartManager.drawFourierCharts();
         }

@@ -1,9 +1,8 @@
 import '../../style/style.css';
-import '../style/tailwind.css';
+import '../../style/tailwind.css';
 
 import {Visualizer} from "./classes/Visualizer";
 import { StreamRecorder } from "./classes/StreamRecorder";
-import { resolve } from "chart.js/helpers";
 
 let recorder = new StreamRecorder();
 
