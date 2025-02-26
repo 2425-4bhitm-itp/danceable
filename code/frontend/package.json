@@ -21,6 +21,7 @@
     "@webpack-cli/generators": "^3.0.7",
     "concurrently": "^9.1.0",
     "css-loader": "^7.1.2",
+    "html-loader": "^5.1.0",
     "html-webpack-plugin": "^5.6.0",
     "mini-css-extract-plugin": "^2.9.1",
     "postcss": "^8.4.47",
