@@ -14,7 +14,7 @@ const config = {
   entry: {
     main: "./src/features/client/index.ts",
     analysis: "./src/features/admin/analysis.ts",
-    controlPanel: "./src/features/control-panel/control-panel.ts",
+    controlPanel: "./src/features/control-panel/index.ts",
   },
   output: {
     path: path.resolve(__dirname, "dist")
