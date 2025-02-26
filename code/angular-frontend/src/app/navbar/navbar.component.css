@@ -1,0 +1,12 @@
+
+div{
+    display: flex;
+    margin-left: 3rem;
+    margin-top: 2rem;
+}
+
+h1{
+    font-size: 3rem;
+    margin-left: 1rem;
+    font-family: monospace;
+}

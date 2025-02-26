@@ -1,0 +1,18 @@
+#record-button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 31rem;
+    height: 31rem;
+    background: linear-gradient(140.37deg, #922BAE 40.78%, #B0429C 96.11%);
+    border-radius: 100rem;
+}
+
+div{
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+
+
