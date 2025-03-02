@@ -3,15 +3,9 @@ import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 import { NavbarComponent } from './app/navbar/navbar.component';
 import { RecordButtonComponent } from './app/record-button/record-button.component';
-
-
-
+import {RecordStopButtonComponent} from './app/record-stop-button/record-stop-button.component';
 import {Visualizer} from "./app/classes/Visualizer";
 import { StreamRecorder } from "./app/classes/StreamRecorder";
-
-
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
 
   bootstrapApplication(NavbarComponent, appConfig)
   .catch((err) => console.error(err));
@@ -19,10 +13,13 @@ bootstrapApplication(AppComponent, appConfig)
   bootstrapApplication(RecordButtonComponent, appConfig)
   .catch((err) => console.error(err));
 
+  bootstrapApplication(RecordStopButtonComponent, appConfig)
+    .catch((err)=> console.error(err));
+
 let recorder = new StreamRecorder();
 
-const recordButton = document.getElementById('recordBtn') as HTMLButtonElement;
-const stopRecordButton = document.getElementById('recordStopBtn') as HTMLButtonElement;
+const recordButton = document.querySelector("app-record-button") as HTMLButtonElement;
+const stopRecordButton = document.getElementById('record-stop-button') as HTMLButtonElement;
 
 // audio visualizer
 
@@ -129,28 +126,19 @@ async function stopRecordingAndVisualizer() {
 }
 
 function changeRecordButtonStylingWhenRecordingStopped(): void {
-  let recordIcon = document.getElementById("recordIcon");
-  let recordingDescription = document.getElementById("recording-description");
-  let stopBtn = document.getElementById('recordStopBtn');
-
-  if (recordIcon && recordingDescription && stopBtn) {
-    recordIcon.style.display = "block";
-    recordingDescription.style.display = "block";
-    stopBtn.classList.remove('block');
-    stopBtn.classList.add('hidden');
-  }
+ if (recordButton){
+   recordButton.style.display = "flex";
+   stopRecordButton.classList.remove('flex');
+   stopRecordButton.classList.add('hidden')
+ }
 }
 
 function changeButtonStylingWhenRecordingStarted(): void {
-  let recordingDescription = document.getElementById("recording-description");
-  let stopBtn = document.getElementById("recordStopBtn");
-  let svg = document.getElementById("recordIcon");
 
-  if (recordingDescription && stopBtn && svg) {
-    svg.style.display = "none";
-    recordingDescription.style.display = "none";
-    stopBtn.classList.remove('hidden');
-    stopBtn.classList.add('block');
+  if (stopRecordButton) {
+    recordButton.style.display = "hidden";
+    stopRecordButton.classList.remove('hidden');
+    stopRecordButton.classList.add('block');
   }
 }
 
