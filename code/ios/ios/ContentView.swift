@@ -1,24 +1,26 @@
-//
-//  ContentView.swift
-//  ios
-//
-//  Created by Samuel Mayer on 26.02.25.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @ObservedObject var viewModel: ViewModel
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        DancesView(viewModel: viewModel)
+        HStack {
+            Button("", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90", action: {
+                print("button pressed")
+            })
+            Spacer()
+            Button("", systemImage: "gear", action: {
+                print("button pressed")
+            })
+        }.padding([.leading, .trailing], 52)
+        .padding([.top], 5)
     }
 }
 
 #Preview {
-    ContentView()
+    let model: Model = Model()
+    let viewModel: ViewModel = ViewModel(model: model)
+    
+    return ContentView(viewModel: viewModel)
 }
