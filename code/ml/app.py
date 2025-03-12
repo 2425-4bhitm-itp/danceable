@@ -1,25 +1,37 @@
-from flask import Flask, request, jsonify
 import os
-import spectrogram
+from flask import Flask, request, jsonify
+from spectrogram import generate_spectrogram
 
 app = Flask(__name__)
 
+UPLOAD_FOLDER = '/app/song-storage/songs'
+SPECTROGRAM_FOLDER = '/app/song-storage/spectrogram'
+
 @app.route('/spectogramFromFile', methods=['POST'])
-def spectogramFromFile():
-    fileName = request.json['fileName']
+def upload_audio():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
 
-    # Force correct paths to avoid issues with incorrect input
-    input_path = os.path.join('/app/song-storage/songs', os.path.basename(fileName))
+    file = request.files['file']
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
 
-    file_name_without_ext = os.path.splitext(os.path.basename(fileName))[0]
-    output_path = os.path.join('/app/song-storage/spectrogram', file_name_without_ext + '_spectogram.png')
+    # Create the upload directory if it does not exist
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(f"File {input_path} not found!")
+    file.save(file_path)
 
-    spectrogram.generate_spectrogram(input_path, output_path)
+    spectrogram_path = generate_spectrogram(
+        file_path,
+        os.path.join(
+            SPECTROGRAM_FOLDER,
+            f"{os.path.splitext(file.filename)[0]}_spectrogram.png"
+                    )
+    )
 
-    return jsonify({'result': 'generated successfully', 'imagePath': output_path}), 200
+    return jsonify({
+        'message': 'Spectrogram generated',
+        'spectrogram': os.path.basename(spectrogram_path)
+    }), 200
 
 @app.route('/health', methods=['GET'])
 def health_check():
