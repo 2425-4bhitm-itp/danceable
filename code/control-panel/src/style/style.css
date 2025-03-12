@@ -1,0 +1,41 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-width: 100%;
+    min-height: 100vh;
+    font-family: sans-serif;
+    text-align: center;
+
+    background: #ffffff;
+}
+
+#visualizer {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    > div {
+        display: inline-block;
+        width: 6px;
+        border-radius: 2rem;
+        height: calc(24rem - 6rem);
+        margin: 0 7px;
+        background: currentColor;
+
+        color: #e5e7eb;
+        transform: scaleY( 0 );
+    }
+
+    &.error {
+        color: #f7451d;
+        min-width: 20em;
+        max-width: 30em;
+        margin: 0 auto;
+        white-space: pre-line;
+    }
+}
