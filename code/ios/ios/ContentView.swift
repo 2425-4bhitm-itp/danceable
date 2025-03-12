@@ -4,11 +4,12 @@ struct ContentView: View {
     @ObservedObject var viewModel: ViewModel
     
     @State private var isSheetPresent: Bool = true
-    @State private var selectedDetent: PresentationDetent = .fraction(0.1)
+    @State private var selectedDetent: PresentationDetent = .fraction(0.125)
     
     var body: some View {
+        Spacer()
         Button(action: {
-            selectedDetent = .fraction(0.6)
+            selectedDetent = .fraction(1)
         }) {
             ZStack {
                 Circle()
@@ -16,24 +17,27 @@ struct ContentView: View {
                 Image(systemName: "microphone.fill")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 75)
+                    .frame(width: 60)
                     .foregroundStyle(Color.white)
             }
-            .padding(50)
+            .padding(75)
             .shadow(radius: 10)
         }.sheet(isPresented: $isSheetPresent, content: {
             DancesView(viewModel: viewModel)
                 .presentationDetents(
-                    [.fraction(0.1), .fraction(0.6), .fraction(0.9)],
+                    [.fraction(0.125), .fraction(0.7), .fraction(1)],
                     selection: $selectedDetent
                 )
                 .presentationBackgroundInteraction(
-                    .enabled(upThrough: .fraction(0.1))
+                    .enabled(upThrough: .fraction(0.125))
                 )
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled(true)
         })
         .padding()
+        Spacer()
+        Spacer()
+        Spacer()
     }
 }
 
