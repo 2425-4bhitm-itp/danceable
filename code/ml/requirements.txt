@@ -4,3 +4,4 @@ matplotlib
 scipy
 pytest
 pytest-mock
+moviepy

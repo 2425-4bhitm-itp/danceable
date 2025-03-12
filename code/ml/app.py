@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, jsonify
 from spectrogram import generate_spectrogram
+from file_converter import convert_webm_to_wav
 
 app = Flask(__name__)
 
@@ -19,6 +20,12 @@ def upload_audio():
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     file.save(file_path)
+
+    if request.files['file'].filename.split('.')[-1] == 'webm':
+        wav_file_path = os.path.join(UPLOAD_FOLDER, f"{os.path.splitext(file.filename)[0]}.wav")
+        convert_webm_to_wav(file_path, wav_file_path)
+        os.remove(file_path)
+        file_path = wav_file_path
 
     spectrogram_path = generate_spectrogram(
         file_path,
