@@ -50,9 +50,21 @@ package "Machine Learning" {
     end note
 }
 
+package "Spectrogram Generation" {
+  [Spectrogram]
+  note bottom of [Spectrogram]
+      - Generate spectrogram
+    end note
+}
+
 [Website] --> [Server] : REST
 [Server] -up-> [DB] : REST
 [Server] --> [ML] : REST
 [Server] --> [Song Storage]
-[ML] -left-> [Song Storage]
+[ML] -right-> [Song Storage]
+[ML] --> [Server]
+
+[Server] -up-> [Spectrogram] : REST
+[Spectrogram] --> [Volume]
+[Spectrogram] --> [Server]
 @enduml
