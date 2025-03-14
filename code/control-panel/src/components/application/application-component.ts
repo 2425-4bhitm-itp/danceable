@@ -1,14 +1,21 @@
-import { render, html } from "../../lib/pure-html";
-import application from "./application-component-template.html";
+import { html, render } from 'lib/pure-html'
+import { AppMenu } from 'components/menu'
 
 class ApplicationElement extends HTMLElement {
   connectedCallback() {
-    this.render();
+    this.render()
   }
 
   render() {
-    render(application(), this);
+    render(
+      html`
+        <${AppMenu}></${AppMenu}>
+      `,
+      this
+    )
   }
 }
 
-customElements.define("application-component", ApplicationElement);
+export const App = 'application-component'
+
+customElements.define(App, ApplicationElement)
