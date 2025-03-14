@@ -75,7 +75,11 @@ const config = {
     ]
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".jsx", ".js", "..."]
+    extensions: [".ts", ".js", ".html"],
+    alias: {
+      lib: resolve("src/lib"),
+      components: resolve("src/components")
+    }
   }
 };
 
