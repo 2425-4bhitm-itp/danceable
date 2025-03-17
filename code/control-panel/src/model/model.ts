@@ -5,6 +5,7 @@ import { Dance } from './dance/dance'
 import { Song } from 'model/song/song'
 
 import { libraryRoute } from 'components/library'
+import { readModelFromSessionStorage } from 'lib/cache'
 
 interface Model {
   currentPane: string,
@@ -13,7 +14,9 @@ interface Model {
   songs: Song[]
 }
 
-const state: Model = {
+const cachedModel: Model = readModelFromSessionStorage();
+
+const state: Model = cachedModel ? cachedModel : {
   currentPane: '/' + libraryRoute,
   snippets: [],
   dances: [],

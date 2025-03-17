@@ -5,7 +5,7 @@ export const Analysis = 'analysis-component'
 export const analysisRoute = 'analysis'
 
 class AnalysisElement extends HTMLElement {
-  static observedAttributes = ["hidden"]
+  static observedAttributes = ['hidden']
 
   constructor() {
     super()
@@ -16,7 +16,10 @@ class AnalysisElement extends HTMLElement {
   }
 
   render() {
-    render(html` analysis `, this)
+    render(html`
+      <div class="text-3xl mt-8 mb-4">Analysis</div>
+    `, this)
+
     addLinks(this)
   }
 }
