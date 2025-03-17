@@ -3,7 +3,7 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const { resolve } = require('path')
 
@@ -43,10 +43,8 @@ const config = {
       chunks: ['main'],
     }),
     new CopyWebpackPlugin({
-      patterns: [
-        { from: "public", to: "public" }
-      ]
-    })
+      patterns: [{ from: 'public', to: 'public' }],
+    }),
 
     // Add your plugins here
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
@@ -79,6 +77,7 @@ const config = {
       lib: resolve('src/lib'),
       components: resolve('src/components'),
       assets: resolve('src/assets'),
+      model: resolve('src/model'),
     },
   },
 }

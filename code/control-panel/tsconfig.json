@@ -16,6 +16,9 @@
       ],
       "assets/*": [
         "src/assets/*"
+      ],
+      "model/*": [
+        "src/model/*"
       ]
     }
   },
