@@ -19,4 +19,11 @@ function render(template: HTMLTemplateElement, at: HTMLElement | ShadowRoot) {
   at.appendChild(content)
 }
 
-export { html, render }
+function renderAppendChild(template: HTMLTemplateElement, at: HTMLElement | ShadowRoot): HTMLElement {
+  const content = template.content.cloneNode(true) as DocumentFragment;
+  const appendedElement = content.firstElementChild as HTMLElement;
+  at.appendChild(content);
+  return appendedElement;
+}
+
+export { html, render, renderAppendChild }
