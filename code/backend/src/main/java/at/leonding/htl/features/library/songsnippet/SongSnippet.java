@@ -26,7 +26,7 @@ public class SongSnippet {
     @Min(0)
     private int speed;
 
-    @NotEmpty
+//    @NotEmpty
     private String fileName;
 
     public void setId(Long id) {

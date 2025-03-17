@@ -8,7 +8,32 @@ GET http://localhost:8080/songs
 
 ###
 
+POST http://localhost:8080/songs
+Content-Type: Application/JSON
+
+{
+    "title": "tmpded song"
+}
+
+###
+
 GET http://localhost:8080/snippets
+
+###
+
+POST http://localhost:8080/snippets
+Content-Type: Application/JSON
+
+{
+  "song": {
+    "id": 2
+  },
+  "dances": [],
+  "songSnippetIndex": 12,
+  "speed": 1210,
+  "fileName": "snippet12.mp3"
+}
+
 
 ### test backend and ml service
 

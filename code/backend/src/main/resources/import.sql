@@ -29,3 +29,14 @@ VALUES
      ('Salsa', 180, 300),
 --      ('Merenge', 130, 200),
      ('Bachata', 90, 200);
+
+INSERT INTO song (title) VALUES ('New Song Title');
+
+-- Insert two song snippets for the new song
+INSERT INTO SongSnippet (song_id, songSnippetIndex, speed, fileName)
+VALUES
+    ((SELECT id FROM song WHERE title = 'New Song Title'), 1, 120, 'snippet1.mp3'),
+    ((SELECT id FROM song WHERE title = 'New Song Title'), 2, 130, 'snippet2.mp3');
+
+select *
+from song;
