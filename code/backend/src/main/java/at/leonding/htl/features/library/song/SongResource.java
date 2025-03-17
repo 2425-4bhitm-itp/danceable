@@ -1,6 +1,7 @@
 package at.leonding.htl.features.library.song;
 
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -21,6 +22,7 @@ public class SongResource {
         return songRepository.listAll();
     }
 
+    @Transactional
     @POST
     public Response addSong(Song song) {
         songRepository.persist(song);
