@@ -18,7 +18,7 @@ public class SongSnippet {
     @ManyToOne(optional = false)
     private Song song;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private Set<Dance> dances;
 
     private int songSnippetIndex = 0;

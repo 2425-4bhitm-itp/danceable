@@ -2,6 +2,14 @@
 
 GET http://localhost:8080/dances
 
+###
+
+GET http://localhost:8080/songs
+
+###
+
+GET http://localhost:8080/snippets
+
 ### test backend and ml service
 
 POST http://localhost:8080/upload/file
