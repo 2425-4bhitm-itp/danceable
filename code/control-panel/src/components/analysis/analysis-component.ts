@@ -1,10 +1,10 @@
 import { html, render } from 'lib/pure-html'
 import { addLinks } from 'lib/router'
 
-export const Library = 'library-component'
-export const libraryRoute = 'library'
+export const Analysis = 'analysis-component'
+export const analysisRoute = 'analysis'
 
-class LibraryElement extends HTMLElement {
+class AnalysisElement extends HTMLElement {
   static observedAttributes = ["hidden"]
 
   constructor() {
@@ -16,12 +16,9 @@ class LibraryElement extends HTMLElement {
   }
 
   render() {
-    render(html`
-      <div>
-        library
-      </div> `, this)
+    render(html` analysis `, this)
     addLinks(this)
   }
 }
 
-customElements.define(Library, LibraryElement)
+customElements.define(Analysis, AnalysisElement)

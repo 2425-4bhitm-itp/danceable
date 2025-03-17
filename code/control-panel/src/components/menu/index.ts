@@ -1,2 +1,3 @@
-import "./menu"
-export { AppMenu } from "./menu"
+import './menu'
+
+export { AppMenu } from './menu'

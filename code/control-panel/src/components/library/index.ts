@@ -1,2 +1,3 @@
-import "./library-component"
-export { Library } from "./library-component"
+import './library-component'
+
+export { Library, libraryRoute } from './library-component'
