@@ -1,11 +1,12 @@
-import { Observable } from "../lib/observable"
+import { Observable } from 'lib/observable'
+import { libraryRoute } from 'components/library'
 
 interface Model {
   currentPane: string
 }
 
 const state: Model = {
-  currentPane: "/todos",
+  currentPane: '/' + libraryRoute,
 }
 
 const store = new Observable(state)
