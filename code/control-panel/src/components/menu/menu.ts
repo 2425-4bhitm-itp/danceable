@@ -17,11 +17,18 @@ class MenuElement extends HTMLElement {
 
   render() {
     render(html`
-      <div class="flex-initial p-1 h-full">
-        <a class="rounded-xl bg-gray-200 aspect-square p-2 m-2 flex justify-center items-center"
-           href="${libraryRoute}">Library</a>
-        <a class="rounded-xl bg-gray-200 aspect-square p-2 m-2 flex justify-center items-center"
-           href="${analysisRoute}">Analysis</a>
+      <div class="flex-initial p-2 h-full">
+        <div class="flex justify-center items-center m-4">
+          <div class="w-10"><img class="w-full" src="/assets/danceable-logo.svg" alt=""></div>
+        </div>
+        <a class="rounded-2xl bg-gray-100 aspect-square p-4 m-2 flex justify-center items-center"
+           href="${libraryRoute}">
+          <div class="w-6"><img class="w-full" src="/assets/library-icon.svg" alt=""></div>
+        </a>
+        <a class="rounded-2xl bg-gray-100 aspect-square p-2 m-2 flex justify-center items-center"
+           href="${analysisRoute}">
+          <div class="w-5"><img class="w-full" src="/assets/analysis-icon.svg" alt=""></div>
+        </a>
       </div>
     `, this)
     addLinks(this)
