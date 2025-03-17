@@ -2,19 +2,22 @@ import { Observable } from 'lib/observable'
 
 import { Snippet } from './snippet/snippet'
 import { Dance } from './dance/dance'
+import { Song } from 'model/song/song'
 
 import { libraryRoute } from 'components/library'
 
 interface Model {
   currentPane: string,
   snippets: Snippet[],
-  dances: Dance[]
+  dances: Dance[],
+  songs: Song[]
 }
 
 const state: Model = {
   currentPane: '/' + libraryRoute,
   snippets: [],
-  dances: []
+  dances: [],
+  songs: []
 }
 
 const store = new Observable(state)
