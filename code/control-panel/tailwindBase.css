@@ -1,3 +1,7 @@
 @import 'tailwindcss';
 
 @config './tailwind.config.js';
+
+@theme {
+    --color-gray-dark: #1C1B1F;
+}
