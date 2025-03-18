@@ -20,7 +20,7 @@ class MenuElement extends HTMLElement {
 
   render() {
     render(html`
-      <div class="flex-initial p-2 h-full">
+      <div class="flex-initial p-2 h-full border-r-2 border-r-gray-200">
         <div class="flex justify-center items-center m-4">
           <div class="h-12"><img class="h-full" src="/public/danceable-logo.svg" alt=""></div>
         </div>
