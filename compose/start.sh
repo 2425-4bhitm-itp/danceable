@@ -25,9 +25,9 @@ then
 
 #  echo "Building frontend..."
 #  ../code/frontend/build.sh || { echo "Frontend build failed!"; exit 1; }
-#
-#  echo "Building machine learning service..."
-#  ../code/ml/build.sh || { echo "ML build failed!"; exit 1; }
+
+  echo "Building machine learning service..."
+  ../code/ml/build.sh || { echo "ML build failed!"; exit 1; }
 fi;
 
 if [ "$DEPLOY" = true ]
