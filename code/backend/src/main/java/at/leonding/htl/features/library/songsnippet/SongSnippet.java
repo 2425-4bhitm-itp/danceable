@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Entity
 public class SongSnippet {
@@ -20,7 +22,7 @@ public class SongSnippet {
     private Song song;
 
     @ManyToMany(cascade = CascadeType.MERGE)
-    private Set<Dance> dances;
+    private SortedSet<Dance> dances;
 
     private int songSnippetIndex = 0;
 
@@ -51,6 +53,10 @@ public class SongSnippet {
     }
 
     public void setDances(Set<Dance> dances) {
+        this.dances = new TreeSet<>(dances);
+    }
+
+    public void setDances(SortedSet<Dance> dances) {
         this.dances = dances;
     }
 
@@ -100,11 +106,25 @@ public class SongSnippet {
 
     public SongSnippet(Song song, int songSnippetIndex, Set<Dance> dances) {
         this.songSnippetIndex = songSnippetIndex;
+        this.dances = new TreeSet<>(dances);
+        this.song = song;
+    }
+
+    public SongSnippet(Song song, int songSnippetIndex, SortedSet<Dance> dances) {
+        this.songSnippetIndex = songSnippetIndex;
         this.dances = dances;
         this.song = song;
     }
 
     public SongSnippet(Song song, Set<Dance> dances, int songSnippetIndex, int speed, String fileName) {
+        this.song = song;
+        this.dances = new TreeSet<>(dances);
+        this.songSnippetIndex = songSnippetIndex;
+        this.speed = speed;
+        this.fileName = fileName;
+    }
+
+    public SongSnippet(Song song, SortedSet<Dance> dances, int songSnippetIndex, int speed, String fileName) {
         this.song = song;
         this.dances = dances;
         this.songSnippetIndex = songSnippetIndex;
@@ -115,8 +135,8 @@ public class SongSnippet {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        SongSnippet songSnippet = (SongSnippet) o;
-        return Objects.equals(id, songSnippet.id);
+        SongSnippet that = (SongSnippet) o;
+        return Objects.equals(id, that.id);
     }
 
     @Override
