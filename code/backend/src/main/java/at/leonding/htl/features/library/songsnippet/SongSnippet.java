@@ -15,10 +15,11 @@ public class SongSnippet {
     @Id
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne
+    @JoinColumn(name = "song_id", nullable = false)
     private Song song;
 
-    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @ManyToMany(cascade = CascadeType.MERGE)
     private Set<Dance> dances;
 
     private int songSnippetIndex = 0;

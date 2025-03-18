@@ -26,11 +26,18 @@ Content-Type: Application/JSON
 
 {
   "song": {
-    "id": 2
+    "id": 1
   },
-  "dances": [],
-  "songSnippetIndex": 12,
-  "speed": 1210,
+  "dances": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    }
+  ],
+  "songSnippetIndex": 13,
+  "speed": 12,
   "fileName": "snippet12.mp3"
 }
 

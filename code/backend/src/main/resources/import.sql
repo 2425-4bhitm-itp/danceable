@@ -38,5 +38,5 @@ VALUES
     ((SELECT id FROM song WHERE title = 'New Song Title'), 1, 120, 'snippet1.mp3'),
     ((SELECT id FROM song WHERE title = 'New Song Title'), 2, 130, 'snippet2.mp3');
 
-select *
-from song;
+insert into songsnippet_dance (songsnippet_id, dances_id) values (1, 1);
+insert into songsnippet_dance (songsnippet_id, dances_id) values (1, 2);
