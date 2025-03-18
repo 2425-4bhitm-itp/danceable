@@ -24,7 +24,7 @@ class LibraryElement extends HTMLElement {
   render() {
     render(html`
       <div>
-        <div class="text-3xl mt-8 mb-4">Library</div>
+        <div class="text-3xl mt-8 mb-4 px-2">Library</div>
         <div id="snippets" class="w-full flex flex-col"></div>
       </div> `, this)
 
@@ -39,11 +39,9 @@ class LibraryElement extends HTMLElement {
       snippets.forEach(snippet => {
         const snippetComponent = renderAppendChild(html`
           <${SnippetComponent}
-            id="${snippet.id}"
-            fileName="${snippet.fileName}"
-            speed="${snippet.speed}"
-            songSnippetIndex="${snippet.songSnippetIndex}"
-            class="odd:bg-gray-100 w-full"
+            snippet='${JSON.stringify(snippet)}'
+            
+            class="odd:bg-gray-100 w-full px-2"
           >
           </${SnippetComponent}>
         `, snippetsContainer)
@@ -58,6 +56,7 @@ class LibraryElement extends HTMLElement {
   snippetClicked(e: CustomEvent) {
     const snippetId: number = Number.parseInt(e.detail)
 
+    alert(e.detail)
     console.log('snippet with id ' + snippetId + ' clicked!')
   }
 }
