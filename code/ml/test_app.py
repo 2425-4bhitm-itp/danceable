@@ -1,12 +1,5 @@
 import pytest
-import os
-import json
-from flask import Flask
-from app import app  # Assuming your Flask app is in spectrogram_api.py
-
-test_wav_file = "test.wav"
-test_spectrogram_dir = "/app/song-storage/spectrogram"
-test_spectrogram_file = os.path.join(test_spectrogram_dir, "test_spectrogram.png")
+from app import app
 
 @pytest.fixture
 def client():

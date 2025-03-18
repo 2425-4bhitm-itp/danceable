@@ -70,46 +70,4 @@ public class FileUploadResource {
             throw new RuntimeException(e);
         }
     }
-
-    @POST
-    @Path("/file")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response uploadFileAndGenerateSpectrogram(
-            @MultipartForm MultipartBody multipartBody
-    ) {
-        if (multipartBody.fileName == null || multipartBody.fileName.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\":\"File name is required.\"}")
-                    .build();
-        }
-
-        InputStream uploadedInputStream = multipartBody.file;
-        String uploadedFileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-ss")) + "_"
-                + multipartBody.fileName;
-
-        File outputFile = new File("/app/song-storage/songs", uploadedFileName);
-
-        try (FileOutputStream outStream = new FileOutputStream(outputFile)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = uploadedInputStream.read(buffer)) != -1) {
-                outStream.write(buffer, 0, bytesRead);
-            }
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, String> jsonMap = new HashMap<>();
-            jsonMap.put("fileName", outputFile.getAbsolutePath());
-            String fileNameJson = objectMapper.writeValueAsString(jsonMap);
-
-            String pythonResponse = pythonService.generateSpectrogramFromFile(fileNameJson);
-
-            return Response.ok(pythonResponse).build();
-        } catch (IOException e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
 }
