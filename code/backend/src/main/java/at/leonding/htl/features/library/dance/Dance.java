@@ -61,7 +61,6 @@ public class Dance implements Comparable<Dance> {
     }
 
     public Dance() {
-
     }
 
     public Dance(String name) {

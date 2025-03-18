@@ -41,8 +41,8 @@ VALUES (1, 1, 85, 'diamonds_rihanna_1.mp3'),
        (6, 1, 120, 'life_is_a_rollercoaster_1.mp3'),
        (6, 2, 120, 'life_is_a_rollercoaster_2.mp3');
 
--- Link song snippets to dances
-INSERT INTO songsnippet_dance (songsnippet_id, dances_id)
+-- Link songs to dances
+INSERT INTO Song_Dance (Song_id, dances_id)
 VALUES (1, 3),
        (2, 8),
        (2, 5),
@@ -55,17 +55,4 @@ VALUES (1, 3),
        (5, 7),
        (6, 9),
        (6, 8),
-       (6, 7),
-       (7, 4),
-       (7, 5),
-       (7, 7),
-       (8, 4),
-       (8, 5),
-       (8, 7),
-       (9, 13),
-       (9, 4),
-       (10, 11),
-       (10, 8),
-       (11, 5),
-       (12, 6),
-       (12, 4);
+       (6, 7);

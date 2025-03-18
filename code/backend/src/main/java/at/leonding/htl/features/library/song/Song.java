@@ -1,8 +1,12 @@
 package at.leonding.htl.features.library.song;
 
+import at.leonding.htl.features.library.dance.Dance;
 import jakarta.persistence.*;
 
 import java.util.Objects;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Entity
 public class Song {
@@ -12,6 +16,21 @@ public class Song {
 
     @Column(unique = true)
     private String title;
+
+    @ManyToMany(cascade = CascadeType.MERGE)
+    private SortedSet<Dance> dances;
+
+    public Set<Dance> getDances() {
+        return dances;
+    }
+
+    public void setDances(Set<Dance> dances) {
+        this.dances = new TreeSet<>(dances);
+    }
+
+    public void setDances(SortedSet<Dance> dances) {
+        this.dances = dances;
+    }
 
     public void setId(Long id) {
         this.id = id;
@@ -34,6 +53,24 @@ public class Song {
 
     public Song(String title) {
         this.title = title;
+    }
+
+    public Song(String title, Set<Dance> dances) {
+        this.title = title;
+        this.dances = new TreeSet<>(dances);
+    }
+
+    public Song(String title, SortedSet<Dance> dances) {
+        this.title = title;
+        this.dances = dances;
+    }
+
+    public void addDance(Dance dance) {
+        this.dances.add(dance);
+    }
+
+    public boolean removeDance(Dance dance) {
+        return this.dances.remove(dance);
     }
 
     @Override
