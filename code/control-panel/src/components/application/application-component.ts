@@ -1,12 +1,13 @@
-import { fetchAllDances, fetchAllSnippets, subscribe } from 'model/index'
+import { fetchAllDancesToModel, fetchAllSnippetsToModel, subscribe } from 'model/index'
 
 import { html, render } from 'lib/pure-html'
 
 import { AppMenu } from 'components/menu'
 import { Library, libraryRoute } from 'components/library'
 import { Analysis, analysisRoute } from 'components/analysis'
-import { fetchAllSongs } from 'model/song/song-service'
+import { fetchAllSongsToModel } from 'model/song/song-service'
 import { saveModelToSessionStorage } from 'lib/cache'
+import { makeLogger } from 'ts-loader/dist/logger'
 
 class ApplicationElement extends HTMLElement {
   connectedCallback() {
@@ -14,11 +15,11 @@ class ApplicationElement extends HTMLElement {
 
     subscribe((model) => this.show(model.currentPane))
     subscribe((model) => saveModelToSessionStorage(model))
+    subscribe(model => console.log(model))
 
-
-    fetchAllDances()
-    fetchAllSnippets()
-    fetchAllSongs()
+    fetchAllDancesToModel()
+    fetchAllSnippetsToModel()
+    fetchAllSongsToModel()
   }
 
   render() {
