@@ -1,5 +1,5 @@
 import { Dance } from '../dance/dance'
-import { Song } from '../song/song'
+import { Song, EMPTY_SONG } from '../song/song'
 
 export interface Snippet {
   id: number
@@ -8,4 +8,13 @@ export interface Snippet {
   songSnippetIndex: number
   speed: number
   fileName: string
+}
+
+export const EMPTY_SNIPPET: Snippet = {
+  id: 0,
+  song: EMPTY_SONG,
+  dances: [],
+  songSnippetIndex: 0,
+  speed: 0,
+  fileName: '',
 }
