@@ -16,6 +16,8 @@ snippets_path = "/app/song-storage/songs/snippets"
 
 @app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
+    open("/app/song-storage/features.csv", "w").close()
+
     for label in os.listdir(snippets_path):
         single_folder_path = os.path.join(snippets_path, label)
         dataset_creator.process_folder(single_folder_path, label)
