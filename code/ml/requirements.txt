@@ -1,7 +1,9 @@
-flask
-numpy
-matplotlib
-scipy
+joblib~=1.4.2
+Flask~=3.1.0
+pandas~=2.2.3
+scikit-learn~=1.6.1
+moviepy~=2.1.2
+librosa~=0.11.0
+numpy~=2.1.3
+pydub
 pytest
-pytest-mock
-moviepy
