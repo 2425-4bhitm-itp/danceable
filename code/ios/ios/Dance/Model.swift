@@ -12,6 +12,18 @@ struct Dance: Codable, Identifiable, Hashable {
     }
 }
 
+struct DanceSetting: Identifiable {
+    var id: Int
+    var dance: Dance
+    var isActive: Bool
+    
+    init(dance: Dance, isActive: Bool = true) {
+        self.id = dance.id
+        self.dance = dance
+        self.isActive = isActive
+    }
+}
+
 struct Model {
-    var dances: [Dance] = []
+    var danceSettings: [DanceSetting] = []
 }
