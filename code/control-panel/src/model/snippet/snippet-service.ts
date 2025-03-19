@@ -1,9 +1,14 @@
 import { set } from 'model/model'
 import { Snippet } from 'model/snippet/snippet'
 
-export async function fetchAllSnippets() {
-  const response = await fetch('/api/snippets')
-  const snippets = await response.json() as Snippet[]
+export async function fetchAllSnippetsToModel() {
+  const snippets = await fetchAllSnippets()
 
   set((model) => (model.snippets = snippets))
+}
+
+
+export async function fetchAllSnippets() {
+  const response = await fetch('/api/snippets')
+  return await response.json() as Snippet[]
 }

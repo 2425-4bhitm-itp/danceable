@@ -5,8 +5,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.util.Objects;
+
 @Entity
-public class Dance {
+public class Dance implements Comparable<Dance> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -59,10 +61,26 @@ public class Dance {
     }
 
     public Dance() {
-
     }
 
     public Dance(String name) {
         this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Dance dance = (Dance) o;
+        return Objects.equals(id, dance.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+
+    @Override
+    public int compareTo(Dance o) {
+        return this.name.compareTo(o.name) * (-1);
     }
 }

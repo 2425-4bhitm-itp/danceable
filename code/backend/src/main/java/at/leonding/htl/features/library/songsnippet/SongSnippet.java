@@ -1,13 +1,10 @@
 package at.leonding.htl.features.library.songsnippet;
 
-import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.song.Song;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
 
 import java.util.Objects;
-import java.util.Set;
 
 @Entity
 public class SongSnippet {
@@ -18,9 +15,6 @@ public class SongSnippet {
     @ManyToOne
     @JoinColumn(name = "song_id", nullable = false)
     private Song song;
-
-    @ManyToMany(cascade = CascadeType.MERGE)
-    private Set<Dance> dances;
 
     private int songSnippetIndex = 0;
 
@@ -46,28 +40,12 @@ public class SongSnippet {
         this.song = song;
     }
 
-    public Set<Dance> getDances() {
-        return dances;
-    }
-
-    public void setDances(Set<Dance> dances) {
-        this.dances = dances;
-    }
-
     public int getSongSnippetIndex() {
         return songSnippetIndex;
     }
 
     public void setSongSnippetIndex(int songSnippetIndex) {
         this.songSnippetIndex = songSnippetIndex;
-    }
-
-    public void addDance(Dance dance) {
-        this.dances.add(dance);
-    }
-
-    public boolean removeDance(Dance dance) {
-        return this.dances.remove(dance);
     }
 
     public String getFileName() {
@@ -98,15 +76,8 @@ public class SongSnippet {
         this.songSnippetIndex = songSnippetIndex;
     }
 
-    public SongSnippet(Song song, int songSnippetIndex, Set<Dance> dances) {
-        this.songSnippetIndex = songSnippetIndex;
-        this.dances = dances;
+    public SongSnippet(Song song, int songSnippetIndex, int speed, String fileName) {
         this.song = song;
-    }
-
-    public SongSnippet(Song song, Set<Dance> dances, int songSnippetIndex, int speed, String fileName) {
-        this.song = song;
-        this.dances = dances;
         this.songSnippetIndex = songSnippetIndex;
         this.speed = speed;
         this.fileName = fileName;
@@ -115,8 +86,8 @@ public class SongSnippet {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        SongSnippet songSnippet = (SongSnippet) o;
-        return Objects.equals(id, songSnippet.id);
+        SongSnippet that = (SongSnippet) o;
+        return Objects.equals(id, that.id);
     }
 
     @Override
@@ -129,7 +100,6 @@ public class SongSnippet {
         return "SongSnippet{" +
                 "id=" + id +
                 ", song=" + song +
-                ", dances=" + dances +
                 ", songSnippetIndex=" + songSnippetIndex +
                 '}';
     }

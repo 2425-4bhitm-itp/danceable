@@ -11,7 +11,6 @@ export function updateModelFromSessionStorage() {
 }
 
 export function saveModelToSessionStorage(model: Model) {
-  console.log('write to session: ' + model.currentPane)
   sessionStorage.setItem('model', JSON.stringify(model))
 }
 

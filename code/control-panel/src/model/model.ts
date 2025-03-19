@@ -1,8 +1,9 @@
 import { Observable } from 'lib/observable'
 
-import { Snippet } from './snippet/snippet'
-import { Dance } from './dance/dance'
+import { Snippet } from 'model/snippet/snippet'
+import { Dance } from 'model/dance/dance'
 import { Song } from 'model/song/song'
+import { DanceFilter } from 'model/dance-filter/dance-filter'
 
 import { libraryRoute } from 'components/library'
 import { readModelFromSessionStorage } from 'lib/cache'
@@ -11,16 +12,18 @@ interface Model {
   currentPane: string,
   snippets: Snippet[],
   dances: Dance[],
+  danceFilters: DanceFilter[]
   songs: Song[]
 }
 
-const cachedModel: Model = readModelFromSessionStorage();
+const cachedModel: Model = readModelFromSessionStorage()
 
 const state: Model = cachedModel ? cachedModel : {
   currentPane: '/' + libraryRoute,
+  danceFilters: [],
   snippets: [],
   dances: [],
-  songs: []
+  songs: [],
 }
 
 const store = new Observable(state)
