@@ -43,3 +43,9 @@ replay_pid*
 
 # Ensure the directories are tracked
 song-storage/songs/.gitkeep
+
+# Feaxture extracting csv for ai
+features.csv
+
+node_modules/
+dist/
