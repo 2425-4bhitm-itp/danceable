@@ -2,12 +2,13 @@ import Foundation
 
 class ViewModel: ObservableObject {
     @Published var model: Model
-    var dances: [Dance] {
+    
+    var danceSettings: [DanceSetting] {
         get {
-            model.dances
+            model.danceSettings
         }
         set {
-            model.dances = newValue
+            model.danceSettings = newValue
         }
     }
     

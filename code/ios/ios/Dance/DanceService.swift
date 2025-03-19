@@ -22,3 +22,9 @@ func loadDances() -> [Dance] {
     
     return dances;
 }
+
+func loadDanceSettings() -> [DanceSetting] {
+    let dances: [Dance] = loadDances()
+    
+    return dances.map { d in DanceSetting(dance: d) }
+}

@@ -28,16 +28,28 @@ struct ContentView: View {
             .padding(75)
             .shadow(radius: 10)
         }.sheet(isPresented: $isSheetPresent, content: {
-            DancesView(viewModel: viewModel)
-                .presentationDetents(
-                    [.fraction(0.125), .fraction(0.7), .fraction(1)],
-                    selection: $selectedDetent
-                )
-                .presentationBackgroundInteraction(
-                    .enabled(upThrough: .fraction(0.125))
-                )
-                .presentationDragIndicator(.visible)
-                .interactiveDismissDisabled(true)
+            NavigationStack {
+                HStack {
+                    NavigationLink(
+                        destination: SettingsView(viewModel: viewModel)
+                    ) {
+                        Image(systemName: "gear")
+                            .padding()
+                    }
+                    Spacer()
+                }
+                
+                DancesView(viewModel: viewModel)
+                    .presentationDetents(
+                        [.fraction(0.125), .fraction(0.7), .fraction(1)],
+                        selection: $selectedDetent
+                    )
+                    .presentationBackgroundInteraction(
+                        .enabled(upThrough: .fraction(0.125))
+                    )
+                    .presentationDragIndicator(.visible)
+                    .interactiveDismissDisabled(true)
+            }
         })
         .padding()
         Spacer()
