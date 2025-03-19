@@ -17,7 +17,7 @@ struct DanceSetting: Identifiable {
     var dance: Dance
     var isActive: Bool
     
-    init(dance: Dance, isActive: Bool = false) {
+    init(dance: Dance, isActive: Bool = true) {
         self.id = dance.id
         self.dance = dance
         self.isActive = isActive

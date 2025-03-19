@@ -8,7 +8,9 @@ struct DancesView: View {
     var body: some View {
         NavigationStack {
             List(viewModel.danceSettings) { danceSetting in
-                NavigationLink(danceSetting.dance.name, value: danceSetting.dance)
+                if (danceSetting.isActive) {
+                    NavigationLink(danceSetting.dance.name, value: danceSetting.dance)
+                }
             }
             .navigationDestination(for: Dance.self) { dance in
                 DanceView(dance: dance)
