@@ -1,15 +1,28 @@
 import { set } from 'model/model'
-import { Snippet } from 'model/snippet/snippet'
 import { Song } from 'model/song/song'
-import { fetchAllDances } from 'model/dance/dance-service'
+
+const SONG_URL = '/api/songs'
 
 export async function fetchAllSongsToModel() {
   const songs = await fetchAllSongs()
 
-  set((model) => (model.songs = songs))
+  set((model) => songs)
 }
 
 export async function fetchAllSongs() {
-  const response = await fetch('/api/songs')
-  return await response.json() as Song[]
+  let songs: Song[] = []
+
+  try {
+    const response = await fetch(SONG_URL)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error while fetching songs from ${SONG_URL}! Status: ${response.status}`)
+    }
+
+    songs = await response.json() as Song[]
+  } catch (error) {
+    console.log(error.toString())
+  }
+
+  return songs
 }

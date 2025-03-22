@@ -2,24 +2,41 @@ import { set } from 'model/model'
 import { Dance } from 'model/dance/dance'
 import { DanceFilter } from 'model/dance-filter/dance-filter'
 
+const DANCES_URL = '/api/dances'
+
 export async function fetchAllDancesToModel() {
   const dances = await fetchAllDances()
 
   set((model) => {
     model.dances = dances
 
-    model.danceFilters = dances.map(d => {
-      const previousDanceFilter = model.danceFilters.find(mD => mD.dance.id === d.id)
+    const danceFilters = Array.from(
+      model.dances.map((d, i) => {
+        return {
+          danceId: d.id,
+          isEnabled: model.danceFilters.length >= i && model.danceFilters[i] ? model.danceFilters[i].isEnabled : false,
+        } as DanceFilter
+      }),
+    )
 
-      return {
-        dance: d,
-        isEnabled: previousDanceFilter == undefined ? false : previousDanceFilter.isEnabled,
-      } as DanceFilter
-    })
+    model.danceFilters = danceFilters
   })
 }
 
 export async function fetchAllDances() {
-  const response = await fetch('/api/dances')
-  return await response.json() as Dance[]
+  let dances: Dance[] = []
+
+  try {
+    const response = await fetch(DANCES_URL)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error while fetching dances from ${DANCES_URL}! Status: ${response.status}`)
+    }
+
+    dances = await response.json() as Dance[]
+  } catch (error) {
+    console.log(error.toString())
+  }
+
+  return dances
 }
