@@ -1,11 +1,13 @@
 import { html, render, renderAppendChild } from 'lib/pure-html'
 import { addLinks } from 'lib/router'
-import { subscribe } from 'model/model'
+import { set, subscribe } from 'model/model'
 import { clear } from 'lib/util'
 
 import { SnippetComponent, SnippetElement } from 'components/snippet/snippet-component'
 import { DanceFilter } from 'model/dance-filter/dance-filter'
 import { Snippet } from 'model/snippet/snippet'
+import { Dance } from 'model/dance/dance'
+import { produce } from 'lib/immer'
 
 export const Library = 'library-component'
 export const libraryRoute = 'library'
@@ -19,12 +21,30 @@ class LibraryElement extends HTMLElement {
 
   async connectedCallback() {
     subscribe(model => {
-      this.renderDanceFilters(model.danceFilters)
+      this.renderDanceFilters(model.danceFilters, model.dances)
     })
 
     this.render()
 
-    subscribe((model) => this.renderSnippets(model.snippets))
+    subscribe(
+      (model) => {
+        const enabledDanceFilterIds = model.danceFilters
+          .filter(f => f.isEnabled)
+          .map(f => f.danceId)
+
+        if (enabledDanceFilterIds.length == 0) {
+          this.renderSnippets(model.snippets)
+        } else {
+          this.renderSnippets(
+            model.snippets.filter(s =>
+              s.song &&
+              s.song.dances
+                .some(d => enabledDanceFilterIds.includes(d.id)),
+            ),
+          )
+        }
+      },
+    )
   }
 
   render() {
@@ -39,24 +59,26 @@ class LibraryElement extends HTMLElement {
     addLinks(this)
   }
 
-  renderDanceFilters(danceFilters: DanceFilter[]) {
+  renderDanceFilters(danceFilters: DanceFilter[], dances: Dance[]) {
     const danceFilterContainer: HTMLElement = this.querySelector('#danceFilters')
 
     if (danceFilterContainer && Array.isArray(danceFilters)) {
       clear(danceFilterContainer)
 
       danceFilters.forEach(filter => {
+        const dance = dances.find(d => d.id === filter.danceId)
+
         const filterElement = renderAppendChild(
           html`
             <span
               class="p-0.5 px-3 select-none cursor-pointer ${filter.isEnabled ? 'bg-gray-300' : 'bg-gray-100'} rounded-full">
-              ${filter.dance.name}
+              ${dance.name}
             </span>
           `, danceFilterContainer,
         )
 
         filterElement.addEventListener('click', (e) => {
-          this.filterClicked(filter, filterElement)
+          this.filterClicked(filter)
         })
       })
     }
@@ -88,10 +110,21 @@ class LibraryElement extends HTMLElement {
     console.log('snippet with id ' + snippetId + ' options clicked!')
   }
 
-  private filterClicked(filter: DanceFilter, filterElement: HTMLElement) {
-    console.log(filter.dance.name + ' clicked')
-    filter.isEnabled = !filter.isEnabled
-    console.log(filter.isEnabled)
+  private filterClicked(filter: DanceFilter) {
+    console.log(filter.danceId + ' clicked')
+
+    set(model => {
+      model.danceFilters = model.danceFilters.map(danceFilter => {
+          if (danceFilter.danceId === filter.danceId) {
+            return produce(danceFilter, draft => {
+              draft.isEnabled = !draft.isEnabled
+            })
+          } else {
+            return danceFilter
+          }
+        },
+      )
+    })
   }
 }
 

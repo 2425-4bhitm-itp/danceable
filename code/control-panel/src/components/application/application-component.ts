@@ -7,7 +7,6 @@ import { Library, libraryRoute } from 'components/library'
 import { Analysis, analysisRoute } from 'components/analysis'
 import { fetchAllSongsToModel } from 'model/song/song-service'
 import { saveModelToSessionStorage } from 'lib/cache'
-import { makeLogger } from 'ts-loader/dist/logger'
 
 class ApplicationElement extends HTMLElement {
   connectedCallback() {
