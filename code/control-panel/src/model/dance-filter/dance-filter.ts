@@ -1,6 +1,4 @@
-import { Dance } from 'model/dance/dance'
-
 export interface DanceFilter {
-  dance: Dance
-  isEnabled: boolean
+  readonly danceId: number
+  readonly isEnabled: boolean
 }

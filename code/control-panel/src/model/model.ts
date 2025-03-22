@@ -10,20 +10,20 @@ import { readModelFromSessionStorage } from 'lib/cache'
 
 interface Model {
   currentPane: string,
-  snippets: Snippet[],
+  snippets: Snippet[]
+  songs: Song[],
   dances: Dance[],
   danceFilters: DanceFilter[]
-  songs: Song[]
 }
 
 const cachedModel: Model = readModelFromSessionStorage()
 
 const state: Model = cachedModel ? cachedModel : {
   currentPane: '/' + libraryRoute,
-  danceFilters: [],
   snippets: [],
-  dances: [],
   songs: [],
+  dances: [],
+  danceFilters: [],
 }
 
 const store = new Observable(state)
