@@ -7,19 +7,18 @@ struct DancesView: View {
     
     var body: some View {
         NavigationStack {
-            List(viewModel.danceSettings) { danceSetting in
-                if (danceSetting.isActive) {
-                    NavigationLink(danceSetting.dance.name, value: danceSetting.dance)
-                }
+            List(viewModel.dances) { dance in
+                NavigationLink(dance.name, value: dance)
             }
             .navigationDestination(for: Dance.self) { dance in
                 DanceView(dance: dance)
             }
         }.task {
             queue.async(execute: {
-                let dances = loadDanceSettings()
+                let dances = loadDances()
+                
                 DispatchQueue.main.async(execute: {
-                    viewModel.model.danceSettings = dances
+                    viewModel.model.dances = dances
                 })
             })
         }

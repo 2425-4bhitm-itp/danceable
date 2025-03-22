@@ -5,7 +5,6 @@ var recordingQueue = DispatchQueue(label:"recording")
 
 struct ContentView: View {
     @ObservedObject var viewModel: ViewModel
-
     
     //Audio Utils
     var engine = AVAudioEngine()
@@ -34,10 +33,16 @@ struct ContentView: View {
             NavigationStack {
                 HStack {
                     NavigationLink(
-                        destination: SettingsView(viewModel: viewModel)
+                        destination: PredictionsView(viewModel: viewModel)
                     ) {
-                        Image(systemName: "gear")
-                            .padding()
+                        if (selectedDetent != .fraction(0.125)) {
+                            Image(systemName: "figure.dance")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 32, height: 32)
+                                .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
+                                .padding(18)
+                        }
                     }
                     Spacer()
                 }
@@ -61,69 +66,67 @@ struct ContentView: View {
     }
     
     func startRecording(length:Double) {
+        let input = engine.inputNode
+        
+        let format = input.outputFormat(forBus: 0)
+        print("Output format: \(format)")
+        
+        // find Documents Directory in current Container and set the URL
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let outputFileURL = documentsDirectory.appendingPathComponent("recordedAudio.wav")
+        
+        // Define WAV format settings (courtesy of DeepSeek)
+        let wavSettings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM, // Linear PCM for WAV
+            AVSampleRateKey: format.sampleRate,
+            AVNumberOfChannelsKey: format.channelCount,
+            AVLinearPCMBitDepthKey: 16, // 16-bit depth
+            AVLinearPCMIsBigEndianKey: false, // Little-endian
+            AVLinearPCMIsFloatKey: false, // Integer format
+            AVLinearPCMIsNonInterleaved: false // Interleaved
+        ]
+        
+        
+        func record(){
+            do {
+                audioFile = try AVAudioFile(forWriting: outputFileURL, settings: wavSettings)
+            } catch {
+                print("Error creating audio file: \(error)")
+                return
+            }
             
-            let input = engine.inputNode
-            
-            let format = input.outputFormat(forBus: 0)
-            print("Output format: \(format)")
-            
-            // find Documents Directory in current Container and set the URL
-            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let outputFileURL = documentsDirectory.appendingPathComponent("recordedAudio.wav")
-            
-            // Define WAV format settings (courtesy of DeepSeek)
-            let wavSettings: [String: Any] = [
-                AVFormatIDKey: kAudioFormatLinearPCM, // Linear PCM for WAV
-                AVSampleRateKey: format.sampleRate,
-                AVNumberOfChannelsKey: format.channelCount,
-                AVLinearPCMBitDepthKey: 16, // 16-bit depth
-                AVLinearPCMIsBigEndianKey: false, // Little-endian
-                AVLinearPCMIsFloatKey: false, // Integer format
-                AVLinearPCMIsNonInterleaved: false // Interleaved
-            ]
-            
-
-            func record(){
+            // installs a Tap to capture audio Stream until engine is stopped
+            input.installTap(onBus: 0, bufferSize: 4096, format: format) { (buffer, when) in
+                
                 do {
-                    audioFile = try AVAudioFile(forWriting: outputFileURL, settings: wavSettings)
+                    try self.audioFile?.write(from: buffer)
                 } catch {
-                    print("Error creating audio file: \(error)")
-                    return
-                }
-                
-                // installs a Tap to capture audio Stream until engine is stopped
-                input.installTap(onBus: 0, bufferSize: 4096, format: format) { (buffer, when) in
-                    
-                    do {
-                        try self.audioFile?.write(from: buffer)
-                    } catch {
-                        print("Error writing to audio file: \(error)")
-                    }
-                }
-                
-                // Start engine
-                do {
-                    try engine.start()
-                } catch {
-                    print("Error starting audio engine: \(error)")
-                    return
-                }
-                
-                // Stop recording after x seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + length) {
-                    engine.stop()
-                    engine.reset()
-                    print("Recording stopped and saved to \(outputFileURL)")
+                    print("Error writing to audio file: \(error)")
                 }
             }
-            recordingQueue.async{record()}
+            
+            // Start engine
+            do {
+                try engine.start()
+            } catch {
+                print("Error starting audio engine: \(error)")
+                return
+            }
+            
+            // Stop recording after x seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + length) {
+                engine.stop()
+                engine.reset()
+                print("Recording stopped and saved to \(outputFileURL)")
+            }
         }
+        recordingQueue.async{record()}
     }
-    
+}
+
 #Preview {
     let model: Model = Model()
     let viewModel: ViewModel = ViewModel(model: model)
     
     return ContentView(viewModel: viewModel)
 }
-
