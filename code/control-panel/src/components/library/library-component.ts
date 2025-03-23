@@ -104,15 +104,16 @@ class LibraryElement extends HTMLElement {
   }
 
   private snippetOptionsClicked(snippet: SnippetElement, e: CustomEvent) {
-    const snippetId: number = Number.parseInt(e.detail)
+    const snippetElements = this.querySelector('#snippets').childNodes as NodeListOf<SnippetElement>
 
-    alert(e.detail)
-    console.log('snippet with id ' + snippetId + ' options clicked!')
+    snippetElements.forEach(s => {
+      if (s.state.id !== snippet.state.id) {
+        s.openOrCloseOptions(false)
+      }
+    })
   }
 
   private filterClicked(filter: DanceFilter) {
-    console.log(filter.danceId + ' clicked')
-
     set(model => {
       model.danceFilters = model.danceFilters.map(danceFilter => {
           if (danceFilter.danceId === filter.danceId) {
