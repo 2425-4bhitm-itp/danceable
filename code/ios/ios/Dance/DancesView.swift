@@ -1,8 +1,6 @@
 import SwiftUI
 
-struct DancesView: View {
-    let queue = DispatchQueue(label: "at.htl.leonding")
-    
+struct DancesView: View {    
     @ObservedObject var viewModel: ViewModel
     
     var body: some View {
@@ -13,14 +11,6 @@ struct DancesView: View {
             .navigationDestination(for: Dance.self) { dance in
                 DanceView(dance: dance)
             }
-        }.task {
-            queue.async(execute: {
-                let dances = loadDances()
-                
-                DispatchQueue.main.async(execute: {
-                    viewModel.model.dances = dances
-                })
-            })
         }
     }
 }

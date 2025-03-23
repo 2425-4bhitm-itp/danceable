@@ -5,6 +5,7 @@ var recordingQueue = DispatchQueue(label:"recording")
 
 struct ContentView: View {
     @ObservedObject var viewModel: ViewModel
+    let queue = DispatchQueue(label: "at.htl.leonding")
     
     //Audio Utils
     var engine = AVAudioEngine()
@@ -33,7 +34,7 @@ struct ContentView: View {
             NavigationStack {
                 HStack {
                     NavigationLink(
-                        destination: PredictionsView(viewModel: viewModel)
+                        destination: DancesView(viewModel: viewModel)
                     ) {
                         if (selectedDetent != .fraction(0.125)) {
                             Image(systemName: "figure.dance")
@@ -47,7 +48,7 @@ struct ContentView: View {
                     Spacer()
                 }
                 
-                DancesView(viewModel: viewModel)
+                PredictionsView(viewModel: viewModel)
                     .presentationDetents(
                         [.fraction(0.125), .fraction(0.7), .fraction(1)],
                         selection: $selectedDetent
@@ -63,6 +64,15 @@ struct ContentView: View {
         Spacer()
         Spacer()
         Spacer()
+        .task {
+            queue.async(execute: {
+                let dances = loadDances()
+                
+                DispatchQueue.main.async(execute: {
+                    viewModel.model.dances = dances
+                })
+            })
+        }
     }
     
     func startRecording(length:Double) {

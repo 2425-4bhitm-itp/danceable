@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DanceView: View {
     var dance: Dance
+    
     var body: some View {
         VStack {
             Text(dance.name)
