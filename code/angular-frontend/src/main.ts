@@ -1,20 +1,11 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
-import { NavbarComponent } from './app/navbar/navbar.component';
-import { RecordButtonComponent } from './app/record-button/record-button.component';
-import {RecordStopButtonComponent} from './app/record-stop-button/record-stop-button.component';
 import {Visualizer} from "./app/classes/Visualizer";
 import { StreamRecorder } from "./app/classes/StreamRecorder";
 
-  bootstrapApplication(NavbarComponent, appConfig)
+bootstrapApplication(AppComponent, appConfig)
   .catch((err) => console.error(err));
-
-  bootstrapApplication(RecordButtonComponent, appConfig)
-  .catch((err) => console.error(err));
-
-  bootstrapApplication(RecordStopButtonComponent, appConfig)
-    .catch((err)=> console.error(err));
 
 let recorder = new StreamRecorder();
 

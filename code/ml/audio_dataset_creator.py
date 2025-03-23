@@ -1,6 +1,6 @@
 import os
 import csv
-
+from concurrent.futures import ThreadPoolExecutor
 
 class AudioDatasetCreator:
     def __init__(self, extractor, output_csv="/app/song-storage/features.csv"):
@@ -13,12 +13,21 @@ class AudioDatasetCreator:
         print(f"processing folder {folder_path}")
         data = []
 
-        for file in os.listdir(folder_path):
+        def process_file(file):
             if file.endswith(".wav"):
                 file_path = os.path.join(folder_path, file)
-                file_path = os.path.join(folder_path, file)
                 features = self.extractor.extract_features_from_file(file_path)
-                data.append([file] + list(features) + [label])
+                return [file] + list(features) + [label]
+            return None
+
+        worker_amount = os.cpu_count() - 2
+
+        with ThreadPoolExecutor(max_workers=worker_amount) as executor:
+            results = executor.map(process_file, os.listdir(folder_path))
+
+        for result in results:
+            if result:
+                data.append(result)
 
         self.save_to_csv(data)
 
