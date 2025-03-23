@@ -38,13 +38,18 @@ class AudioFeatureExtractor:
         tonnetz_mean = np.mean(tonnetz, axis=1)
         tonnetz_var = np.var(tonnetz, axis=1)
 
+        # tempogram = librosa.feature.tempogram(y=y, sr=self.sr, hop_length=self.hop_length)
+        # tempogram_mean = np.mean(tempogram, axis=1)
+        # tempogram_var = np.var(tempogram, axis=1)
+
         # Concatenate all features
         features = np.concatenate([
             mfccs_mean, mfccs_var,
             chroma_mean, chroma_var,
             mel_mean, mel_var,
             contrast_mean, contrast_var,
-            tonnetz_mean, tonnetz_var
+            tonnetz_mean, tonnetz_var,
+            #tempogram_mean, tempogram_var
         ])
 
         return features
