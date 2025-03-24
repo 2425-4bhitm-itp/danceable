@@ -19,10 +19,10 @@ p{
   justify-content: center;
   margin-top: 3rem;
   font-size: 1.5rem;
+  font-family: Inter, sans-serif;
 }
 
 #record-button:hover{
-
   background: linear-gradient(140.37deg, #B0429C 96.11%, #922BAE 40.78%);
 }
 
