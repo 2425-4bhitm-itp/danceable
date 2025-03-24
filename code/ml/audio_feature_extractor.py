@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import librosa
 import numpy as np
 
@@ -13,34 +14,46 @@ class AudioFeatureExtractor:
         return y, sr
 
     def extract_features(self, y):
-        # Compute MFCCs
-        mfccs = librosa.feature.mfcc(y=y, sr=self.sr, n_mfcc=self.n_mfcc, n_fft=self.n_fft, hop_length=self.hop_length)
-        mfccs_mean = np.mean(mfccs, axis=1)
-        mfccs_var = np.var(mfccs, axis=1)
+        def compute_mfccs():
+            mfccs = librosa.feature.mfcc(y=y, sr=self.sr, n_mfcc=self.n_mfcc, n_fft=self.n_fft, hop_length=self.hop_length)
+            return np.mean(mfccs, axis=1), np.var(mfccs, axis=1)
 
-        # Compute Chroma feature
-        chroma = librosa.feature.chroma_stft(y=y, sr=self.sr, n_fft=self.n_fft, hop_length=self.hop_length)
-        chroma_mean = np.mean(chroma, axis=1)
-        chroma_var = np.var(chroma, axis=1)
+        def compute_chroma():
+            chroma = librosa.feature.chroma_stft(y=y, sr=self.sr, n_fft=self.n_fft, hop_length=self.hop_length)
+            return np.mean(chroma, axis=1), np.var(chroma, axis=1)
 
-        # Compute Mel-scaled spectrogram
-        mel = librosa.feature.melspectrogram(y=y, sr=self.sr, n_fft=self.n_fft, hop_length=self.hop_length)
-        mel_mean = np.mean(mel, axis=1)
-        mel_var = np.var(mel, axis=1)
+        def compute_mel():
+            mel = librosa.feature.melspectrogram(y=y, sr=self.sr, n_fft=self.n_fft, hop_length=self.hop_length)
+            return np.mean(mel, axis=1), np.var(mel, axis=1)
 
-        # Compute Spectral Contrast
-        contrast = librosa.feature.spectral_contrast(y=y, sr=self.sr, n_fft=self.n_fft, hop_length=self.hop_length)
-        contrast_mean = np.mean(contrast, axis=1)
-        contrast_var = np.var(contrast, axis=1)
+        def compute_contrast():
+            contrast = librosa.feature.spectral_contrast(y=y, sr=self.sr, n_fft=self.n_fft, hop_length=self.hop_length)
+            return np.mean(contrast, axis=1), np.var(contrast, axis=1)
 
-        # Compute Tonnetz
-        tonnetz = librosa.feature.tonnetz(y=librosa.effects.harmonic(y), sr=self.sr)
-        tonnetz_mean = np.mean(tonnetz, axis=1)
-        tonnetz_var = np.var(tonnetz, axis=1)
+        def compute_tonnetz():
+            tonnetz = librosa.feature.tonnetz(y=librosa.effects.harmonic(y), sr=self.sr)
+            return np.mean(tonnetz, axis=1), np.var(tonnetz, axis=1)
 
-        tempogram = librosa.feature.tempogram(y=y, sr=self.sr, hop_length=self.hop_length)
-        tempogram_mean = np.mean(tempogram, axis=1)
-        tempogram_var = np.var(tempogram, axis=1)
+        def compute_tempogram():
+            tempogram = librosa.feature.tempogram(y=y, sr=self.sr, hop_length=self.hop_length)
+            return np.mean(tempogram, axis=1), np.var(tempogram, axis=1)
+
+        # Multithreading for parallel feature computation
+        with ThreadPoolExecutor() as executor:
+            mfccs_result = executor.submit(compute_mfccs)
+            chroma_result = executor.submit(compute_chroma)
+            mel_result = executor.submit(compute_mel)
+            contrast_result = executor.submit(compute_contrast)
+            tonnetz_result = executor.submit(compute_tonnetz)
+            tempogram_result = executor.submit(compute_tempogram)
+
+            # Wait for results
+            mfccs_mean, mfccs_var = mfccs_result.result()
+            chroma_mean, chroma_var = chroma_result.result()
+            mel_mean, mel_var = mel_result.result()
+            contrast_mean, contrast_var = contrast_result.result()
+            tonnetz_mean, tonnetz_var = tonnetz_result.result()
+            tempogram_mean, tempogram_var = tempogram_result.result()
 
         # Concatenate all features
         features = np.concatenate([
@@ -51,7 +64,6 @@ class AudioFeatureExtractor:
             tonnetz_mean, tonnetz_var,
             tempogram_mean, tempogram_var
         ])
-
         return features
 
     def extract_features_from_file(self, file_path):
