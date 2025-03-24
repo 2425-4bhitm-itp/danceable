@@ -29,17 +29,27 @@ def train():
     train_df = df[df['song_name'].isin(train_songs)]
     test_df = df[df['song_name'].isin(test_songs)]
 
+    # Further split the training data into training and validation sets
+    train_songs, val_songs = train_test_split(train_songs, test_size=0.2, random_state=42)
+    train_df = df[df['song_name'].isin(train_songs)]
+    val_df = df[df['song_name'].isin(val_songs)]
+
     # Separate features and labels
     X_train, y_train = train_df.drop(columns=["filename", "label", "song_name"]).values, train_df["label"].values
+    X_val, y_val = val_df.drop(columns=["filename", "label", "song_name"]).values, val_df["label"].values
     X_test, y_test = test_df.drop(columns=["filename", "label", "song_name"]).values, test_df["label"].values
 
     # Train the model
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
 
-    # Evaluate the model
-    y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
+    # Evaluate the model on the validation set
+    y_val_pred = model.predict(X_val)
+    val_accuracy = accuracy_score(y_val, y_val_pred)
+
+    # Evaluate the model on the test set
+    y_test_pred = model.predict(X_test)
+    test_accuracy = accuracy_score(y_test, y_test_pred)
 
     # Save model as joblib (optional)
     joblib.dump(model, "/app/song-storage/model.joblib")
@@ -50,7 +60,7 @@ def train():
     # Save Core ML model
     coreml_model.save("/app/song-storage/model.mlmodel")
 
-    return accuracy
+    return test_accuracy, val_accuracy
 
 def classify_audio(file_path, extractor):
     global model
