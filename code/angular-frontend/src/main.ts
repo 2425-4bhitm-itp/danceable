@@ -10,7 +10,7 @@ bootstrapApplication(AppComponent, appConfig)
 let recorder = new StreamRecorder();
 
 const recordButton = document.querySelector("app-record-button") as HTMLButtonElement;
-const stopRecordButton = document.getElementById('record-stop-button') as HTMLButtonElement;
+const stopRecordButton = document.querySelector("app-record-stop-button") as HTMLButtonElement;
 
 // audio visualizer
 
@@ -80,25 +80,25 @@ const init = () => {
   visualizer = new Visualizer(audioContext, processFrame, processError);
 };
 
-recordButton.addEventListener('click', async () => {
-  changeButtonStylingWhenRecordingStarted();
-  await recorder.startRecording();
-  init();
+// recordButton.addEventListener('click', async () => {
+//
+//   await recorder.startRecording();
+//   init();
+//
+//   // clearTimeoutIfExists();
+//
+//   startTimer(5, async () => {
+//     await stopRecordingAndVisualizer();
+//   });
+//
+//   // timeoutId = setTimeout(async () => {
+//   //     await stopRecordingAndVisualizer();
+//   // }, 1000 * 5);
+// });
 
-  // clearTimeoutIfExists();
-
-  startTimer(5, async () => {
-    await stopRecordingAndVisualizer();
-  });
-
-  // timeoutId = setTimeout(async () => {
-  //     await stopRecordingAndVisualizer();
-  // }, 1000 * 5);
-});
-
-stopRecordButton.addEventListener('click', async () => {
-  await stopRecordingAndVisualizer();
-});
+// stopRecordButton.addEventListener('click', async () => {
+//   await stopRecordingAndVisualizer();
+// });
 
 async function stopRecordingAndVisualizer() {
   stopTimer();
