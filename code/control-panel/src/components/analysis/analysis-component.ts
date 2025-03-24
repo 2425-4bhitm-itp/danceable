@@ -17,7 +17,7 @@ class AnalysisElement extends HTMLElement {
 
   render() {
     render(html`
-      <div class="text-3xl mt-8 mb-4 px-2">Analysis</div>
+      <div class="text-3xl pt-9 pb-2 px-2">Analysis</div>
     `, this)
 
     addLinks(this)
