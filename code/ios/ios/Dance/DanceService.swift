@@ -1,6 +1,6 @@
 import Foundation
 
-var BASE_URL = "localhost"
+var BASE_URL = "172.20.10.5"
 let DANCE_URL = "http://" + BASE_URL + ":8080/dances"
 
 func loadDances() -> [Dance] {

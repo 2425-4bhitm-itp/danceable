@@ -19,7 +19,7 @@ export class SnippetElement extends HTMLElement {
   connectedCallback() {
     this.render()
 
-    this.querySelector('img.snippet-options-button').addEventListener(
+    this.querySelector('.snippet-options-button').addEventListener(
       'click',
       (e: MouseEvent) => this.optionsClicked(),
     )
@@ -42,14 +42,19 @@ export class SnippetElement extends HTMLElement {
           ).join('')}
         </div>
         <div class="w-8 relative">
-          <modal hidden class="snippet-options p-3 bg-white shadow absolute top-0 right-8 rounded-md">
-            <span class="hover:underline">rename</span>
-            <span class="hover:underline">edit</span>
-            <span class="hover:underline text-red-500">remove</span>
+          <modal hidden
+                 class="snippet-options p-1 bg-white shadow absolute top-0 right-8 rounded-md flex flex-col min-w-12 text-nowrap">
+            <span class="hover:bg-gray-100 px-2 py-1 rounded text-purple-500">analyse</span>
+            <span class="hover:bg-gray-100 px-2 py-1 rounded">add dance</span>
+            <span class="hover:bg-gray-100 px-2 py-1 rounded">remove dance</span>
+            <span class="hover:bg-gray-100 px-2 py-1 rounded">rename song</span>
+            <span class="hover:bg-gray-100 px-2 py-1 rounded">edit</span>
+            <span class="hover:bg-gray-100 px-2 py-1 rounded text-red-400">remove</span>
           </modal>
-          <img class="snippet-options-button w-full" src="/public/svgs/options-icon-dark.svg" alt="options button">
+          <div class="w-full snippet-options-button aspect-square rounded-md hover:bg-gray-100 flex justify-center items-center">
+            <img class="w-full" src="/public/svgs/options-icon-dark.svg" alt="options button">
+          </div>
         </div>
-        <!--        position a popup exaclty here (it are options to edit and delete)-->
       </div>
     `, this)
 
@@ -57,18 +62,20 @@ export class SnippetElement extends HTMLElement {
   }
 
   optionsClicked() {
-    this.isOptionsOpen = !this.isOptionsOpen
-    this.openOrCloseOptions()
-    // this.dispatchEvent(
-    //   new CustomEvent('snippet-option-clicked', { detail: this.state }),
-    // )
+    this.dispatchEvent(
+      new CustomEvent('snippet-option-clicked', { detail: this.state }),
+    )
+
+    this.openOrCloseOptions(!this.isOptionsOpen)
   }
 
-  openOrCloseOptions() {
+  openOrCloseOptions(changeOptionsTo: boolean) {
+    this.isOptionsOpen = changeOptionsTo
+
     const optionsElement = this.querySelector('modal.snippet-options')
 
     if (optionsElement) {
-      if (!optionsElement.checkVisibility()) {
+      if (this.isOptionsOpen) {
         optionsElement.removeAttribute('hidden')
       } else {
         optionsElement.setAttribute('hidden', '')

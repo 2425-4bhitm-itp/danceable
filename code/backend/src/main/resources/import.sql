@@ -1,6 +1,6 @@
 -- Insert dances
 INSERT INTO dance (name, minbpm, maxbpm)
-VALUES ('Waltz', 84, 90),
+VALUES ('Slow Waltz', 84, 90),
        ('Vienese Waltz', 174, 180),
        ('Foxtrott', 112, 120),
        ('Quickstep', 200, 208),
@@ -56,3 +56,9 @@ VALUES (1, 3),
        (6, 9),
        (6, 8),
        (6, 7);
+
+-- Insert predictions
+INSERT INTO Prediction (confidence, dance_id, speedCategory)
+VALUES (0.95, 1, 'slow'),  -- Prediction for 'Waltz' dance, slow speed
+       (0.85, 2, 'medium'),  -- Prediction for 'Vienese Waltz' dance, medium speed
+       (0.90, 3, 'fast');
