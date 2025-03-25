@@ -118,9 +118,70 @@ struct ContentView: View {
                 engine.stop()
                 engine.reset()
                 print("Recording stopped and saved to \(outputFileURL)")
+                self.sendRecording(fileURL: outputFileURL)
             }
         }
         recordingQueue.async{record()}
+    }
+    
+    private func sendRecording(fileURL: URL) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let fileData = try Data(contentsOf: fileURL)
+                
+                guard let url = URL(string: "http://192.168.178.95/upload/save") else {
+                    print("Invalid server URL")
+                    return
+                }
+                
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                
+                
+                //Multipart Data (courtesy of deepseek)
+                
+                let boundary = "Boundary-\(UUID().uuidString)"
+                request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+                
+                var body = Data()
+                
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                body.append("Content-Disposition: form-data; name=\"fileName\"\r\n\r\n".data(using: .utf8)!)
+                body.append("recordedAudio.wav\r\n".data(using: .utf8)!)
+                
+                
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                body.append("Content-Disposition: form-data; name=\"file\"; filename=\"recordedAudio.wav\"\r\n".data(using: .utf8)!)
+                body.append("Content-Type: audio/wav\r\n\r\n".data(using: .utf8)!)
+                body.append(fileData)
+                body.append("\r\n".data(using: .utf8)!)
+                
+                body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+                
+                request.httpBody = body
+                
+                
+                let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        print("Upload error: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    if let httpResponse = response as? HTTPURLResponse {
+                        print("Response Code: \(httpResponse.statusCode)")
+                        
+                        if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                            print("Response: \(responseString)")
+                        }
+                    }
+                }
+                
+                task.resume()
+                
+            } catch {
+                print("Error reading file or sending to server: \(error)")
+            }
+        }
     }
 }
 
