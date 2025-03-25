@@ -14,5 +14,10 @@ import {VisualizerComponent} from '../visualizer/visualizer.component';
   styleUrl: './record-button.component.css',
 })
 export class RecordButtonComponent {
-  buttonState = true
+  isRecording: boolean = false;
+
+  toggleRecording() {
+    this.isRecording = !this.isRecording;
+    console.log(this.isRecording ? "Recording started" : "Recording stopped");
+  }
 }

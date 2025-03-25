@@ -1,14 +1,17 @@
+
+
 <div>
-<div id="record-button" (click)="buttonState = !buttonState">
-  @if (buttonState) {
-    <app-record-svg></app-record-svg>
-  } @else {
-    <app-visualizer></app-visualizer>
-  }
+  <div id="record-button" (click)="toggleRecording()">
+    @if (!isRecording) {
+      <app-record-svg></app-record-svg>
+    } @else {
+      <app-visualizer></app-visualizer>
+    }
+  </div>
 </div>
-</div>
-@if (buttonState) {
+
+@if (!isRecording) {
   <p id="recording-description">Press to record audio and get matching dance styles!</p>
 } @else {
-  <div><app-record-stop-button></app-record-stop-button></div>
+  <div><app-record-stop-button (click)="toggleRecording()"></app-record-stop-button></div>
 }
