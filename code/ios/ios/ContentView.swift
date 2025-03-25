@@ -1,11 +1,14 @@
 import SwiftUI
 import AVFoundation
 
-var recordingQueue = DispatchQueue(label:"recording")
+var recordingQueue = DispatchQueue(label: "recording")
 
 struct ContentView: View {
     @ObservedObject var viewModel: ViewModel
+    
     let queue = DispatchQueue(label: "at.htl.leonding")
+    
+    @State var showDancesView = false
     
     //Audio Utils
     var engine = AVAudioEngine()
@@ -31,22 +34,22 @@ struct ContentView: View {
             .padding(75)
             .shadow(radius: 10)
         }.sheet(isPresented: $isSheetPresent, content: {
-            NavigationStack {
-                HStack {
-                    NavigationLink(
-                        destination: DancesView(viewModel: viewModel)
-                    ) {
-                        if (selectedDetent != .fraction(0.125)) {
-                            Image(systemName: "figure.dance")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 32, height: 32)
-                                .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
-                                .padding(18)
+            VStack {
+                /*if (selectedDetent != .fraction(0.125)) {
+                    NavigationStack {
+                        VStack {
+                            NavigationLink(destination: DancesView(viewModel: viewModel)) {
+                                Image(systemName: "figure.dance")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 32, height: 32)
+                                    .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
+                                    .padding(18)
+                            }
+                            Spacer()
                         }
                     }
-                    Spacer()
-                }
+                }*/
                 
                 PredictionsView(viewModel: viewModel)
                     .presentationDetents(
@@ -60,8 +63,17 @@ struct ContentView: View {
                     .interactiveDismissDisabled(true)
             }
         })
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Image(systemName: "figure.dance")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
+                    .padding(18)
+            }
+        }
         .padding()
-        Spacer()
         Spacer()
         Spacer()
         .task {
