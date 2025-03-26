@@ -33,11 +33,8 @@ def upload_wav_file():
 
 @app.route("/train", methods=["GET"])
 def train_model():
-    accuracy = train()
-    return jsonify({
-        "message": "Training completed.",
-        "accuracy": accuracy
-    }), 200
+    train()
+    return jsonify({"message": "Training completed."}), 200
 
 @app.route("/classify_audio", methods=["POST"])
 def classify_audio_api():

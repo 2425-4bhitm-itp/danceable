@@ -41,10 +41,6 @@ Content-Type: Application/JSON
   "fileName": "snippet12.mp3"
 }
 
-###
-
-GET http://localhost:8080/predictions
-Content-Type: */*
 
 ### test backend and ml service
 
