@@ -12,7 +12,7 @@ struct PredictionView: View {
                     Text(dance.name).font(.title2)
                 }
                 Spacer()
-                Image(systemName: getImageForSpeedCategory(speedCategory: prediction.speedCategory))
+                Image(systemName: getImageForSpeedCategory(for: prediction.speedCategory))
                     .resizable()
                     .frame(width: 24, height: 24)
             }

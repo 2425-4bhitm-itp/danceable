@@ -40,14 +40,16 @@ struct ContentView: View {
                 if (areDancesDisplayed) {
                     DancesView(viewModel: viewModel)
                         .toolbar {
-                            Button {
-                                areDancesDisplayed.toggle()
-                            } label:{
-                                HStack {
-                                    Image(systemName: "chevron.left")
-                                    Text("Back")
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button {
+                                    areDancesDisplayed.toggle()
+                                } label:{
+                                    HStack {
+                                        Image(systemName: "chevron.left")
+                                        Text("Back")
+                                    }
+                                    .foregroundStyle(Color.purple)
                                 }
-                                .foregroundStyle(Color.purple)
                             }
                         }
                 } else {
@@ -56,7 +58,7 @@ struct ContentView: View {
                             if (selectedDetent != .fraction(0.125)) {
                                 ToolbarItem(placement: .topBarLeading) {
                                     Button(action: {
-                                        //areDancesDisplayed.toggle()
+                                        areDancesDisplayed.toggle()
                                         print("Dance button tapped, areDancesDisplayed: \(areDancesDisplayed)")
                                     }) {
                                         Image(systemName: "figure.dance")
@@ -64,7 +66,6 @@ struct ContentView: View {
                                             .scaledToFit()
                                             .frame(width: 32, height: 32)
                                             .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
-                                            .padding(.bottom, -32)
                                     }
                             }
                         }
