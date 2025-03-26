@@ -17,6 +17,8 @@ struct ContentView: View {
     @State private var isSheetPresent: Bool = true
     @State private var selectedDetent: PresentationDetent = .fraction(0.125)
     
+    @State private var areDancesDisplayed: Bool = false
+    
     var body: some View {
         Spacer()
         Button(action: {
@@ -33,47 +35,53 @@ struct ContentView: View {
             }
             .padding(75)
             .shadow(radius: 10)
-        }.sheet(isPresented: $isSheetPresent, content: {
-            VStack {
-                /*if (selectedDetent != .fraction(0.125)) {
-                    NavigationStack {
-                        VStack {
-                            NavigationLink(destination: DancesView(viewModel: viewModel)) {
-                                Image(systemName: "figure.dance")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 32, height: 32)
-                                    .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
-                                    .padding(18)
+        }.sheet(isPresented: $isSheetPresent) {
+            NavigationView {
+                if (areDancesDisplayed) {
+                    DancesView(viewModel: viewModel)
+                        .toolbar {
+                            Button {
+                                areDancesDisplayed.toggle()
+                            } label:{
+                                HStack {
+                                    Image(systemName: "chevron.left")
+                                    Text("Back")
+                                }
+                                .foregroundStyle(Color.purple)
                             }
-                            Spacer()
+                        }
+                } else {
+                    PredictionsView(viewModel: viewModel)
+                        .toolbar {
+                            if (selectedDetent != .fraction(0.125)) {
+                                ToolbarItem(placement: .topBarLeading) {
+                                    Button(action: {
+                                        //areDancesDisplayed.toggle()
+                                        print("Dance button tapped, areDancesDisplayed: \(areDancesDisplayed)")
+                                    }) {
+                                        Image(systemName: "figure.dance")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 32, height: 32)
+                                            .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
+                                            .padding(.bottom, -32)
+                                    }
+                            }
                         }
                     }
-                }*/
-                
-                PredictionsView(viewModel: viewModel)
-                    .presentationDetents(
-                        [.fraction(0.125), .fraction(0.7), .fraction(1)],
-                        selection: $selectedDetent
-                    )
-                    .presentationBackgroundInteraction(
-                        .enabled(upThrough: .fraction(0.125))
-                    )
-                    .presentationDragIndicator(.visible)
-                    .interactiveDismissDisabled(true)
+                }
             }
-        })
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Image(systemName: "figure.dance")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 32, height: 32)
-                    .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
-                    .padding(18)
-            }
+            .presentationDetents(
+                [.fraction(0.125), .fraction(0.7), .fraction(1)],
+                selection: $selectedDetent
+            )
+            .presentationBackgroundInteraction(
+                .enabled(upThrough: .fraction(1))
+            )
+            .presentationDragIndicator(.visible)
+            .interactiveDismissDisabled(true)
         }
-        .padding()
+        Spacer()
         Spacer()
         Spacer()
         .task {
