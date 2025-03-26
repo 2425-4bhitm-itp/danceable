@@ -1,5 +1,6 @@
 package at.leonding.htl.features.library.songsnippet;
 
+import at.leonding.htl.features.library.song.SongRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
@@ -17,15 +18,29 @@ public class SongSnippetResource {
     @Inject
     SongSnippetRepository songSnippetRepository;
 
+    @Inject
+    SongRepository songRepository;
+
     @GET
-    public List<SongSnippet> getAllSnippets() {
-        return songSnippetRepository.listAll();
+    public List<SongSnippetDto> getAllSnippets() {
+        return songSnippetRepository.listAll().stream()
+                .map(s -> new SongSnippetDto(
+                        s.getId(),
+                        s.getSong().getId(),
+                        s.getSongSnippetIndex(),
+                        s.getFileName())
+                ).toList();
     }
 
     @Transactional
     @POST
-    public Response addSnippet(SongSnippet snippet) {
-        songSnippetRepository.persist(snippet);
+    public Response addSnippet(SongSnippetDto snippet) {
+        songSnippetRepository.persist(new SongSnippet(snippet.id(),
+                songRepository.findById(snippet.id()),
+                snippet.songSnippetIndex(),
+                snippet.fileName()
+        ));
+
         return Response.ok().build();
     }
 }

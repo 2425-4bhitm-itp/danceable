@@ -2,7 +2,6 @@ package at.leonding.htl.features.library.songsnippet;
 
 import at.leonding.htl.features.library.song.Song;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
 
@@ -17,9 +16,6 @@ public class SongSnippet {
     private Song song;
 
     private int songSnippetIndex = 0;
-
-    @Min(0)
-    private int speed;
 
 //    @NotEmpty
     private String fileName;
@@ -56,14 +52,6 @@ public class SongSnippet {
         this.fileName = path;
     }
 
-    public int getSpeed() {
-        return speed;
-    }
-
-    public void setSpeed(int speed) {
-        this.speed = speed;
-    }
-
     public SongSnippet() {
     }
 
@@ -71,15 +59,16 @@ public class SongSnippet {
         this.song = song;
     }
 
-    public SongSnippet(Song song, int songSnippetIndex) {
+    public SongSnippet(Song song, int songSnippetIndex, String fileName) {
         this.song = song;
         this.songSnippetIndex = songSnippetIndex;
+        this.fileName = fileName;
     }
 
-    public SongSnippet(Song song, int songSnippetIndex, int speed, String fileName) {
+    public SongSnippet(Long id, Song song, int songSnippetIndex, String fileName) {
+        this.id = id;
         this.song = song;
         this.songSnippetIndex = songSnippetIndex;
-        this.speed = speed;
         this.fileName = fileName;
     }
 

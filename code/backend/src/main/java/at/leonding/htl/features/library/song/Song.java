@@ -2,6 +2,7 @@ package at.leonding.htl.features.library.song;
 
 import at.leonding.htl.features.library.dance.Dance;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
 import java.util.Set;
@@ -19,6 +20,16 @@ public class Song {
 
     @ManyToMany(cascade = CascadeType.MERGE)
     private SortedSet<Dance> dances;
+
+    private int speed;
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
 
     public Set<Dance> getDances() {
         return dances;
@@ -55,14 +66,28 @@ public class Song {
         this.title = title;
     }
 
-    public Song(String title, Set<Dance> dances) {
-        this.title = title;
-        this.dances = new TreeSet<>(dances);
+    public Song(String title, int speed) {
+        this(title);
+        this.speed = speed;
     }
 
-    public Song(String title, SortedSet<Dance> dances) {
-        this.title = title;
+    public Song(String title, int speed, Set<Dance> dances) {
+        this(title, speed, new TreeSet<>(dances));
+    }
+
+    public Song(String title, int speed, SortedSet<Dance> dances) {
+        this(title, speed);
         this.dances = dances;
+    }
+
+    public Song(Long id, String title, int speed, SortedSet<Dance> dances) {
+        this(title, speed, dances);
+        this.id = id;
+    }
+
+    public Song(Long id, String title, int speed, Set<Dance> dances) {
+        this(title, speed, dances);
+        this.id = id;
     }
 
     public void addDance(Dance dance) {

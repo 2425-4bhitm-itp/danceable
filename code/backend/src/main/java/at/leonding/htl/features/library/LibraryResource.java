@@ -121,10 +121,10 @@ public class LibraryResource {
 
             Set<Dance> dances = this.persistOrUpdateDances(danceNames);
 
-            Song song = songRepository.persistOrUpdateSong(songName, dances);
+            Song song = songRepository.persistOrUpdateSong(songName, speedInBpm, dances);
 
             songSnippetRepository.persistOrUpdateSongSnippet(
-                    song, songSnippetIndex, speedInBpm, fileName
+                    song, songSnippetIndex, fileName
             );
         } else {
             throw new IllegalArgumentException(fileName);
