@@ -1,4 +1,4 @@
-import { fetchAllDancesToModel, fetchAllSnippetsToModel, subscribe } from 'model/index'
+import { fetchAllDancesToModel, fetchAllSnippetsToModel, store } from 'model/index'
 
 import { html, render } from 'lib/pure-html'
 
@@ -12,9 +12,9 @@ class ApplicationElement extends HTMLElement {
   connectedCallback() {
     this.render()
 
-    subscribe((model) => this.show(model.currentPane))
-    subscribe((model) => saveModelToSessionStorage(model))
-    subscribe(model => console.log(model))
+    store.subscribe((model) => this.show(model.currentPane))
+    store.subscribe((model) => saveModelToSessionStorage(model))
+    store.subscribe(model => console.log(model))
 
     fetchAllDancesToModel()
     fetchAllSnippetsToModel()
