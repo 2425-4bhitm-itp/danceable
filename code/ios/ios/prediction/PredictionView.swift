@@ -27,7 +27,7 @@ struct PredictionView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .inset(by: 2)
-                .stroke(.blue, lineWidth: 1)
+                .stroke(.gray, lineWidth: 1)
         )
     }
 }
