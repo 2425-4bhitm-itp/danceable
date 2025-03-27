@@ -6,14 +6,12 @@ import { AppMenu } from 'components/menu'
 import { Library, libraryRoute } from 'components/library'
 import { Analysis, analysisRoute } from 'components/analysis'
 import { fetchAllSongsToModel } from 'model/song/song-service'
-import { saveModelToSessionStorage } from 'lib/cache'
 
 class ApplicationElement extends HTMLElement {
   connectedCallback() {
     this.render()
 
     store.subscribe((model) => this.show(model.currentPane))
-    store.subscribe((model) => saveModelToSessionStorage(model))
     store.subscribe((model) => console.log(model))
 
     fetchAllDancesToModel()
