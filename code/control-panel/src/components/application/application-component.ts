@@ -14,7 +14,7 @@ class ApplicationElement extends HTMLElement {
 
     store.subscribe((model) => this.show(model.currentPane))
     store.subscribe((model) => saveModelToSessionStorage(model))
-    store.subscribe(model => console.log(model))
+    store.subscribe((model) => console.log(model))
 
     fetchAllDancesToModel()
     fetchAllSnippetsToModel()
@@ -32,7 +32,7 @@ class ApplicationElement extends HTMLElement {
           </div>
         </div>
       `,
-      this,
+      this
     )
   }
 
