@@ -24,7 +24,7 @@ export class SnippetElement extends HTMLElement {
     store
       .pipe(
         distinctUntilChanged(
-          (prev, cur) => prev.snippets === cur.snippets && prev.dances === prev.dances
+          (prev, cur) => prev.snippets == cur.snippets && prev.dances == prev.dances
         )
       )
       .subscribe((model) => {
@@ -48,7 +48,7 @@ export class SnippetElement extends HTMLElement {
             class="flex w-full items-center gap-5 border-t-2 border-t-gray-100 py-1.5 select-none"
           >
             <span> ${this.state.fileName} (${this.state.songSnippetIndex}) </span>
-            <span class="text-gray-400"> ${this.state.speed} bpm </span>
+            <span class="text-gray-400"> ${song.speed} bpm </span>
             <div class="flex flex-1 flex-row-reverse gap-2">
               ${dances
                 .map(

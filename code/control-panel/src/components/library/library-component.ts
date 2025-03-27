@@ -29,7 +29,6 @@ class LibraryElement extends HTMLElement {
         )
       )
       .subscribe((model) => {
-        console.log('distinct')
         this.renderDanceFilters(model.danceFilters, model.dances)
       })
 
