@@ -5,7 +5,6 @@ import { Dance } from 'model/dance/dance'
 import { Song } from 'model/song/song'
 import { DanceFilter } from 'model/dance-filter/dance-filter'
 
-import { libraryRoute } from 'components/library'
 import { WriteableDraft } from 'lib/immer'
 
 interface Model {
@@ -16,17 +15,13 @@ interface Model {
   danceFilters: DanceFilter[]
 }
 
-const cachedModel: Model = null // readModelFromSessionStorage()
-
-const state: Model = cachedModel
-  ? cachedModel
-  : {
-      currentPane: '/' + libraryRoute,
-      snippets: [],
-      songs: [],
-      dances: [],
-      danceFilters: [],
-    }
+const state: Model = {
+  currentPane: '',
+  snippets: [],
+  songs: [],
+  dances: [],
+  danceFilters: [],
+}
 
 const store = new Subject(state)
 
