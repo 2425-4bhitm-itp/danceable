@@ -41,9 +41,8 @@ def train():
 
 def classify_audio(file_path, extractor):
     global model
-    features = extractor.extract_features_from_file(file_path).reshape(1, -1)
-    predictions = None
     if model is not None:
+        features = extractor.extract_features_from_file(file_path).reshape(1, -1)
         probabilities = model.predict_proba(features)[0]
         dance_styles = model.classes_
         predictions = sorted(zip(dance_styles, probabilities), key=lambda x: x[1], reverse=True)
