@@ -2,6 +2,7 @@ package at.leonding.htl.features.library.songsnippet;
 
 import at.leonding.htl.features.library.song.Song;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 
 import java.util.Objects;
 
@@ -15,9 +16,7 @@ public class SongSnippet {
     @JoinColumn(name = "song_id", nullable = false)
     private Song song;
 
-    private int songSnippetIndex = 0;
-
-//    @NotEmpty
+    @NotEmpty
     private String fileName;
 
     public void setId(Long id) {
@@ -36,14 +35,6 @@ public class SongSnippet {
         this.song = song;
     }
 
-    public int getSongSnippetIndex() {
-        return songSnippetIndex;
-    }
-
-    public void setSongSnippetIndex(int songSnippetIndex) {
-        this.songSnippetIndex = songSnippetIndex;
-    }
-
     public String getFileName() {
         return fileName;
     }
@@ -59,16 +50,14 @@ public class SongSnippet {
         this.song = song;
     }
 
-    public SongSnippet(Song song, int songSnippetIndex, String fileName) {
+    public SongSnippet(Song song, String fileName) {
         this.song = song;
-        this.songSnippetIndex = songSnippetIndex;
         this.fileName = fileName;
     }
 
-    public SongSnippet(Long id, Song song, int songSnippetIndex, String fileName) {
+    public SongSnippet(Long id, Song song, String fileName) {
         this.id = id;
         this.song = song;
-        this.songSnippetIndex = songSnippetIndex;
         this.fileName = fileName;
     }
 
@@ -89,7 +78,6 @@ public class SongSnippet {
         return "SongSnippet{" +
                 "id=" + id +
                 ", song=" + song +
-                ", songSnippetIndex=" + songSnippetIndex +
                 '}';
     }
 }

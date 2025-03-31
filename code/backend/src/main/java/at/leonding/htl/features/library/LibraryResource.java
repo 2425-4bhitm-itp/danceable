@@ -124,7 +124,7 @@ public class LibraryResource {
             Song song = songRepository.persistOrUpdateSong(songName, speedInBpm, dances.stream().findFirst().orElse(null));
 
             songSnippetRepository.persistOrUpdateSongSnippet(
-                    song, songSnippetIndex, fileName
+                    song, fileName
             );
         } else {
             throw new IllegalArgumentException(fileName);

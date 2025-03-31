@@ -10,11 +10,12 @@ public class SongSnippetRepository implements PanacheRepository<SongSnippet> {
         return find("song = ?1 and songSnippetIndex = ?2", song, index).firstResult();
     }
 
-    public SongSnippet persistOrUpdateSongSnippet(Song song, int songSnippetIndex, String path) {
-        SongSnippet songSnippet = this.findSongSnippetBySongAndIndex(song, songSnippetIndex);
+    public SongSnippet persistOrUpdateSongSnippet(Song song, String path) {
+//        SongSnippet songSnippet = this.findSongSnippetBySongAndIndex(song, songSnippetIndex); // warummm?????
+        SongSnippet songSnippet = null;
 
         if (songSnippet == null) {
-            songSnippet = new SongSnippet(song, songSnippetIndex, path);
+            songSnippet = new SongSnippet(song, path);
         } else {
             songSnippet.setFileName(path);
         }

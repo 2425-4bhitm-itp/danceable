@@ -26,23 +26,23 @@ VALUES
     ('Life is a Rollercoaster - Ronan Keating', 100, 5);
 
 -- Insert song snippets
-INSERT INTO SongSnippet (song_id, songSnippetIndex, fileName)
+INSERT INTO SongSnippet (song_id, fileName)
 VALUES
-    (1, 1, 'diamonds_rihanna_1.mp3'),
-    (2, 1, 'bad_moon_rising_1.mp3'),
-    (2, 2, 'bad_moon_rising_2.mp3'),
-    (2, 3, 'bad_moon_rising_3.mp3'),
-    (3, 1, 'i_want_it_that_way_1.mp3'),
-    (3, 2, 'i_want_it_that_way_2.mp3'),
-    (3, 3, 'i_want_it_that_way_3.mp3'),
-    (3, 4, 'i_want_it_that_way_4.mp3'),
-    (4, 1, 'havana_1.mp3'),
-    (4, 2, 'havana_2.mp3'),
-    (4, 3, 'havana_3.mp3'),
-    (5, 1, 'all_we_got_1.mp3'),
-    (5, 2, 'all_we_got_2.mp3'),
-    (6, 1, 'life_is_a_rollercoaster_1.mp3'),
-    (6, 2, 'life_is_a_rollercoaster_2.mp3');
+    (1, 'diamonds_rihanna_1.mp3'),
+    (2, 'bad_moon_rising_1.mp3'),
+    (2, 'bad_moon_rising_2.mp3'),
+    (2, 'bad_moon_rising_3.mp3'),
+    (3, 'i_want_it_that_way_1.mp3'),
+    (3, 'i_want_it_that_way_2.mp3'),
+    (3, 'i_want_it_that_way_3.mp3'),
+    (3, 'i_want_it_that_way_4.mp3'),
+    (4, 'havana_1.mp3'),
+    (4, 'havana_2.mp3'),
+    (4, 'havana_3.mp3'),
+    (5, 'all_we_got_1.mp3'),
+    (5, 'all_we_got_2.mp3'),
+    (6, 'life_is_a_rollercoaster_1.mp3'),
+    (6, 'life_is_a_rollercoaster_2.mp3');
 
 -- Insert predictions
 INSERT INTO Prediction (confidence, dance_id, speedCategory)
