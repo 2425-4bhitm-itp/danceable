@@ -1,6 +1,7 @@
 import os
 import csv
 
+
 class AudioDatasetCreator:
     def __init__(self, extractor, output_csv="/app/song-storage/features.csv"):
         self.extractor = extractor
@@ -14,6 +15,7 @@ class AudioDatasetCreator:
 
         for file in os.listdir(folder_path):
             if file.endswith(".wav"):
+                file_path = os.path.join(folder_path, file)
                 file_path = os.path.join(folder_path, file)
                 features = self.extractor.extract_features_from_file(file_path)
                 data.append([file] + list(features) + [label])

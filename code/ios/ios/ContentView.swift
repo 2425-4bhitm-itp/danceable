@@ -1,11 +1,14 @@
 import SwiftUI
 import AVFoundation
 
-var recordingQueue = DispatchQueue(label:"recording")
+var recordingQueue = DispatchQueue(label: "recording")
 
 struct ContentView: View {
     @ObservedObject var viewModel: ViewModel
+    
     let queue = DispatchQueue(label: "at.htl.leonding")
+    
+    @State var showDancesView = false
     
     //Audio Utils
     var engine = AVAudioEngine()
@@ -13,6 +16,8 @@ struct ContentView: View {
     
     @State private var isSheetPresent: Bool = true
     @State private var selectedDetent: PresentationDetent = .fraction(0.125)
+    
+    @State private var areDancesDisplayed: Bool = false
     
     var body: some View {
         Spacer()
@@ -30,37 +35,53 @@ struct ContentView: View {
             }
             .padding(75)
             .shadow(radius: 10)
-        }.sheet(isPresented: $isSheetPresent, content: {
-            NavigationStack {
-                HStack {
-                    NavigationLink(
-                        destination: DancesView(viewModel: viewModel)
-                    ) {
-                        if (selectedDetent != .fraction(0.125)) {
-                            Image(systemName: "figure.dance")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 32, height: 32)
-                                .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
-                                .padding(18)
+        }.sheet(isPresented: $isSheetPresent) {
+            NavigationView {
+                if (areDancesDisplayed) {
+                    DancesView(viewModel: viewModel)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button {
+                                    areDancesDisplayed.toggle()
+                                } label:{
+                                    HStack {
+                                        Image(systemName: "chevron.left")
+                                        Text("Back")
+                                    }
+                                    .foregroundStyle(Color.purple)
+                                }
+                            }
+                        }
+                } else {
+                    PredictionsView(viewModel: viewModel)
+                        .toolbar {
+                            if (selectedDetent != .fraction(0.125)) {
+                                ToolbarItem(placement: .topBarLeading) {
+                                    Button(action: {
+                                        areDancesDisplayed.toggle()
+                                        print("Dance button tapped, areDancesDisplayed: \(areDancesDisplayed)")
+                                    }) {
+                                        Image(systemName: "figure.dance")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 32, height: 32)
+                                            .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
+                                    }
+                            }
                         }
                     }
-                    Spacer()
                 }
-                
-                PredictionsView(viewModel: viewModel)
-                    .presentationDetents(
-                        [.fraction(0.125), .fraction(0.7), .fraction(1)],
-                        selection: $selectedDetent
-                    )
-                    .presentationBackgroundInteraction(
-                        .enabled(upThrough: .fraction(0.125))
-                    )
-                    .presentationDragIndicator(.visible)
-                    .interactiveDismissDisabled(true)
             }
-        })
-        .padding()
+            .presentationDetents(
+                [.fraction(0.125), .fraction(0.7), .fraction(1)],
+                selection: $selectedDetent
+            )
+            .presentationBackgroundInteraction(
+                .enabled(upThrough: .fraction(1))
+            )
+            .presentationDragIndicator(.visible)
+            .interactiveDismissDisabled(true)
+        }
         Spacer()
         Spacer()
         Spacer()

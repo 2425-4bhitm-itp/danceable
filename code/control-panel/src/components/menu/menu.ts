@@ -3,7 +3,7 @@ import { addLinks } from 'lib/router'
 
 import { libraryRoute } from 'components/library'
 import { analysisRoute } from 'components/analysis'
-import { subscribe } from 'model/model'
+import { store } from 'model/index'
 
 export const AppMenu = 'menu-component'
 
@@ -15,7 +15,7 @@ class MenuElement extends HTMLElement {
   connectedCallback() {
     this.render()
 
-    subscribe((model) => this.highlightLink(model.currentPane))
+    store.subscribe((model) => this.highlightLink(model.currentPane))
   }
 
   render() {
@@ -48,11 +48,11 @@ class MenuElement extends HTMLElement {
       link.classList.remove('bg-gray-dark')
       link.classList.remove('hover:bg-gray-200')
 
-      link.querySelector('img').src = link.querySelector('img').src.replace('light', 'dark');
+      link.querySelector('img').src = link.querySelector('img').src.replace('light', 'dark')
 
       if ('/' + link.getAttribute('href') === currentPane) {
         link.classList.add('bg-gray-dark')
-        link.querySelector('img').src = link.querySelector('img').src.replace('dark', 'light');
+        link.querySelector('img').src = link.querySelector('img').src.replace('dark', 'light')
       } else {
         link.classList.add('hover:bg-gray-200')
       }

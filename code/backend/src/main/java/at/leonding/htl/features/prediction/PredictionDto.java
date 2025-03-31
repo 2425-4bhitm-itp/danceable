@@ -1,3 +1,4 @@
+
 package at.leonding.htl.features.prediction;
 
 public record PredictionDto(

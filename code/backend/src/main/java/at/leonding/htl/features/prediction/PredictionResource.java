@@ -1,3 +1,4 @@
+
 package at.leonding.htl.features.prediction;
 
 import jakarta.inject.Inject;

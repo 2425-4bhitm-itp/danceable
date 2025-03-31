@@ -1,4 +1,4 @@
-import { fetchAllDancesToModel, fetchAllSnippetsToModel, subscribe } from 'model/index'
+import { fetchAllDancesToModel, fetchAllSnippetsToModel, store } from 'model/index'
 
 import { html, render } from 'lib/pure-html'
 
@@ -6,15 +6,13 @@ import { AppMenu } from 'components/menu'
 import { Library, libraryRoute } from 'components/library'
 import { Analysis, analysisRoute } from 'components/analysis'
 import { fetchAllSongsToModel } from 'model/song/song-service'
-import { saveModelToSessionStorage } from 'lib/cache'
 
 class ApplicationElement extends HTMLElement {
   connectedCallback() {
     this.render()
 
-    subscribe((model) => this.show(model.currentPane))
-    subscribe((model) => saveModelToSessionStorage(model))
-    subscribe(model => console.log(model))
+    store.subscribe((model) => this.show(model.currentPane))
+    store.subscribe((model) => console.log(model))
 
     fetchAllDancesToModel()
     fetchAllSnippetsToModel()
@@ -32,7 +30,7 @@ class ApplicationElement extends HTMLElement {
           </div>
         </div>
       `,
-      this,
+      this
     )
   }
 

@@ -15,6 +15,7 @@ const config = {
   entry: {
     main: './src/index.ts',
   },
+  devtool: 'cheap-source-map',
   output: {
     path: path.resolve(__dirname, 'dist'),
   },

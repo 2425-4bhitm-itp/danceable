@@ -12,12 +12,13 @@ public class SongRepository implements PanacheRepository<Song> {
         return find("title", title.toLowerCase()).firstResult();
     }
 
-    public Song persistOrUpdateSong(String songName, Set<Dance> dances) {
+    public Song persistOrUpdateSong(String songName, int speed, Set<Dance> dances) {
         Song song = this.findSongByTitle(songName);
 
         if (song == null) {
-            song = new Song(songName.toLowerCase(), dances);
+            song = new Song(songName.toLowerCase(), speed, dances);
         } else {
+            song.setSpeed(speed);
             song.setDances(dances);
         }
 

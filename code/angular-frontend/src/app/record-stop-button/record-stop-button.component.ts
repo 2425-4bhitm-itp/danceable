@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, EventEmitter, Output} from '@angular/core';
 
 @Component({
   selector: 'app-record-stop-button',
@@ -7,5 +7,5 @@ import { Component } from '@angular/core';
   styleUrl: './record-stop-button.component.css'
 })
 export class RecordStopButtonComponent {
-
+  @Output() stop = new EventEmitter<void>();
 }

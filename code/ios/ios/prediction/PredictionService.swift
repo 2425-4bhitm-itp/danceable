@@ -1,10 +1,11 @@
 import Foundation
 
-let ADRESS = "172.20.10.5"
+let ADRESS = "localhost"
 let PREDICTION_BASE_URL = "http://" + ADRESS + ":8080/predictions"
 
 func loadPredictions() -> [Prediction] {
     var predictions: [Prediction] = []
+    
     
     if let url = URL(string: PREDICTION_BASE_URL) {
         if let data = try? Data(contentsOf: url) {

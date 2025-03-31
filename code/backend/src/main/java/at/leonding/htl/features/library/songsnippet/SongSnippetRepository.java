@@ -1,11 +1,8 @@
 package at.leonding.htl.features.library.songsnippet;
 
-import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.song.Song;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
-
-import java.util.Set;
 
 @ApplicationScoped
 public class SongSnippetRepository implements PanacheRepository<SongSnippet> {
@@ -13,13 +10,12 @@ public class SongSnippetRepository implements PanacheRepository<SongSnippet> {
         return find("song = ?1 and songSnippetIndex = ?2", song, index).firstResult();
     }
 
-    public SongSnippet persistOrUpdateSongSnippet(Song song, int songSnippetIndex, int speedInBpm, String path) {
+    public SongSnippet persistOrUpdateSongSnippet(Song song, int songSnippetIndex, String path) {
         SongSnippet songSnippet = this.findSongSnippetBySongAndIndex(song, songSnippetIndex);
 
         if (songSnippet == null) {
-            songSnippet = new SongSnippet(song, songSnippetIndex, speedInBpm, path);
+            songSnippet = new SongSnippet(song, songSnippetIndex, path);
         } else {
-            songSnippet.setSpeed(speedInBpm);
             songSnippet.setFileName(path);
         }
 

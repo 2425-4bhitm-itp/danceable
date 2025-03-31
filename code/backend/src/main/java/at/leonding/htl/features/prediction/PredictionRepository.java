@@ -1,3 +1,4 @@
+
 package at.leonding.htl.features.prediction;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepository;

@@ -6,7 +6,7 @@ const SONG_URL = '/api/songs'
 export async function fetchAllSongsToModel() {
   const songs = await fetchAllSongs()
 
-  set((model) => songs)
+  set((model) => (model.songs = songs))
 }
 
 export async function fetchAllSongs() {
@@ -16,10 +16,12 @@ export async function fetchAllSongs() {
     const response = await fetch(SONG_URL)
 
     if (!response.ok) {
-      throw new Error(`HTTP error while fetching songs from ${SONG_URL}! Status: ${response.status}`)
+      throw new Error(
+        `HTTP error while fetching songs from ${SONG_URL}! Status: ${response.status}`
+      )
     }
 
-    songs = await response.json() as Song[]
+    songs = (await response.json()) as Song[]
   } catch (error) {
     console.log(error.toString())
   }
