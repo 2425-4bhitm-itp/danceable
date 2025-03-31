@@ -44,7 +44,7 @@ public class SongSnippetResource {
     public Response patchSnippet(SongSnippetDto snippet) {
         SongSnippet songSnippet = songSnippetRepository.findById(snippet.id());
 
-        songSnippet.setSong(songRepository.findById(snippet.id()));
+        songSnippet.setSong(songRepository.findById(snippet.songId()));
 
         return Response.ok().build();
     }

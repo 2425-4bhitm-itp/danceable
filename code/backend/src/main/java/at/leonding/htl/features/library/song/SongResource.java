@@ -1,6 +1,5 @@
 package at.leonding.htl.features.library.song;
 
-import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.dance.DanceRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -48,7 +47,7 @@ public class SongResource {
     public Response patchSong(SongDto songDto) {
         Song song = songRepository.findById(songDto.id());
 
-        song.setDance(danceRepository.findById(songDto.id()));
+        song.setDance(danceRepository.findById(songDto.danceId()));
         song.setSpeed(songDto.speed());
         song.setTitle(songDto.title());
 
