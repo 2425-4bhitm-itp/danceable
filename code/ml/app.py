@@ -63,11 +63,16 @@ def upload_webm_file():
 def health_check():
     return jsonify(status="healthy", message="Service is running"), 200
 
-@app.route('/processing_wav', methods=['POST'])
-def shorten_all_clips():
+@app.route('/split_and_sort', methods=['POST'])
+def split_and_sort():
     shorten.split_wav_files(folder_path, snippets_path)
     sort.sort_and_delete_wav_files(snippets_path)
     return jsonify({"message": "Shortening and sorting completed"}), 200
+
+@app.route('/split_files', methods=['POST'])
+def split_files():
+    shorten.split_wav_files(folder_path, folder_path)
+    return jsonify({"message": "Shortening completed"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
