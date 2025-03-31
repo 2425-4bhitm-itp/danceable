@@ -12,7 +12,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Path("/songs")
 @Produces(MediaType.APPLICATION_JSON)
@@ -29,19 +28,19 @@ public class SongResource {
                         s.getId(),
                         s.getTitle(),
                         s.getSpeed(),
-                        s.getDances().stream().map(Dance::getId).toList()
+                        s.getDance().getId()
                 )
         ).toList();
     }
 
     @Transactional
     @POST
-    public Response addSong(SongDto song) {
+    public Response addSong(SongDto songDto) {
         songRepository.persist(new Song(
-                song.id(),
-                song.title(),
-                song.speed(),
-                song.danceIds().stream().map(id -> danceRepository.findById(id)).collect(Collectors.toSet())
+                songDto.id(),
+                songDto.title(),
+                songDto.speed(),
+                danceRepository.findById(songDto.danceId())
         ));
 
         return Response.ok().build();

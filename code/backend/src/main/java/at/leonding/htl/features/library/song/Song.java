@@ -18,8 +18,9 @@ public class Song {
     @Column(unique = true)
     private String title;
 
-    @ManyToMany(cascade = CascadeType.MERGE)
-    private SortedSet<Dance> dances;
+    @ManyToOne(cascade = CascadeType.MERGE)
+    @JoinColumn(name = "dance_id")
+    private Dance dance;
 
     private int speed;
 
@@ -31,16 +32,12 @@ public class Song {
         this.speed = speed;
     }
 
-    public Set<Dance> getDances() {
-        return dances;
+    public Dance getDance() {
+        return dance;
     }
 
-    public void setDances(Set<Dance> dances) {
-        this.dances = new TreeSet<>(dances);
-    }
-
-    public void setDances(SortedSet<Dance> dances) {
-        this.dances = dances;
+    public void setDance(Dance dance) {
+        this.dance = dance;
     }
 
     public void setId(Long id) {
@@ -71,31 +68,14 @@ public class Song {
         this.speed = speed;
     }
 
-    public Song(String title, int speed, Set<Dance> dances) {
-        this(title, speed, new TreeSet<>(dances));
-    }
-
-    public Song(String title, int speed, SortedSet<Dance> dances) {
+    public Song(String title, int speed, Dance dance) {
         this(title, speed);
-        this.dances = dances;
+        this.dance = dance;
     }
 
-    public Song(Long id, String title, int speed, SortedSet<Dance> dances) {
-        this(title, speed, dances);
+    public Song(Long id, String title, int speed, Dance dance) {
+        this(title, speed, dance);
         this.id = id;
-    }
-
-    public Song(Long id, String title, int speed, Set<Dance> dances) {
-        this(title, speed, dances);
-        this.id = id;
-    }
-
-    public void addDance(Dance dance) {
-        this.dances.add(dance);
-    }
-
-    public boolean removeDance(Dance dance) {
-        return this.dances.remove(dance);
     }
 
     @Override

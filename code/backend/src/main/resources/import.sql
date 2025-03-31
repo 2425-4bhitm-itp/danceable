@@ -16,14 +16,14 @@ VALUES
     ('Bachata', 90, 200);
 
 -- Insert songs
-INSERT INTO Song (title, speed)
-VALUES 
-    ('Diamonds - Rihanna', 100),
-    ('Bad Moon Rising - Creedence Clearwater Revival', 100),
-    ('I Want It That Way - Backstreet Boys', 100),
-    ('Havana - Camila Cabello', 100),
-    ('All We Got - Ray Dalton', 100),
-    ('Life is a Rollercoaster - Ronan Keating', 100);
+INSERT INTO Song (title, speed, dance_id)
+VALUES
+    ('Diamonds - Rihanna', 100, 1),
+    ('Bad Moon Rising - Creedence Clearwater Revival', 100, 2),
+    ('I Want It That Way - Backstreet Boys', 100, 1),
+    ('Havana - Camila Cabello', 100, 3),
+    ('All We Got - Ray Dalton', 100, 6),
+    ('Life is a Rollercoaster - Ronan Keating', 100, 5);
 
 -- Insert song snippets
 INSERT INTO SongSnippet (song_id, songSnippetIndex, fileName)
@@ -43,23 +43,6 @@ VALUES
     (5, 2, 'all_we_got_2.mp3'),
     (6, 1, 'life_is_a_rollercoaster_1.mp3'),
     (6, 2, 'life_is_a_rollercoaster_2.mp3');
-
--- Link songs to dances
-INSERT INTO Song_Dance (Song_id, dances_id)
-VALUES
-    (1, 3),
-    (2, 8),
-    (2, 5),
-    (3, 8),
-    (3, 5),
-    (4, 8),
-    (4, 5),
-    (5, 9),
-    (5, 8),
-    (5, 7),
-    (6, 9),
-    (6, 8),
-    (6, 7);
 
 -- Insert predictions
 INSERT INTO Prediction (confidence, dance_id, speedCategory)

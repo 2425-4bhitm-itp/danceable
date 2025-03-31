@@ -121,7 +121,7 @@ public class LibraryResource {
 
             Set<Dance> dances = this.persistOrUpdateDances(danceNames);
 
-            Song song = songRepository.persistOrUpdateSong(songName, speedInBpm, dances);
+            Song song = songRepository.persistOrUpdateSong(songName, speedInBpm, dances.stream().findFirst().orElse(null));
 
             songSnippetRepository.persistOrUpdateSongSnippet(
                     song, songSnippetIndex, fileName
