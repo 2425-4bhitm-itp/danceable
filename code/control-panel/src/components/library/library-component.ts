@@ -10,14 +10,13 @@ import { Dance } from 'model/dance/dance'
 import { produce } from 'lib/immer'
 import { Song } from 'model/song/song'
 import { EditSongElement, EditSongModal } from 'components/edit-song-modal/edit-song-modal'
+import { SwitchSongElement, SwitchSongModal } from 'components/switch-song-modal/switch-song-modal'
 
 export const Library = 'library-component'
 export const libraryRoute = 'library'
 
 class LibraryElement extends HTMLElement {
   static observedAttributes = ['hidden']
-
-  editSong: EditSongElement
 
   constructor() {
     super()
@@ -42,16 +41,12 @@ class LibraryElement extends HTMLElement {
           <div class="px-2 pt-9 pb-2 text-3xl">Library</div>
           <div id="danceFilters" class="flex flex-wrap gap-2 p-2"></div>
           <div id="snippets" class="flex w-full flex-col items-center"></div>
-          <${EditSongModal} song-id="1"></${EditSongModal}>
+          <${EditSongModal}></${EditSongModal}>
+          <${SwitchSongModal}></${SwitchSongModal}>
         </div>
       `,
       this
     )
-
-    this.editSong = document.querySelector(EditSongModal)
-    if (this.editSong) {
-      this.editSong.show()
-    }
 
     addLinks(this)
   }
@@ -67,13 +62,13 @@ class LibraryElement extends HTMLElement {
 
         const filterElement = renderAppendChild(
           html`
-            <span
+            <button
               class="${filter.isEnabled
                 ? 'bg-gray-300'
                 : 'bg-gray-100'} cursor-pointer rounded-full p-0.5 px-3 select-none"
             >
               ${dance.name}
-            </span>
+            </button>
           `,
           danceFilterContainer
         )
@@ -120,7 +115,25 @@ class LibraryElement extends HTMLElement {
         snippetElement.addEventListener('edit-song', (e: CustomEvent) => {
           this.closeAllSnippetOptions()
           set((model) => (model.songToEdit = snippetElement.snippet.songId))
-          this.editSong.show()
+          const editSongElement: EditSongElement = document.querySelector(EditSongModal)
+          editSongElement?.show()
+        })
+
+        snippetElement.addEventListener('change-song', (e: CustomEvent) => {
+          this.closeAllSnippetOptions()
+          set((model) => (model.snippetToSwitchSong = snippetElement.snippet.id))
+          const changeSongElement: SwitchSongElement = document.querySelector(SwitchSongModal)
+          changeSongElement?.show()
+        })
+
+        snippetElement.addEventListener('delete-snippet', (e: CustomEvent) => {
+          this.closeAllSnippetOptions()
+          set((model) => {
+            const snippetIndex = model.snippets.findIndex((s) => s.id === snippetElement.snippet.id)
+
+            model.snippets.splice(snippetIndex, 1)
+            model.snippetToSwitchSong = -1
+          })
         })
       })
     }

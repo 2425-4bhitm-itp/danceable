@@ -14,6 +14,7 @@ interface Model {
   dances: Dance[]
   danceFilters: DanceFilter[]
   songToEdit: number
+  snippetToSwitchSong: number
 }
 
 const state: Model = {
@@ -23,6 +24,7 @@ const state: Model = {
   dances: [],
   danceFilters: [],
   songToEdit: -1,
+  snippetToSwitchSong: -1,
 }
 
 const store = new Subject(state)

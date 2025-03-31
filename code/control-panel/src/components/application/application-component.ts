@@ -12,7 +12,7 @@ class ApplicationElement extends HTMLElement {
     this.render()
 
     store.subscribe((model) => this.show(model.currentPane))
-    store.subscribe((model) => console.log(model))
+    // store.subscribe((model) => console.log(model))
 
     fetchAllDancesToModel()
     fetchAllSnippetsToModel()

@@ -79,6 +79,7 @@ export class EditSongElement extends HTMLElement {
               cancel
             </button>
             <button
+              type="submit"
               id="saveEditDanceModal"
               class="bg-gray-dark cursor-pointer rounded-lg px-5 py-1 text-white hover:text-white"
             >
@@ -88,13 +89,6 @@ export class EditSongElement extends HTMLElement {
         </dialog>`,
         this
       )
-
-      const formElement: HTMLFormElement = this.querySelector('form')
-
-      formElement?.addEventListener('onsubmit', (e) => {
-        e.preventDefault()
-        this.updateDance()
-      })
 
       document
         .querySelector('#cancelEditDanceModal')
