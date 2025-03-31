@@ -12,7 +12,7 @@ export const SnippetComponent = 'snippet-component'
 export class SnippetElement extends HTMLElement {
   static observedAttributes = ['hidden']
 
-  state: Snippet
+  snippet: Snippet
 
   isOptionsOpen: boolean = false
 
@@ -28,44 +28,59 @@ export class SnippetElement extends HTMLElement {
         )
       )
       .subscribe((model) => {
-        this.state = model.snippets.find((s) => s.id === this.state.id)
+        this.snippet = model.snippets.find((s) => s.id === this.snippet.id)
 
         this.render(model.songs, model.dances)
       })
   }
 
   render(allSongs: Song[], allDances: Dance[]) {
-    const song = allSongs.find((s) => s.id === this.state.songId)
+    const song = allSongs.find((s) => s.id === this.snippet.songId)
 
     if (song) {
-      const danceMap = new Map(allDances.map((dance) => [dance.id, dance]))
+      // const danceMap = new Map(allDances.map((dance) => [dance.id, dance]))
 
-      const dances: Dance[] = song.danceIds.flatMap((id): Dance | [] => danceMap.get(id) ?? [])
+      // const dances: Dance[] = song.danceIds.flatMap((id): Dance | [] => danceMap.get(id) ?? [])
+
+      const dance = allDances.find((d) => {
+        const song = allSongs.find((s) => s.id === this.snippet.songId)
+
+        return d.id === song.danceId
+      })
+
+      /*
+      * ${dances
+                .map(
+                  (dance) =>
+                    '<span class="p-0.5 px-3 bg-gray-100 rounded-full">' + dance.name + '</span>'
+                )
+                .join('')}
+      * */
 
       render(
         html`
           <div
             class="flex w-full items-center gap-5 border-t-2 border-t-gray-100 py-1.5 select-none"
           >
-            <span> ${this.state.fileName} (${this.state.songSnippetIndex}) </span>
+            <span> ${this.snippet.fileName} (${this.snippet.songSnippetIndex}) </span>
             <span class="text-gray-400"> ${song.speed} bpm </span>
             <div class="flex flex-1 flex-row-reverse gap-2">
-              ${dances
-                .map(
-                  (dance) =>
-                    '<span class="p-0.5 px-3 bg-gray-100 rounded-full">' + dance.name + '</span>'
-                )
-                .join('')}
+              <span class="rounded-full bg-gray-100 p-0.5 px-3">${dance.name}</span>
             </div>
             <div class="relative w-8">
-              <modal
+              <div
                 hidden
                 class="snippet-options absolute top-0 right-8 flex min-w-12 flex-col rounded-md bg-white p-1 text-nowrap shadow"
               >
-                <span class="rounded px-2 py-1 text-purple-500 hover:bg-gray-100">analyse</span>
-                <span class="rounded px-2 py-1 hover:bg-gray-100">edit song</span>
-                <span class="rounded px-2 py-1 text-red-400 hover:bg-gray-100">remove snippet</span>
-              </modal>
+                <span
+                  class="analyse-song-option rounded px-2 py-1 text-purple-500 hover:bg-gray-100"
+                  >analyse</span
+                >
+                <span class="edit-song-option rounded px-2 py-1 hover:bg-gray-100">edit song</span>
+                <span class="remove-song-option rounded px-2 py-1 text-red-400 hover:bg-gray-100"
+                  >remove snippet</span
+                >
+              </div>
               <div
                 class="snippet-options-button flex aspect-square w-full items-center justify-center rounded-md hover:bg-gray-100"
               >
@@ -77,6 +92,10 @@ export class SnippetElement extends HTMLElement {
         this
       )
 
+      this.querySelector('.edit-song-option').addEventListener('click', (e: MouseEvent) =>
+        this.editSong()
+      )
+
       this.querySelector('.snippet-options-button').addEventListener('click', (e: MouseEvent) =>
         this.optionsClicked()
       )
@@ -85,8 +104,12 @@ export class SnippetElement extends HTMLElement {
     }
   }
 
+  editSong() {
+    this.dispatchEvent(new CustomEvent('edit-song', { detail: this.snippet.songId }))
+  }
+
   optionsClicked() {
-    this.dispatchEvent(new CustomEvent('snippet-option-clicked', { detail: this.state }))
+    this.dispatchEvent(new CustomEvent('snippet-options-clicked', { detail: this.snippet }))
 
     this.openOrCloseOptions(!this.isOptionsOpen)
   }
@@ -94,7 +117,7 @@ export class SnippetElement extends HTMLElement {
   openOrCloseOptions(changeOptionsTo: boolean) {
     this.isOptionsOpen = changeOptionsTo
 
-    const optionsElement = this.querySelector('modal.snippet-options')
+    const optionsElement = this.querySelector('.snippet-options')
 
     if (optionsElement) {
       if (this.isOptionsOpen) {

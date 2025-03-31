@@ -8,8 +8,8 @@ import { DanceFilter } from 'model/dance-filter/dance-filter'
 import { Snippet } from 'model/snippet/snippet'
 import { Dance } from 'model/dance/dance'
 import { produce } from 'lib/immer'
-import { distinctUntilChanged } from 'lib/observable'
 import { Song } from 'model/song/song'
+import { EditSongElement, EditSongModal } from 'components/edit-song-modal/edit-song-modal'
 
 export const Library = 'library-component'
 export const libraryRoute = 'library'
@@ -17,35 +17,22 @@ export const libraryRoute = 'library'
 class LibraryElement extends HTMLElement {
   static observedAttributes = ['hidden']
 
+  editSong: EditSongElement
+
   constructor() {
     super()
   }
 
   async connectedCallback() {
-    store
-      .pipe(
-        distinctUntilChanged(
-          (prev, cur) => prev.dances === cur.dances && prev.danceFilters === cur.danceFilters
-        )
-      )
-      .subscribe((model) => {
-        this.renderDanceFilters(model.danceFilters, model.dances)
-      })
+    store.subscribe((model) => {
+      this.renderDanceFilters(model.danceFilters, model.dances)
+    })
 
     this.render()
 
-    store
-      .pipe(
-        distinctUntilChanged(
-          (prev, cur) =>
-            prev.snippets === cur.snippets &&
-            prev.danceFilters === cur.danceFilters &&
-            prev.songs === cur.songs
-        )
-      )
-      .subscribe((model) => {
-        this.renderedFilteredSnippets(model.snippets, model.danceFilters, model.songs)
-      })
+    store.subscribe((model) => {
+      this.renderedFilteredSnippets(model.snippets, model.danceFilters, model.songs)
+    })
   }
 
   render() {
@@ -55,10 +42,16 @@ class LibraryElement extends HTMLElement {
           <div class="px-2 pt-9 pb-2 text-3xl">Library</div>
           <div id="danceFilters" class="flex flex-wrap gap-2 p-2"></div>
           <div id="snippets" class="flex w-full flex-col items-center"></div>
+          <${EditSongModal} song-id="1"></${EditSongModal}>
         </div>
       `,
       this
     )
+
+    this.editSong = document.querySelector(EditSongModal)
+    if (this.editSong) {
+      this.editSong.show()
+    }
 
     addLinks(this)
   }
@@ -102,7 +95,7 @@ class LibraryElement extends HTMLElement {
         snippets.filter((s) => {
           const song = songs.find((d) => d.id === s.songId)
 
-          return song && song.danceIds.some((id) => enabledDanceFilterIds.includes(id))
+          return song && enabledDanceFilterIds.includes(song.danceId)
         })
       )
     }
@@ -116,13 +109,19 @@ class LibraryElement extends HTMLElement {
       snippets.forEach((snippet) => {
         const snippetElement = document.createElement(SnippetComponent) as SnippetElement
         snippetElement.classList.add(...['w-full', 'px-4'])
-        snippetElement.state = snippet
+        snippetElement.snippet = snippet
 
         snippetsContainer.appendChild(snippetElement)
 
-        snippetElement.addEventListener('snippet-option-clicked', (e: CustomEvent) =>
+        snippetElement.addEventListener('snippet-options-clicked', (e: CustomEvent) =>
           this.snippetOptionsClicked(snippetElement, e)
         )
+
+        snippetElement.addEventListener('edit-song', (e: CustomEvent) => {
+          this.closeAllSnippetOptions()
+          set((model) => (model.songToEdit = snippetElement.snippet.songId))
+          this.editSong.show()
+        })
       })
     }
   }
@@ -131,9 +130,17 @@ class LibraryElement extends HTMLElement {
     const snippetElements = this.querySelector('#snippets').childNodes as NodeListOf<SnippetElement>
 
     snippetElements.forEach((s) => {
-      if (s.state.id !== snippet.state.id) {
+      if (s.snippet.id !== snippet.snippet.id) {
         s.openOrCloseOptions(false)
       }
+    })
+  }
+
+  private closeAllSnippetOptions() {
+    const snippetElements = this.querySelector('#snippets').childNodes as NodeListOf<SnippetElement>
+
+    snippetElements.forEach((s) => {
+      s.openOrCloseOptions(false)
     })
   }
 

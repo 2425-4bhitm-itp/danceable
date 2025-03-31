@@ -2,5 +2,5 @@ export interface Song {
   readonly id: number
   readonly title: string
   readonly speed: number
-  readonly danceIds: number[]
+  readonly danceId: number
 }
