@@ -4,10 +4,7 @@ import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.dance.DanceRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -42,6 +39,27 @@ public class SongResource {
                 songDto.speed(),
                 danceRepository.findById(songDto.danceId())
         ));
+
+        return Response.ok().build();
+    }
+
+    @Transactional
+    @PATCH
+    public Response patchSong(SongDto songDto) {
+        Song song = songRepository.findById(songDto.id());
+
+        song.setDance(danceRepository.findById(songDto.id()));
+        song.setSpeed(songDto.speed());
+        song.setTitle(songDto.title());
+
+        return Response.ok().build();
+    }
+
+    @Transactional
+    @DELETE
+    @Path("{id}")
+    public Response deleteSong(@PathParam("id") Long id) {
+        songRepository.deleteById(id);
 
         return Response.ok().build();
     }

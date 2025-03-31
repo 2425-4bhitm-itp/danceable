@@ -3,10 +3,7 @@ package at.leonding.htl.features.library.songsnippet;
 import at.leonding.htl.features.library.song.SongRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -27,7 +24,6 @@ public class SongSnippetResource {
                 .map(s -> new SongSnippetDto(
                         s.getId(),
                         s.getSong().getId(),
-                        s.getSongSnippetIndex(),
                         s.getFileName())
                 ).toList();
     }
@@ -37,9 +33,27 @@ public class SongSnippetResource {
     public Response addSnippet(SongSnippetDto snippet) {
         songSnippetRepository.persist(new SongSnippet(snippet.id(),
                 songRepository.findById(snippet.id()),
-                snippet.songSnippetIndex(),
                 snippet.fileName()
         ));
+
+        return Response.ok().build();
+    }
+
+    @Transactional
+    @PATCH
+    public Response patchSnippet(SongSnippetDto snippet) {
+        SongSnippet songSnippet = songSnippetRepository.findById(snippet.id());
+
+        songSnippet.setSong(songRepository.findById(snippet.id()));
+
+        return Response.ok().build();
+    }
+
+    @Transactional
+    @DELETE
+    @Path("{id}")
+    public Response deleteSnippet(@PathParam("id") Long id) {
+        songSnippetRepository.deleteById(id);
 
         return Response.ok().build();
     }
