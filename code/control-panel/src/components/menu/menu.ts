@@ -8,10 +8,6 @@ import { store } from 'model/index'
 export const AppMenu = 'menu-component'
 
 class MenuElement extends HTMLElement {
-  constructor() {
-    super()
-  }
-
   connectedCallback() {
     this.render()
 
@@ -19,32 +15,42 @@ class MenuElement extends HTMLElement {
   }
 
   render() {
-    render(html`
-      <div class="flex-initial p-2 h-full border-r-2 border-r-gray-200">
-        <div class="flex justify-center items-center m-4">
-          <div class="h-12"><img class="h-full" src="/public/svgs/logo/danceable-logo.svg" alt=""></div>
+    render(
+      html`
+        <div class="h-full flex-initial border-r-2 border-r-gray-200 p-2">
+          <div class="m-4 flex items-center justify-center">
+            <div class="h-12">
+              <img class="h-full" src="/public/svgs/logo/danceable-logo.svg" alt="" />
+            </div>
+          </div>
+          <a
+            class="m-2 flex aspect-square items-center justify-center rounded-2xl bg-gray-100 p-4 transition hover:bg-gray-200"
+            href="${libraryRoute}"
+          >
+            <div class="w-6">
+              <img class="w-full" src="/public/svgs/menu/library-icon-dark.svg" alt="" />
+            </div>
+          </a>
+          <a
+            class="m-2 flex aspect-square items-center justify-center rounded-2xl bg-gray-100 p-4 transition hover:bg-gray-200"
+            href="${analysisRoute}"
+          >
+            <div class="w-6">
+              <img class="w-full" src="/public/svgs/menu/analysis-icon-dark.svg" alt="" />
+            </div>
+          </a>
         </div>
-        <a
-          class="rounded-2xl bg-gray-100 aspect-square p-4 m-2 flex justify-center items-center hover:bg-gray-200 transition"
-          href="${libraryRoute}">
-          <div class="w-6"><img class="w-full" src="/public/svgs/menu/library-icon-dark.svg" alt=""></div>
-        </a>
-        <a
-          class="rounded-2xl bg-gray-100 aspect-square p-4 m-2 flex justify-center items-center hover:bg-gray-200 transition"
-          href="${analysisRoute}">
-          <div class="w-6"><img class="w-full" src="/public/svgs/menu/analysis-icon-dark.svg" alt=""></div>
-        </a>
-      </div>
-    `, this)
+      `,
+      this
+    )
 
     addLinks(this)
   }
 
-
   private highlightLink(currentPane: string) {
     const links = this.querySelectorAll('a')
 
-    links.forEach(link => {
+    links.forEach((link) => {
       link.classList.remove('bg-gray-dark')
       link.classList.remove('hover:bg-gray-200')
 

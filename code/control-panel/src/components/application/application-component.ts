@@ -2,7 +2,7 @@ import { fetchAllDancesToModel, fetchAllSnippetsToModel, store } from 'model/ind
 
 import { html, render } from 'lib/pure-html'
 
-import { AppMenu } from 'components/menu'
+import { AppMenu } from 'components/menu/menu'
 import { Library, libraryRoute } from 'components/library'
 import { Analysis, analysisRoute } from 'components/analysis'
 import { fetchAllSongsToModel } from 'model/song/song-service'

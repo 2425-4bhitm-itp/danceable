@@ -13,10 +13,6 @@ export class SnippetElement extends HTMLElement {
 
   isOptionsOpen: boolean = false
 
-  constructor() {
-    super()
-  }
-
   connectedCallback() {
     store.subscribe((model) => {
       if (this.snippet) {
@@ -63,7 +59,7 @@ export class SnippetElement extends HTMLElement {
                       edit song
                     </button>
                     <button
-                      class="change-song-option rounded px-2 py-1 text-left hover:bg-gray-100"
+                      class="switch-song-option rounded px-2 py-1 text-left hover:bg-gray-100"
                     >
                       switch song
                     </button>
@@ -93,8 +89,8 @@ export class SnippetElement extends HTMLElement {
           this.editSong()
         )
 
-        this.querySelector('.change-song-option')?.addEventListener('click', (e: MouseEvent) =>
-          this.changeSong()
+        this.querySelector('.switch-song-option')?.addEventListener('click', (e: MouseEvent) =>
+          this.switchSong()
         )
 
         this.querySelector('.snippet-options-button')?.addEventListener('click', (e: MouseEvent) =>
@@ -110,8 +106,8 @@ export class SnippetElement extends HTMLElement {
     }
   }
 
-  changeSong() {
-    this.dispatchEvent(new CustomEvent('change-song', { detail: this.snippet.id }))
+  switchSong() {
+    this.dispatchEvent(new CustomEvent('switch-song', { detail: this.snippet.id }))
   }
 
   editSong() {

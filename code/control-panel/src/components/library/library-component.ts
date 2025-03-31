@@ -11,17 +11,13 @@ import { produce } from 'lib/immer'
 import { Song } from 'model/song/song'
 import { EditSongElement, EditSongModal } from 'components/edit-song-modal/edit-song-modal'
 import { SwitchSongElement, SwitchSongModal } from 'components/switch-song-modal/switch-song-modal'
+import { deleteSong } from 'model/song/song-service'
+import { deleteSnippet, patchSnippet } from 'model/snippet/snippet-service'
 
 export const Library = 'library-component'
 export const libraryRoute = 'library'
 
 class LibraryElement extends HTMLElement {
-  static observedAttributes = ['hidden']
-
-  constructor() {
-    super()
-  }
-
   async connectedCallback() {
     store.subscribe((model) => {
       this.renderDanceFilters(model.danceFilters, model.dances)
@@ -101,41 +97,49 @@ class LibraryElement extends HTMLElement {
     clear(snippetsContainer)
 
     if (Array.isArray(snippets)) {
-      snippets.forEach((snippet) => {
-        const snippetElement = document.createElement(SnippetComponent) as SnippetElement
-        snippetElement.classList.add(...['w-full', 'px-4'])
-        snippetElement.snippet = snippet
+      snippets
+        .sort((s1, s2) => s1.id - s2.id)
+        .forEach((snippet) => {
+          const snippetElement = document.createElement(SnippetComponent) as SnippetElement
+          snippetElement.classList.add(...['w-full', 'px-4'])
+          snippetElement.snippet = snippet
 
-        snippetsContainer.appendChild(snippetElement)
+          snippetsContainer.appendChild(snippetElement)
 
-        snippetElement.addEventListener('snippet-options-clicked', (e: CustomEvent) =>
-          this.snippetOptionsClicked(snippetElement, e)
-        )
+          snippetElement.addEventListener('snippet-options-clicked', (e: CustomEvent) =>
+            this.snippetOptionsClicked(snippetElement, e)
+          )
 
-        snippetElement.addEventListener('edit-song', (e: CustomEvent) => {
-          this.closeAllSnippetOptions()
-          set((model) => (model.songToEdit = snippetElement.snippet.songId))
-          const editSongElement: EditSongElement = document.querySelector(EditSongModal)
-          editSongElement?.show()
-        })
+          snippetElement.addEventListener('edit-song', (e: CustomEvent) => {
+            this.closeAllSnippetOptions()
+            set((model) => {
+              model.songToEdit = snippetElement.snippet.songId
+            })
+            const editSongElement: EditSongElement = document.querySelector(EditSongModal)
+            editSongElement?.show()
+          })
 
-        snippetElement.addEventListener('change-song', (e: CustomEvent) => {
-          this.closeAllSnippetOptions()
-          set((model) => (model.snippetToSwitchSong = snippetElement.snippet.id))
-          const changeSongElement: SwitchSongElement = document.querySelector(SwitchSongModal)
-          changeSongElement?.show()
-        })
+          snippetElement.addEventListener('switch-song', (e: CustomEvent) => {
+            this.closeAllSnippetOptions()
+            set((model) => (model.snippetToSwitchSong = snippetElement.snippet.id))
+            const switchSongElement: SwitchSongElement = document.querySelector(SwitchSongModal)
+            switchSongElement?.show()
+          })
 
-        snippetElement.addEventListener('delete-snippet', (e: CustomEvent) => {
-          this.closeAllSnippetOptions()
-          set((model) => {
-            const snippetIndex = model.snippets.findIndex((s) => s.id === snippetElement.snippet.id)
+          snippetElement.addEventListener('delete-snippet', (e: CustomEvent) => {
+            deleteSnippet(snippetElement.snippet.id)
 
-            model.snippets.splice(snippetIndex, 1)
-            model.snippetToSwitchSong = -1
+            this.closeAllSnippetOptions()
+            set((model) => {
+              const snippetIndex = model.snippets.findIndex(
+                (s) => s.id === snippetElement.snippet.id
+              )
+
+              model.snippets.splice(snippetIndex, 1)
+              model.snippetToSwitchSong = -1
+            })
           })
         })
-      })
     }
   }
 

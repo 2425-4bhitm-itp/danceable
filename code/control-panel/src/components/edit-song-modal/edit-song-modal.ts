@@ -4,15 +4,12 @@ import { Dance } from 'model/dance/dance'
 import { set, store } from 'model/model'
 import { Song } from 'model/song/song'
 import { produce } from 'lib/immer'
+import { patchSong } from 'model/song/song-service'
 
 export const EditSongModal = 'edit-song-modal'
 
 export class EditSongElement extends HTMLElement {
   song: Song
-
-  constructor(state: Dance) {
-    super()
-  }
 
   connectedCallback() {
     store.subscribe((model) => {
@@ -64,7 +61,7 @@ export class EditSongElement extends HTMLElement {
               >
                 ${allDances
                   .map((d) => {
-                    return `<option value="${d.id}">${d.name}</option>`
+                    return `<option ${this.song.danceId === d.id ? 'selected' : ''} value="${d.id}">${d.name}</option>`
                   })
                   .join('')}
               </select>
@@ -115,11 +112,15 @@ export class EditSongElement extends HTMLElement {
     set((model) => {
       model.songs = model.songs.map((s) => {
         if (s.id === this.song.id) {
-          return produce(s, (draft) => {
+          const song = produce(s, (draft) => {
             draft.title = title
             draft.speed = speed
             draft.danceId = danceId
           })
+
+          patchSong(song)
+
+          return song
         }
 
         return s

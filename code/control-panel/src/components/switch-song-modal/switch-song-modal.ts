@@ -4,15 +4,12 @@ import { set, store } from 'model/model'
 import { Song } from 'model/song/song'
 import { produce } from 'lib/immer'
 import { Snippet } from 'model/snippet/snippet'
+import { patchSnippet } from 'model/snippet/snippet-service'
 
 export const SwitchSongModal = 'switch-song-modal'
 
 export class SwitchSongElement extends HTMLElement {
   snippet: Snippet
-
-  constructor(state: Snippet) {
-    super()
-  }
 
   connectedCallback() {
     store.subscribe((model) => {
@@ -39,8 +36,8 @@ export class SwitchSongElement extends HTMLElement {
                 type="number"
               >
                 ${songs
-                  .map((d) => {
-                    return `<option value="${d.id}">${d.title}</option>`
+                  .map((s) => {
+                    return `<option ${this.snippet.songId === s.id ? 'selected' : ''} value="${s.id}">${s.title}</option>`
                   })
                   .join('')}
               </select>
@@ -94,9 +91,13 @@ export class SwitchSongElement extends HTMLElement {
       set((model) => {
         model.snippets = model.snippets.map((s) => {
           if (s.id === this.snippet.id) {
-            return produce(s, (draft) => {
+            const snippet = produce(s, (draft) => {
               draft.songId = songId
             })
+
+            patchSnippet(snippet)
+
+            return snippet
           }
 
           return s

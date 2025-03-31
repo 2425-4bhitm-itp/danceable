@@ -5,20 +5,12 @@ export const Analysis = 'analysis-component'
 export const analysisRoute = 'analysis'
 
 class AnalysisElement extends HTMLElement {
-  static observedAttributes = ['hidden']
-
-  constructor() {
-    super()
-  }
-
   connectedCallback() {
     this.render()
   }
 
   render() {
-    render(html`
-      <div class="text-3xl mt-8 mb-4 px-2">Analysis</div>
-    `, this)
+    render(html` <div class="mt-8 mb-4 px-2 text-3xl">Analysis</div> `, this)
 
     addLinks(this)
   }
