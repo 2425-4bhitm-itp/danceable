@@ -6,8 +6,8 @@ type PipeFunction<T> = (t: T) => T
 
 /** an element of a pipe */
 interface Operator<T> {
-  name?: string,
-  lastValue?: T,
+  name?: string
+  lastValue?: T
   apply: PipeFunction<T>
 }
 
@@ -18,7 +18,7 @@ interface Subscribable<T> {
 }
 
 class Pipe<T extends object> implements Subscribable<T> {
-  callback: Callback<T> = t => { }
+  callback: Callback<T> = (t) => {}
   operators: Operator<T>[] = []
   parent: Subscribable<T>
 
@@ -27,7 +27,7 @@ class Pipe<T extends object> implements Subscribable<T> {
       const name = this.operators.length.toString()
       const operator: Operator<T> = {
         apply: cb,
-        name
+        name,
       }
       operator.apply = operator.apply.bind(operator)
       this.operators.push(operator)
@@ -36,22 +36,22 @@ class Pipe<T extends object> implements Subscribable<T> {
   addParent(parent: Subscribable<T>) {
     this.parent = parent
     const process = (t: T) => {
-      log("Pipe: value received from parent", t)
+      log('Pipe: value received from parent', t)
       let result = t
       for (const op of this.operators) {
         if (result) {
-          log("apply operator", op.name, "with", result, "lastValue", op.lastValue)
+          log('apply operator', op.name, 'with', result, 'lastValue', op.lastValue)
           result = op.apply(result)
-          log("result operator", op.name, "=", result)
+          log('result operator', op.name, '=', result)
         } else {
-          log("skip, cause result is", result)
+          log('skip, cause result is', result)
         }
       }
       if (result) {
-        log("callback with", result)
+        log('callback with', result)
         this.callback(result)
       } else {
-        log("no callback cause undefined")
+        log('no callback cause undefined')
       }
     }
     parent.subscribe(process)
@@ -65,7 +65,6 @@ class Pipe<T extends object> implements Subscribable<T> {
     this.parent.aSubscriptionWasDoneBy(callback)
   }
 }
-
 
 /** an Observable that can be subscribed by multiple observers
  */
@@ -85,7 +84,7 @@ class Subject<T extends object> implements ProxyHandler<T>, Subscribable<T> {
     this.subscriptions.push(callback)
     this.aSubscriptionWasDoneBy(callback)
   }
-  aSubscriptionWasDoneBy (callback: Callback<T>) {
+  aSubscriptionWasDoneBy(callback: Callback<T>) {
     callback(this.model)
   }
   get(target: T, property: string | symbol, receiver: any): any {
@@ -119,22 +118,22 @@ class Subject<T extends object> implements ProxyHandler<T>, Subscribable<T> {
  */
 function distinctUntilChanged<T extends object>(comparator: (prev: T, cur: T) => boolean) {
   function op(this: Operator<T>, t: T) {
-    log("in distinctUntilChanged with", t, "with lastvalue=", this.lastValue)
+    log('in distinctUntilChanged with', t, 'with lastvalue=', this.lastValue)
     let result = t
     if (this.lastValue) {
       const isEqual = comparator(this.lastValue, t)
       if (isEqual) {
         result = undefined
-        log("no change, lastValue", this.lastValue, "current", t)
+        log('no change, lastValue', this.lastValue, 'current', t)
       } else {
         this.lastValue = structuredClone(result)
-        log("set lastValue", result)
+        log('set lastValue', result)
       }
     } else {
-      log("distinctUntilChanged: no lastvalue, set lastValue to", result)
+      log('distinctUntilChanged: no lastvalue, set lastValue to', result)
       this.lastValue = structuredClone(result)
     }
-    log("exit distinctUntilChanged returns", result, "lastValue=", this.lastValue)
+    log('exit distinctUntilChanged returns', result, 'lastValue=', this.lastValue)
     return result
   }
   return op
@@ -159,7 +158,7 @@ function peek<T extends object>(sideEffekt: (t: T) => void) {
 function apply<T extends object>(subject: Subject<T>, recipe: (store: T) => void) {
   recipe(subject.value)
 }
-const DEBUG = true
+const DEBUG = false
 function log(message?: any, ...optionalParams: any[]) {
   if (DEBUG) {
     console.log(message, optionalParams)
