@@ -15,8 +15,8 @@ def train():
     # Load dataset
     df = pd.read_csv("/app/song-storage/features.csv")
 
-    # Extract song name by removing the last "_partX.wav" section using regex
-    df['song_name'] = df['filename'].apply(lambda x: re.sub(r'_part\d+\.wav$', '', x))
+    # Extract song name by removing the last "X_partX.wav" section using regex
+    df['song_name'] = df['filename'].apply(lambda x: re.sub(r'\d+_part\d+\.wav$', '', x))
 
     # Group by song name to ensure all segments from a song are treated together
     grouped = df.groupby('song_name')
