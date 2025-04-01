@@ -66,13 +66,14 @@ def health_check():
 @app.route('/split_and_sort', methods=['POST'])
 def split_and_sort():
     segment_length = request.get_json()["segment_length"]
-    shorten.split_wav_files(folder_path, snippets_path, segment_length)
+    split_files()
     sort.sort_and_delete_wav_files(snippets_path)
     return jsonify({"message": "Shortening and sorting completed"}), 200
 
 @app.route('/split_files', methods=['POST'])
 def split_files():
-    shorten.split_wav_files(folder_path, folder_path)
+    segment_length = request.get_json()["segment_length"]
+    shorten.split_wav_files(folder_path, snippets_path, segment_length)
     return jsonify({"message": "Shortening completed"}), 200
 
 if __name__ == '__main__':
