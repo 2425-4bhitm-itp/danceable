@@ -149,9 +149,44 @@ struct ContentView: View {
                 engine.stop()
                 engine.reset()
                 print("Recording stopped and saved to \(outputFileURL)")
+                saveRecording(fileURL: outputFileURL)
             }
         }
         recordingQueue.async{record()}
+    }
+    
+    private func saveRecording(fileURL: URL) {
+        DispatchQueue.global(qos: .background).async {
+            do {
+                
+                let fileData = try Data(contentsOf: fileURL)
+                print (fileData)
+                
+                guard let url = URL(string: "http://<YOUR_SERVER_IP>:8080/uploadStream") else {
+                    print("Invalid server URL")
+                    return
+                }
+                
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                
+                request.setValue("audio/wav", forHTTPHeaderField: "Content-Type")
+                
+                request.httpBody = fileData
+                
+                
+                let task = URLSession.shared.dataTask(with: request) {data, response, error in
+                    if let httpResponse = response as? HTTPURLResponse {
+                        print("Server response status code: \(httpResponse.statusCode)")
+                    }
+                }
+                
+                task.resume()
+                
+            } catch {
+                print("Error reading file or sending to server: \(error)")
+            }
+        }
     }
 }
 
