@@ -6,21 +6,8 @@ struct DancesView: View {
     @ObservedObject var viewModel: ViewModel
     
     var body: some View {
-        NavigationStack {
-            List(viewModel.dances) { dance in
-                NavigationLink(dance.name, value: dance)
-            }
-            .navigationDestination(for: Dance.self) { dance in
-                DanceView(dance: dance)
-            }
-        }.task {
-            queue.async(execute: {
-                let dances = loadDances()
-                
-                DispatchQueue.main.async(execute: {
-                    viewModel.model.dances = dances
-                })
-            })
+        List(viewModel.dances, id: \.id) { dance in
+            Text(dance.name)
         }
     }
 }
