@@ -9,10 +9,12 @@ import { Snippet } from 'model/snippet/snippet'
 import { Dance } from 'model/dance/dance'
 import { produce } from 'lib/immer'
 import { Song } from 'model/song/song'
-import { EditSongElement, EditSongModal } from 'components/edit-song-modal/edit-song-modal'
-import { SwitchSongElement, SwitchSongModal } from 'components/switch-song-modal/switch-song-modal'
-import { deleteSong } from 'model/song/song-service'
-import { deleteSnippet, patchSnippet } from 'model/snippet/snippet-service'
+import { EditSongElement, EditSongComponent } from 'components/edit-song/edit-song-component'
+import {
+  SwitchSongElement,
+  SwitchSongComponent,
+} from 'components/switch-song/switch-song-component'
+import { deleteSnippet } from 'model/snippet/snippet-service'
 
 export const Library = 'library-component'
 export const libraryRoute = 'library'
@@ -35,26 +37,31 @@ class LibraryElement extends HTMLElement {
       html`
         <div class="h-full overflow-y-auto">
           <div class="px-2 pt-9 pb-2 text-3xl">Library</div>
+          <div class="flex flex-row-reverse px-4"><button id="uploadSnippetButton" class="cursor-pointer py-1 px-5 bg-gray-dark rounded-xl font-medium text-white">upload snippet</button></div>
           <div id="danceFilters" class="flex flex-wrap gap-2 p-2"></div>
           <div id="snippets" class="flex w-full flex-col items-center"></div>
-          <${EditSongModal}></${EditSongModal}>
-          <${SwitchSongModal}></${SwitchSongModal}>
+          <${EditSongComponent}></${EditSongComponent}>
+          <${SwitchSongComponent}></${SwitchSongComponent}>
         </div>
       `,
       this
     )
 
+    const uploadSnippetButton = document.querySelector('button#uploadSnippetButton')
+
+    uploadSnippetButton?.addEventListener('click', () => {})
+
     addLinks(this)
   }
 
-  renderDanceFilters(danceFilters: DanceFilter[], dances: Dance[]) {
+  renderDanceFilters(danceFilters: DanceFilter[], dances: Map<number, Dance>) {
     const danceFilterContainer: HTMLElement = this.querySelector('#danceFilters')
 
     if (danceFilterContainer && Array.isArray(danceFilters)) {
       clear(danceFilterContainer)
 
       danceFilters.forEach((filter) => {
-        const dance = dances.find((d) => d.id === filter.danceId)
+        const dance = dances.get(filter.danceId)
 
         const filterElement = renderAppendChild(
           html`
@@ -76,7 +83,11 @@ class LibraryElement extends HTMLElement {
     }
   }
 
-  renderedFilteredSnippets(snippets: Snippet[], danceFilters: DanceFilter[], songs: Song[]) {
+  renderedFilteredSnippets(
+    snippets: Snippet[],
+    danceFilters: DanceFilter[],
+    songs: Map<number, Song>
+  ) {
     const enabledDanceFilterIds = danceFilters.filter((f) => f.isEnabled).map((f) => f.danceId)
 
     if (enabledDanceFilterIds.length == 0) {
@@ -84,7 +95,7 @@ class LibraryElement extends HTMLElement {
     } else {
       this.renderSnippets(
         snippets.filter((s) => {
-          const song = songs.find((d) => d.id === s.songId)
+          const song = songs.get(s.songId)
 
           return song && enabledDanceFilterIds.includes(song.danceId)
         })
@@ -115,14 +126,14 @@ class LibraryElement extends HTMLElement {
             set((model) => {
               model.songToEdit = snippetElement.snippet.songId
             })
-            const editSongElement: EditSongElement = document.querySelector(EditSongModal)
+            const editSongElement: EditSongElement = document.querySelector(EditSongComponent)
             editSongElement?.show()
           })
 
           snippetElement.addEventListener('switch-song', (e: CustomEvent) => {
             this.closeAllSnippetOptions()
             set((model) => (model.snippetToSwitchSong = snippetElement.snippet.id))
-            const switchSongElement: SwitchSongElement = document.querySelector(SwitchSongModal)
+            const switchSongElement: SwitchSongElement = document.querySelector(SwitchSongComponent)
             switchSongElement?.show()
           })
 

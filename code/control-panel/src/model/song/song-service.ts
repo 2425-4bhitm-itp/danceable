@@ -6,7 +6,7 @@ const SONG_URL = '/api/songs'
 export async function fetchAllSongsToModel() {
   const songs = await fetchAllSongs()
 
-  set((model) => (model.songs = songs))
+  set((model) => (model.songs = new Map(songs.map((s) => [s.id, s]))))
 }
 
 export async function fetchAllSongs() {

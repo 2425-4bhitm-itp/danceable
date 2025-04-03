@@ -6,22 +6,22 @@ import { Song } from 'model/song/song'
 import { produce } from 'lib/immer'
 import { patchSong } from 'model/song/song-service'
 
-export const EditSongModal = 'edit-song-modal'
+export const EditSongComponent = 'edit-song'
 
 export class EditSongElement extends HTMLElement {
   song: Song
 
   connectedCallback() {
     store.subscribe((model) => {
-      this.song = model.songs.find((s) => s.id === model.songToEdit)
+      this.song = model.songs.get(model.songToEdit)
 
       this.render(model.dances)
     })
   }
 
-  render(allDances: Dance[]) {
+  render(allDances: Map<number, Dance>) {
     if (this.song) {
-      const dance = allDances.find((d) => d.id === this.song.danceId)
+      const dance = allDances.get(this.song.danceId)
 
       console.log('song', this.song)
 
@@ -59,7 +59,7 @@ export class EditSongElement extends HTMLElement {
                 name="dance"
                 type="number"
               >
-                ${allDances
+                ${Array.from(allDances.values())
                   .map((d) => {
                     return `<option ${this.song.danceId === d.id ? 'selected' : ''} value="${d.id}">${d.name}</option>`
                   })
@@ -110,21 +110,23 @@ export class EditSongElement extends HTMLElement {
     console.log(title, speed, danceId)
 
     set((model) => {
-      model.songs = model.songs.map((s) => {
-        if (s.id === this.song.id) {
-          const song = produce(s, (draft) => {
-            draft.title = title
-            draft.speed = speed
-            draft.danceId = danceId
-          })
+      const newSongs = structuredClone(model.songs) as Map<number, Song>
 
-          patchSong(song)
+      newSongs.get(this.song.id)
+      console.log('heloooo')
 
-          return song
-        }
-
-        return s
-      })
+      // const song = model.songs.get(this.song.id)
+      //
+      // if (model.songs.has(this.song.id)) {
+      //   const updatedSong = produce(model.songs.get(this.song.id), (draft) => {
+      //     draft.title = title
+      //     draft.speed = speed
+      //     draft.danceId = danceId
+      //   })
+      //
+      //   model.songs.set(this.song.id, updatedSong)
+      //   patchSong(updatedSong)
+      // }
     })
   }
 
@@ -143,4 +145,4 @@ export class EditSongElement extends HTMLElement {
   }
 }
 
-customElements.define(EditSongModal, EditSongElement)
+customElements.define(EditSongComponent, EditSongElement)

@@ -23,16 +23,12 @@ export class SnippetElement extends HTMLElement {
     })
   }
 
-  render(allSongs: Song[], allDances: Dance[]) {
+  render(allSongs: Map<number, Song>, allDances: Map<number, Dance>) {
     if (this.snippet) {
-      const song = allSongs.find((s) => s.id === this.snippet.songId)
+      const song = allSongs.get(this.snippet.songId)
 
       if (song) {
-        const dance = allDances.find((d) => {
-          const song = allSongs.find((s) => s.id === this.snippet.songId)
-
-          return d.id === song.danceId
-        })
+        const dance = allDances.get(allSongs.get(this.snippet.songId).danceId)
 
         if (dance) {
           render(

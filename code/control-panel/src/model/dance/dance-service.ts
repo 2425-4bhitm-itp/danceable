@@ -8,15 +8,18 @@ export async function fetchAllDancesToModel() {
   const dances = await fetchAllDances()
 
   set((model) => {
-    model.dances = dances
+    model.dances = new Map(dances.map((d) => [d.id, d]))
 
     const danceFilters = Array.from(
-      model.dances.map((d, i) => {
+      dances.map((d, i) => {
         return {
           danceId: d.id,
-          isEnabled: model.danceFilters.length >= i && model.danceFilters[i] ? model.danceFilters[i].isEnabled : false,
+          isEnabled:
+            model.danceFilters.length >= i && model.danceFilters[i]
+              ? model.danceFilters[i].isEnabled
+              : false,
         } as DanceFilter
-      }),
+      })
     )
 
     model.danceFilters = danceFilters
@@ -30,10 +33,12 @@ export async function fetchAllDances() {
     const response = await fetch(DANCES_URL)
 
     if (!response.ok) {
-      throw new Error(`HTTP error while fetching dances from ${DANCES_URL}! Status: ${response.status}`)
+      throw new Error(
+        `HTTP error while fetching dances from ${DANCES_URL}! Status: ${response.status}`
+      )
     }
 
-    dances = await response.json() as Dance[]
+    dances = (await response.json()) as Dance[]
   } catch (error) {
     console.log(error.toString())
   }

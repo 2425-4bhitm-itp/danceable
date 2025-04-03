@@ -6,7 +6,7 @@ import { produce } from 'lib/immer'
 import { Snippet } from 'model/snippet/snippet'
 import { patchSnippet } from 'model/snippet/snippet-service'
 
-export const SwitchSongModal = 'switch-song-modal'
+export const SwitchSongComponent = 'switch-song'
 
 export class SwitchSongElement extends HTMLElement {
   snippet: Snippet
@@ -19,7 +19,7 @@ export class SwitchSongElement extends HTMLElement {
     })
   }
 
-  render(songs: Song[]) {
+  render(songs: Map<number, Song>) {
     if (this.snippet) {
       render(
         html` <dialog
@@ -35,7 +35,7 @@ export class SwitchSongElement extends HTMLElement {
                 name="song"
                 type="number"
               >
-                ${songs
+                ${Array.from(songs.values())
                   .map((s) => {
                     return `<option ${this.snippet.songId === s.id ? 'selected' : ''} value="${s.id}">${s.title}</option>`
                   })
@@ -126,4 +126,4 @@ export class SwitchSongElement extends HTMLElement {
   }
 }
 
-customElements.define(SwitchSongModal, SwitchSongElement)
+customElements.define(SwitchSongComponent, SwitchSongElement)

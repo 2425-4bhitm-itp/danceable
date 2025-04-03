@@ -10,8 +10,8 @@ import { WriteableDraft } from 'lib/immer'
 interface Model {
   currentPane: string
   snippets: Snippet[]
-  songs: Song[]
-  dances: Dance[]
+  songs: Map<number, Song>
+  dances: Map<number, Dance>
   danceFilters: DanceFilter[]
   songToEdit: number
   snippetToSwitchSong: number
@@ -20,8 +20,8 @@ interface Model {
 const state: Model = {
   currentPane: '',
   snippets: [],
-  songs: [],
-  dances: [],
+  songs: new Map<number, Song>(),
+  dances: new Map<number, Dance>(),
   danceFilters: [],
   songToEdit: -1,
   snippetToSwitchSong: -1,
