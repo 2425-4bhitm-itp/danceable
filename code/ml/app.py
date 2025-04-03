@@ -33,8 +33,13 @@ def upload_wav_file():
 
 @app.route("/train", methods=["GET"])
 def train_model():
-    train()
-    return jsonify({"message": "Training completed."}), 200
+    accuracy, val_accuracy = train()
+
+    return jsonify({
+        "message": "Training completed.",
+        "accuracy": accuracy,
+        "val_accuracy": val_accuracy
+    }), 200
 
 @app.route("/classify_audio", methods=["POST"])
 def classify_audio_api():
@@ -60,13 +65,15 @@ def health_check():
 
 @app.route('/split_and_sort', methods=['POST'])
 def split_and_sort():
-    shorten.split_wav_files(folder_path, snippets_path)
+    segment_length = request.get_json()["segment_length"]
+    split_files()
     sort.sort_and_delete_wav_files(snippets_path)
     return jsonify({"message": "Shortening and sorting completed"}), 200
 
 @app.route('/split_files', methods=['POST'])
 def split_files():
-    shorten.split_wav_files(folder_path, folder_path)
+    segment_length = request.get_json()["segment_length"]
+    shorten.split_wav_files(folder_path, snippets_path, segment_length)
     return jsonify({"message": "Shortening completed"}), 200
 
 if __name__ == '__main__':
