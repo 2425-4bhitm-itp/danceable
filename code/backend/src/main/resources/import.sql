@@ -25,8 +25,8 @@ VALUES
     ('All We Got - Ray Dalton', 100, 6),
     ('Life is a Rollercoaster - Ronan Keating', 100, 5);
 
--- Insert song snippets
-INSERT INTO SongSnippet (song_id, fileName)
+-- Insert clips
+INSERT INTO Clip (song_id, fileName)
 VALUES
     (1, 'diamonds_rihanna_1.mp3'),
     (2, 'bad_moon_rising_1.mp3'),

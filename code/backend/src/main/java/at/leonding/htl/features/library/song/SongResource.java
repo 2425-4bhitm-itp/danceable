@@ -1,5 +1,6 @@
 package at.leonding.htl.features.library.song;
 
+import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.dance.DanceRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -7,11 +8,14 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.net.URI;
 import java.util.List;
 
-@Path("/songs")
+@Path(SongResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class SongResource {
+    public static final String BASE_PATH = "/songs";
+
     @Inject
     SongRepository songRepository;
 
@@ -32,12 +36,36 @@ public class SongResource {
     @Transactional
     @POST
     public Response addSong(SongDto songDto) {
-        songRepository.persist(new Song(
-                songDto.id(),
+        Song song = new Song(
                 songDto.title(),
                 songDto.speed(),
-                danceRepository.findById(songDto.danceId())
-        ));
+                songDto.danceId() != null ? danceRepository.findById(songDto.danceId()) : null
+        );
+
+        songRepository.persist(song);
+
+        return Response.created(URI.create(BASE_PATH + "/" + song.getId())).build();
+    }
+
+    @Transactional
+    @PATCH
+    @Path("{id}")
+    public Response patchSong1(String title, Integer speed, Long danceId) {
+        try {
+            if (title != null) {
+
+            }
+
+            if (speed != null) {
+
+            }
+
+            if (danceId != null) {
+
+            }
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
 
         return Response.ok().build();
     }
@@ -45,11 +73,24 @@ public class SongResource {
     @Transactional
     @PATCH
     public Response patchSong(SongDto songDto) {
-        Song song = songRepository.findById(songDto.id());
+        try {
+            Song song = songRepository.findById(songDto.id());
+            Dance dance = danceRepository.findById(songDto.danceId());
 
-        song.setDance(danceRepository.findById(songDto.danceId()));
-        song.setSpeed(songDto.speed());
-        song.setTitle(songDto.title());
+            if (dance != null) {
+                song.setDance(dance);
+            }
+
+            if (songDto.speed() != null) {
+                song.setSpeed(songDto.speed());
+            }
+
+            if (songDto.title() != null) {
+                song.setTitle(songDto.title());
+            }
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
 
         return Response.ok().build();
     }

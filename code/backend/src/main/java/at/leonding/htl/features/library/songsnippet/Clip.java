@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;
 
 @Entity
-public class SongSnippet {
+public class Clip {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;
@@ -32,6 +32,10 @@ public class SongSnippet {
     }
 
     public void setSong(Song song) {
+        if (song == null) {
+            throw new IllegalArgumentException("Song can not be null!");
+        }
+
         this.song = song;
     }
 
@@ -43,19 +47,19 @@ public class SongSnippet {
         this.fileName = path;
     }
 
-    public SongSnippet() {
+    public Clip() {
     }
 
-    public SongSnippet(Song song) {
+    public Clip(Song song) {
         this.song = song;
     }
 
-    public SongSnippet(Song song, String fileName) {
+    public Clip(Song song, String fileName) {
         this.song = song;
         this.fileName = fileName;
     }
 
-    public SongSnippet(Long id, Song song, String fileName) {
+    public Clip(Long id, Song song, String fileName) {
         this.id = id;
         this.song = song;
         this.fileName = fileName;
@@ -64,7 +68,7 @@ public class SongSnippet {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        SongSnippet that = (SongSnippet) o;
+        Clip that = (Clip) o;
         return Objects.equals(id, that.id);
     }
 

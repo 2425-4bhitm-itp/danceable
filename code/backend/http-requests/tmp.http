@@ -17,11 +17,11 @@ Content-Type: Application/JSON
 
 ###
 
-GET http://localhost:8080/snippets
+GET http://localhost:8080/clips
 
 ###
 
-POST http://localhost:8080/snippets
+POST http://localhost:8080/clips
 Content-Type: Application/JSON
 
 {

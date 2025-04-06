@@ -5,23 +5,23 @@ import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class SongSnippetRepository implements PanacheRepository<SongSnippet> {
-    public SongSnippet findSongSnippetBySongAndIndex(Song song, int index) {
+public class ClipRepository implements PanacheRepository<Clip> {
+    public Clip findSongSnippetBySongAndIndex(Song song, int index) {
         return find("song = ?1 and songSnippetIndex = ?2", song, index).firstResult();
     }
 
-    public SongSnippet persistOrUpdateSongSnippet(Song song, String path) {
+    public Clip persistOrUpdateSongSnippet(Song song, String path) {
 //        SongSnippet songSnippet = this.findSongSnippetBySongAndIndex(song, songSnippetIndex); // warummm?????
-        SongSnippet songSnippet = null;
+        Clip clip = null;
 
-        if (songSnippet == null) {
-            songSnippet = new SongSnippet(song, path);
+        if (clip == null) {
+            clip = new Clip(song, path);
         } else {
-            songSnippet.setFileName(path);
+            clip.setFileName(path);
         }
 
-        this.persist(songSnippet);
+        this.persist(clip);
 
-        return songSnippet;
+        return clip;
     }
 }

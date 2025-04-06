@@ -9,9 +9,11 @@ import jakarta.ws.rs.core.MediaType;
 
 import java.util.List;
 
-@Path("/dances")
+@Path(DanceResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class DanceResource {
+    public static final String BASE_PATH = "/dances";
+
     @Inject
     DanceRepository danceRepository;
 

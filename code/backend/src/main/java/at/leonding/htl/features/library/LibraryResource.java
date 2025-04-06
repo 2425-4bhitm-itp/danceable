@@ -1,6 +1,6 @@
 package at.leonding.htl.features.library;
 
-import at.leonding.htl.features.library.songsnippet.SongSnippetRepository;
+import at.leonding.htl.features.library.songsnippet.ClipRepository;
 import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.dance.DanceRepository;
 import at.leonding.htl.features.library.song.Song;
@@ -35,7 +35,7 @@ public class LibraryResource {
     SongRepository songRepository;
 
     @Inject
-    SongSnippetRepository songSnippetRepository;
+    ClipRepository clipRepository;
 
     @POST
     @Path("/feedin")
@@ -123,7 +123,7 @@ public class LibraryResource {
 
             Song song = songRepository.persistOrUpdateSong(songName, speedInBpm, dances.stream().findFirst().orElse(null));
 
-            songSnippetRepository.persistOrUpdateSongSnippet(
+            clipRepository.persistOrUpdateSongSnippet(
                     song, fileName
             );
         } else {

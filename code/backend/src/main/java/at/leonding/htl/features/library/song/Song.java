@@ -37,6 +37,10 @@ public class Song {
     }
 
     public void setDance(Dance dance) {
+        if (dance == null) {
+            throw new IllegalArgumentException("Dance can not be null!");
+        }
+
         this.dance = dance;
     }
 

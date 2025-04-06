@@ -1,6 +1,6 @@
 package at.leonding.htl.features.library.songsnippet;
 
-public record SongSnippetDto(
+public record ClipDto(
         Long id,
         Long songId,
         String fileName
