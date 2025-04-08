@@ -31,6 +31,13 @@ def upload_wav_file():
     dataset_creator.upload_single_file(file_path, label)
     return jsonify({"message": "File uploaded."}), 200
 
+@app.route("/features", methods=["POST"])
+def extract_features():
+    data = request.get_json()
+    file_path = data["file_path"]
+    features = extractor.extract_features_from_file(file_path)
+    return jsonify({"features": features.tolist()}), 200
+
 @app.route("/train", methods=["GET"])
 def train_model():
     accuracy, val_accuracy = train()
