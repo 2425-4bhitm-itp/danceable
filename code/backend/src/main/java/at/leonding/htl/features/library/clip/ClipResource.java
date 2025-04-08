@@ -1,4 +1,4 @@
-package at.leonding.htl.features.library.songsnippet;
+package at.leonding.htl.features.library.clip;
 
 import at.leonding.htl.features.library.song.SongRepository;
 import jakarta.inject.Inject;

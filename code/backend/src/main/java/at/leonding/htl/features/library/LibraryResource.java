@@ -1,6 +1,6 @@
 package at.leonding.htl.features.library;
 
-import at.leonding.htl.features.library.songsnippet.ClipRepository;
+import at.leonding.htl.features.library.clip.ClipRepository;
 import at.leonding.htl.features.library.dance.Dance;
 import at.leonding.htl.features.library.dance.DanceRepository;
 import at.leonding.htl.features.library.song.Song;

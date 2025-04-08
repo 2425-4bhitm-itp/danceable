@@ -1,4 +1,4 @@
-package at.leonding.htl.features.library.songsnippet;
+package at.leonding.htl.features.library.clip;
 
 public record ClipDto(
         Long id,
