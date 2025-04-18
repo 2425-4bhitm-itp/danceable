@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSongStore } from '../stores/song/songStore'
-import { useClipStore } from '../stores/clip/clipStore'
-import { Clip } from '../stores/clip/clip'
+import { Clip } from '../../stores/clip/clip'
+import { Song } from '../../stores/song/song'
+import { useClipStore } from '../../stores/clip/clipStore'
+import { useSongStore } from '../../stores/song/songStore'
 
 function SwitchSongModal() {
   const { songs } = useSongStore()
-  const { clips, switchSongClipId, setSwitchSongClipId, patchClip } = useClipStore()
+  const { clips, switchSongClipId, setSwitchSongClipId, updateClip: patchClip } = useClipStore()
 
   const clip = clips.get(switchSongClipId ?? -1)
 
@@ -76,7 +77,7 @@ function SwitchSongModal() {
             value={songId ?? ''}
             onChange={(e) => setSongId(Number(e.target.value))}
           >
-            {Array.from(songs.values()).map((s) => (
+            {Array.from(songs.values()).map((s: Song) => (
               <option key={s.id} value={s.id}>
                 {s.title}
               </option>
@@ -85,7 +86,6 @@ function SwitchSongModal() {
         </label>
         <div className="flex justify-center gap-2">
           <button
-            id="cancelSwitchDanceModal"
             className="cursor-pointer rounded-lg bg-gray-100 px-5 py-1 select-none hover:bg-gray-200"
             onClick={close}
           >
@@ -93,7 +93,6 @@ function SwitchSongModal() {
           </button>
           <button
             type="submit"
-            id="saveSwitchDanceModal"
             className="bg-gray-dark cursor-pointer rounded-lg px-5 py-1 text-white select-none hover:text-white"
           >
             save

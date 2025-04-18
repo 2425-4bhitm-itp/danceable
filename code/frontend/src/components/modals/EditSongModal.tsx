@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import { useDanceStore } from '../stores/dance/danceStore'
-import { Song } from '../stores/song/song'
-import { useSongStore } from '../stores/song/songStore'
+import { useState, useRef, useEffect } from 'react'
+import { useDanceStore } from '../../stores/dance/danceStore'
+import { Song } from '../../stores/song/song'
+import { useSongStore } from '../../stores/song/songStore'
 
 function EditSongModal() {
   const { songs, patchSong, editSongId, setEditSongId } = useSongStore()
@@ -74,6 +74,7 @@ function EditSongModal() {
         <label className="flex flex-col">
           <span>Title:</span>
           <input
+            required
             name="title"
             type="text"
             value={title}
@@ -85,6 +86,7 @@ function EditSongModal() {
         <label className="flex flex-col">
           <span>Speed:</span>
           <input
+            required
             name="speed"
             type="number"
             value={speed}
@@ -114,7 +116,6 @@ function EditSongModal() {
 
         <div className="flex justify-center gap-2 pt-2">
           <button
-            id="cancelEditDanceModal"
             className="cursor-pointer rounded-lg bg-gray-100 px-5 py-1 hover:bg-gray-200"
             onClick={close}
           >
@@ -122,7 +123,6 @@ function EditSongModal() {
           </button>
           <button
             type="submit"
-            id="saveEditDanceModal"
             className="bg-gray-dark cursor-pointer rounded-lg px-5 py-1 text-white hover:text-white"
           >
             save

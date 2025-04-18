@@ -6,8 +6,12 @@ import { useSongStore } from '../stores/song/songStore'
 import { Song } from '../stores/song/song'
 import ClipOptionsMenu from './ClipOptionsMenu'
 
-function ClipTile(props: any) {
-  const clip: Clip | undefined = useClipStore((state) => state.clips.get(props.clipId as number))
+interface ClipTileProps {
+  clipId: number
+}
+
+function ClipTile(props: ClipTileProps) {
+  const clip: Clip | undefined = useClipStore((state) => state.clips.get(props.clipId))
   const song: Song | undefined = useSongStore((state) => state.songs.get(clip ? clip?.songId : -1))
   const dance: Dance | undefined = useDanceStore((state) =>
     state.dances.get(song ? song.danceId : -1)

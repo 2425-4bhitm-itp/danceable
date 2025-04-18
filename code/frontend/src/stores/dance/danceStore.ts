@@ -1,19 +1,24 @@
 import { create } from 'zustand'
 import { Dance } from './dance'
+import { OnError } from '../../utils/OnError'
 
 type DanceStore = {
   dances: Map<number, Dance>
-  fetchDances: () => Promise<void>
+  fetchDances: (onError: OnError) => Promise<boolean>
 }
 
 export const useDanceStore = create<DanceStore>((set) => ({
   dances: new Map(),
-  fetchDances: async () => {
+  fetchDances: async (onError) => {
     const response = await fetch('/api/dances')
 
-    const dancesArray = (await response.json()) as Dance[]
-    console.log(dancesArray)
+    if (response.ok) {
+      const dancesArray = (await response.json()) as Dance[]
+      set({ dances: new Map(dancesArray.map((d) => [d.id, d])) })
+    } else {
+      onError?.('Something went wrong when fetching dances!')
+    }
 
-    set({ dances: new Map(dancesArray.map((d) => [d.id, d])) })
+    return response.ok
   },
 }))
