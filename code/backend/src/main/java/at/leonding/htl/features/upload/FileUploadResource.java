@@ -1,8 +1,7 @@
 package at.leonding.htl.features.upload;
 
-import at.leonding.htl.features.ml.PythonService;
+import at.leonding.htl.features.ml.PythonResource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -26,7 +25,7 @@ public class FileUploadResource {
     String UPLOAD_DIRECTORY;
 
     @Inject
-    PythonService pythonService;
+    PythonResource pythonService;
 
     @Path("/save")
     @POST
