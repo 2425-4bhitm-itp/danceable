@@ -1,22 +1,4 @@
 name: Danceable CI/CD Pipeline
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-#on: [ push ]
-#jobs:
-#  Explore-GitHub-Actions:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-java@v4
-#        with:
-#          distribution: 'temurin'
-#          java-version: '21'
-#          cache: 'maven'
-#          cache-dependency-path: 'code/backend/pom.xml'
-#      - name: Build with Maven
-#        working-directory: code/backend
-#        run: mvn -B package --file pom.xml
-
-
 
 on:
   push:
@@ -32,8 +14,11 @@ env:
   FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend
 
 jobs:
-  build-and-test:
+  build-test-containerize:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -74,53 +59,6 @@ jobs:
           npm ci
           npm test
           npm run build
-
-      # Store artifacts
-      - name: Archive backend production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: backend-artifacts
-          path: backend/target
-          retention-days: 1
-
-      - name: Archive frontend production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: frontend-artifacts
-          path: frontend/dist
-          retention-days: 1
-
-  containerize:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Download artifacts
-      - name: Download backend artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: backend-artifacts
-          path: backend/target
-
-      - name: Download frontend artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: frontend-artifacts
-          path: frontend/dist
-
-      # Verify artifacts were downloaded
-      - name: List downloaded files
-        run: |
-          echo "Backend artifacts:"
-          ls -la backend/target
-          echo "Frontend artifacts:"
-          ls -la frontend/dist
 
       # Login to GitHub Container Registry
       - name: Log in to GitHub Container Registry
@@ -174,7 +112,7 @@ jobs:
           labels: ${{ steps.meta-frontend.outputs.labels }}
 
   deploy:
-    needs: containerize
+    needs: build-test-containerize
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
 
@@ -182,7 +120,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Setup deployment tools
+      # Setup deployment tools (example for Docker Compose deployment)
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -190,7 +128,7 @@ jobs:
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
           if_key_exists: replace
 
-      # Deploy mit Docker Compose
+      # Deploy using Docker Compose
       - name: Deploy to server
         run: |
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
@@ -221,7 +159,7 @@ jobs:
         with:
           myToken: ${{ secrets.GITHUB_TOKEN }}
 
-      #  GitHub Release
+      # Create GitHub Release
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
