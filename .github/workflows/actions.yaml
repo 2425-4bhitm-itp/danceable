@@ -16,6 +16,8 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 #        working-directory: code/backend
 #        run: mvn -B package --file pom.xml
 
+
+
 on:
   push:
     branches: [ main ]
@@ -79,12 +81,14 @@ jobs:
         with:
           name: backend-artifacts
           path: backend/target
+          retention-days: 1
 
       - name: Archive frontend production artifacts
         uses: actions/upload-artifact@v3
         with:
           name: frontend-artifacts
           path: frontend/dist
+          retention-days: 1
 
   containerize:
     needs: build-and-test
@@ -110,6 +114,14 @@ jobs:
           name: frontend-artifacts
           path: frontend/dist
 
+      # Verify artifacts were downloaded
+      - name: List downloaded files
+        run: |
+          echo "Backend artifacts:"
+          ls -la backend/target
+          echo "Frontend artifacts:"
+          ls -la frontend/dist
+
       # Login to GitHub Container Registry
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
@@ -117,6 +129,10 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       # Extract metadata for Docker
       - name: Extract Docker metadata for backend
@@ -166,7 +182,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Setup deployment tools (example for Docker Compose deployment)
+      # Setup deployment tools
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -174,7 +190,7 @@ jobs:
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
           if_key_exists: replace
 
-      # Deploy using Docker Compose
+      # Deploy mit Docker Compose
       - name: Deploy to server
         run: |
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
@@ -205,7 +221,7 @@ jobs:
         with:
           myToken: ${{ secrets.GITHUB_TOKEN }}
 
-      # Create GitHub Release
+      #  GitHub Release
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
