@@ -15,10 +15,6 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 #      - name: Build with Maven
 #        working-directory: code/backend
 #        run: mvn -B package --file pom.xml
-
-
-
-
 on:
   push:
     branches: [ main ]
@@ -46,10 +42,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Start PostgreSQL
@@ -59,6 +55,7 @@ jobs:
 
       - name: Find and build backend
         run: |
+          # Versuche, das Backend-Verzeichnis zu finden
           if [ -d "backend" ]; then
             cd backend
           elif [ -d "code/backend" ]; then
