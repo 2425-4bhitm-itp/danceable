@@ -8,7 +8,7 @@ type SongStore = {
   songs: Map<number, Song>
   fetchSongs: (onError: OnError) => Promise<boolean>
   patchSong: (song: Song, onError: OnError) => Promise<boolean>
-  addSong: (song: Song, onError: OnError) => Promise<boolean>
+  addSong: (song: Omit<Song, 'id'>, onError: OnError) => Promise<boolean>
   editSongId: number | null
   setEditSongId: (id: number | null) => void
   isAddingSong: boolean
@@ -64,12 +64,14 @@ export const useSongStore = create<SongStore>((set) => ({
       },
     })
 
-    const isValid = (response.ok && song.id) as boolean
+    const createdSong = (await response.json()) as Song
+
+    const isValid = (response.ok && createdSong && createdSong.id) as boolean
 
     if (isValid) {
       set((state) => {
         const updatedSongs = new Map(state.songs)
-        updatedSongs.set(song.id, song)
+        updatedSongs.set(createdSong.id, createdSong)
         return { songs: updatedSongs }
       })
     } else {

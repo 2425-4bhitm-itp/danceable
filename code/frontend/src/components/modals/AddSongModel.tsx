@@ -2,10 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useDanceStore } from '../../stores/dance/danceStore'
 import { Song } from '../../stores/song/song'
 import { useSongStore } from '../../stores/song/songStore'
+import { useToastStore } from '../../stores/toast/toastStore'
+import { ToastType } from '../toast/ToastType'
+import { ToastData } from '../../stores/toast/ToastData'
 
 function AddSongModal() {
   const { addSong, isAddingSong, setIsAddingSong } = useSongStore()
   const { dances } = useDanceStore()
+  const { createToast } = useToastStore()
 
   const [title, setTitle] = useState('')
   const [speed, setSpeed] = useState(-1)
@@ -31,14 +35,21 @@ function AddSongModal() {
       return
     }
 
-    const updatedSong: Song = {
-      id: null,
+    const updatedSong: Omit<Song, 'id'> = {
       title,
       speed,
       danceId,
     }
 
-    addSong(updatedSong)
+    console.log('trying to add song', updatedSong)
+
+    addSong(updatedSong, (message) =>
+      createToast({
+        type: ToastType.ERROR,
+        message: message,
+        timeToLive: 3000,
+      } as ToastData)
+    )
     close()
   }
 

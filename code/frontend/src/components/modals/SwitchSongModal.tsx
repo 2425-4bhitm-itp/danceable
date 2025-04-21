@@ -3,10 +3,14 @@ import { Clip } from '../../stores/clip/clip'
 import { Song } from '../../stores/song/song'
 import { useClipStore } from '../../stores/clip/clipStore'
 import { useSongStore } from '../../stores/song/songStore'
+import { useToastStore } from '../../stores/toast/toastStore'
+import { ToastType } from '../toast/ToastType'
+import { ToastData } from '../../stores/toast/ToastData'
 
 function SwitchSongModal() {
   const { songs } = useSongStore()
   const { clips, switchSongClipId, setSwitchSongClipId, updateClip: patchClip } = useClipStore()
+  const { createToast } = useToastStore()
 
   const clip = clips.get(switchSongClipId ?? -1)
 
@@ -43,7 +47,14 @@ function SwitchSongModal() {
 
     console.log('song id', songId)
 
-    patchClip(updatedClip)
+    patchClip(updatedClip, (message) =>
+      createToast({
+        type: ToastType.ERROR,
+        message: message,
+        timeToLive: 3000,
+      } as ToastData)
+    )
+    close()
     close()
   }
 

@@ -2,10 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import { useDanceStore } from '../../stores/dance/danceStore'
 import { Song } from '../../stores/song/song'
 import { useSongStore } from '../../stores/song/songStore'
+import { useToastStore } from '../../stores/toast/toastStore'
+import { ToastType } from '../toast/ToastType'
+import { ToastData } from '../../stores/toast/ToastData'
 
 function EditSongModal() {
   const { songs, patchSong, editSongId, setEditSongId } = useSongStore()
   const { dances } = useDanceStore()
+  const { createToast } = useToastStore()
 
   const song = songs.get(editSongId ?? -1)
 
@@ -45,7 +49,13 @@ function EditSongModal() {
       danceId,
     }
 
-    patchSong(updatedSong)
+    patchSong(updatedSong, (message) =>
+      createToast({
+        type: ToastType.ERROR,
+        message: message,
+        timeToLive: 3000,
+      } as ToastData)
+    )
     close()
   }
 
