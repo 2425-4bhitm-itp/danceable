@@ -3,17 +3,21 @@ import AVFoundation
 
 var recordingQueue = DispatchQueue(label: "recording")
 
+let MIN_SHEET_FRACTION: CGFloat = 0.175
+let MAX_SHEET_FRACTION: CGFloat = 0.7
+
 struct ContentView: View {
     @ObservedObject var viewModel: ViewModel
     
-    @StateObject private var recorder = AudioRecorder()
+    @StateObject private var audioController = AudioController()
     
     let queue = DispatchQueue(label: "at.htl.leonding")
     
     @State var showDancesView = false
     
-    @State private var isSheetPresent: Bool = true
-    @State private var selectedDetent: PresentationDetent = .fraction(0.125)
+    @State private var isSheetPresent: Bool = false
+    
+    @State private var selectedDetent: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
     
     @State private var areDancesDisplayed: Bool = false
     
@@ -21,7 +25,17 @@ struct ContentView: View {
         NavigationStack {
             Spacer()
             Button(action: {
-                recorder.startRecording(length:5);
+                audioController.recordAndUploadAudio(duration: 5.0) { result in
+                    switch result {
+                    case .success(let predictions):
+                        print("Received predictions: \(predictions)")
+                        viewModel.predictions = predictions
+                        selectedDetent = .fraction(MAX_SHEET_FRACTION)
+                        isSheetPresent = true
+                    case .failure(let error):
+                        print("Error: \(error.localizedDescription)")
+                    }
+                }
             }) {
                 ZStack {
                     Circle()
@@ -34,16 +48,19 @@ struct ContentView: View {
                 }
                 .padding(75)
                 .shadow(radius: 10)
+                .onAppear() {
+                    isSheetPresent = viewModel.predictions.count != 0
+                }
                 .sheet(isPresented: $isSheetPresent) {
                     NavigationView {
                         PredictionsView(viewModel: viewModel)
                     }
                     .presentationDetents(
-                        [.fraction(0.125), .fraction(0.7), .fraction(1)],
+                        [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
                         selection: $selectedDetent
                     )
                     .presentationBackgroundInteraction(
-                        .enabled(upThrough: .fraction(1))
+                        .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
                     )
                     .presentationDragIndicator(.visible)
                     .interactiveDismissDisabled(true)
@@ -55,7 +72,11 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink(destination: {
-                        DancesView(viewModel: viewModel)
+                        DancesView(viewModel: viewModel).onAppear {
+                            isSheetPresent = false
+                        }.onDisappear {
+                            isSheetPresent = true
+                        }
                     }) {
                         Image(systemName: "list.bullet.circle.fill")
                             .resizable()
