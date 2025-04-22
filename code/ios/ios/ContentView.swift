@@ -54,6 +54,7 @@ struct ContentView: View {
                 .padding(75)
                 .shadow(radius: 10)
             }
+            .disabled(audioController.isRecording)
             .onAppear() {
                 isSheetPresent = viewModel.predictions.count != 0
             }
