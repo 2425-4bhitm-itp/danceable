@@ -40,31 +40,39 @@ struct ContentView: View {
                 ZStack {
                     Circle()
                         .fill(Color(red: 0.48, green: 0.14, blue: 0.58))
-                    Image(systemName: "microphone.fill")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 60)
-                        .foregroundStyle(Color.white)
+                    if (!audioController.isRecording) {
+                        Image(systemName: "microphone.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60)
+                            .foregroundStyle(Color.white)
+                    } else {
+                        RecordingAnimationView(soundLevels: audioController.soundLevels)
+                    }
+                    
                 }
                 .padding(75)
                 .shadow(radius: 10)
-                .onAppear() {
-                    isSheetPresent = viewModel.predictions.count != 0
+            }
+            .onAppear() {
+                isSheetPresent = viewModel.predictions.count != 0
+            }
+            .onReceive(audioController.$soundLevels) { levels in
+                print("sound levels: \(levels)")
+            }
+            .sheet(isPresented: $isSheetPresent) {
+                NavigationView {
+                    PredictionsView(viewModel: viewModel)
                 }
-                .sheet(isPresented: $isSheetPresent) {
-                    NavigationView {
-                        PredictionsView(viewModel: viewModel)
-                    }
-                    .presentationDetents(
-                        [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
-                        selection: $selectedDetent
-                    )
-                    .presentationBackgroundInteraction(
-                        .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
-                    )
-                    .presentationDragIndicator(.visible)
-                    .interactiveDismissDisabled(true)
-                }
+                .presentationDetents(
+                    [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
+                    selection: $selectedDetent
+                )
+                .presentationBackgroundInteraction(
+                    .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
+                )
+                .presentationDragIndicator(.visible)
+                .interactiveDismissDisabled(true)
             }
             Spacer()
             Spacer()
@@ -72,7 +80,9 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink(destination: {
-                        DancesView(viewModel: viewModel).onAppear {
+                        Text("Avaliable Dances").font(.headline)
+                        DancesView(viewModel: viewModel)
+                        .onAppear {
                             isSheetPresent = false
                         }.onDisappear {
                             isSheetPresent = true

@@ -1,7 +1,7 @@
 import Foundation
 
-let ADRESS = "localhost"
-let PREDICTION_BASE_URL = "http://" + ADRESS + ":8080/predictions"
+let ADRESS = "localhost:8080"
+let PREDICTION_BASE_URL = "http://" + ADRESS + "/predictions"
 
 func loadPredictions() -> [Prediction] {
     var predictions: [Prediction] = []

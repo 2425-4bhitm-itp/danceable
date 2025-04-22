@@ -5,7 +5,7 @@ class AudioUploader {
         DispatchQueue.global(qos: .background).async {
             do {
                 let fileData = try Data(contentsOf: fileURL)
-                let serverAddress = "http://172.20.10.5:8080/audio/uploadStream"
+                let serverAddress = "http://localhost:8080/audio/uploadStream"
                 
                 guard let url = URL(string: serverAddress) else {
                     let error = NSError(domain: "Uploader", code: 1001, userInfo: [NSLocalizedDescriptionKey: "Invalid server URL"])
