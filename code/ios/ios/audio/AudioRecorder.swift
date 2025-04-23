@@ -79,7 +79,7 @@ class AudioRecorder: ObservableObject {
     }
 
     private func normalize(_ db: Float) -> CGFloat {
-        let clamped = max(0, CGFloat(db + 50) / 50)
+        let clamped = CGFloat(db + 50) / 50 // max(0, CGFloat(db + 50) / 50)
         return min(clamped, 1.0)
     }
 }
