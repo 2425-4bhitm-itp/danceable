@@ -49,6 +49,3 @@ features.csv
 
 node_modules/
 dist/
-
-*.joblib
-*.mlmodel
