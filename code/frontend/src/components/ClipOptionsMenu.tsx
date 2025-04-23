@@ -10,7 +10,7 @@ interface ClipOptionsMenuProps {
 function ClipOptionsMenu(props: ClipOptionsMenuProps) {
   const [isVisible, setIsVisible] = useState(false)
   const { setEditSongId } = useSongStore()
-  const { setSwitchSongClipId } = useClipStore()
+  const { setSwitchSongClipId, deleteClip } = useClipStore()
   const clip = useClipStore((state) => state.clips.get(props.clipId))
 
   if (!clip || !clip.songId) {
@@ -65,6 +65,15 @@ function ClipOptionsMenu(props: ClipOptionsMenuProps) {
             analyse
           </button>
           <button
+            className="switch-song-option rounded px-2 py-1 text-left hover:bg-gray-100"
+            onClick={() => {
+              setSwitchSongClipId(clip.id)
+              close()
+            }}
+          >
+            switch song
+          </button>
+          <button
             className="edit-song-option rounded px-2 py-1 text-left hover:bg-gray-100"
             onClick={() => {
               setEditSongId(clip.songId)
@@ -74,15 +83,9 @@ function ClipOptionsMenu(props: ClipOptionsMenuProps) {
             edit song
           </button>
           <button
-            className="switch-song-option rounded px-2 py-1 text-left hover:bg-gray-100"
-            onClick={() => {
-              setSwitchSongClipId(clip.id)
-              close()
-            }}
+            className="delete-song-option rounded px-2 py-1 text-left text-red-400 hover:bg-gray-100"
+            onClick={() => deleteClip(clip.id)}
           >
-            switch song
-          </button>
-          <button className="delete-song-option rounded px-2 py-1 text-left text-red-400 hover:bg-gray-100">
             delete clip
           </button>
         </div>

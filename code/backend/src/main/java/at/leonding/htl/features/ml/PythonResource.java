@@ -15,13 +15,12 @@ import io.quarkus.runtime.ShutdownEvent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @Path("/ml")
 @ApplicationScoped
-public class PythonService {
+public class PythonResource {
 
     private static Client client;
 

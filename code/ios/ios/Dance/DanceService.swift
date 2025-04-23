@@ -1,7 +1,6 @@
 import Foundation
 
-var BASE_URL = "localhost"
-let DANCE_URL = "http://" + BASE_URL + ":8080/dances"
+let DANCE_URL = Config.API_URL + "/dances"
 
 func loadDances() -> [Dance] {
     var dances: [Dance] = []

@@ -3,88 +3,99 @@ import AVFoundation
 
 var recordingQueue = DispatchQueue(label: "recording")
 
+let MIN_SHEET_FRACTION: CGFloat = 0.175
+let MAX_SHEET_FRACTION: CGFloat = 0.7
+
 struct ContentView: View {
     @ObservedObject var viewModel: ViewModel
+    
+    @StateObject private var audioController = AudioController()
     
     let queue = DispatchQueue(label: "at.htl.leonding")
     
     @State var showDancesView = false
     
-    //Audio Utils
-    var engine = AVAudioEngine()
-    @State private var audioFile: AVAudioFile?
+    @State private var isSheetPresent: Bool = false
     
-    @State private var isSheetPresent: Bool = true
-    @State private var selectedDetent: PresentationDetent = .fraction(0.125)
+    @State private var selectedDetent: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
     
     @State private var areDancesDisplayed: Bool = false
     
     var body: some View {
-        Spacer()
-        Button(action: {
-            startRecording(length:5);
-        }) {
-            ZStack {
-                Circle()
-                    .fill(Color(red: 0.48, green: 0.14, blue: 0.58))
-                Image(systemName: "microphone.fill")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 60)
-                    .foregroundStyle(Color.white)
+        NavigationStack {
+            Spacer()
+            Button(action: {
+                audioController.recordAndUploadAudio(duration: 5.0) { result in
+                    switch result {
+                    case .success(let predictions):
+                        print("Received predictions: \(predictions)")
+                        viewModel.predictions = predictions
+                        selectedDetent = .fraction(MAX_SHEET_FRACTION)
+                        isSheetPresent = true
+                    case .failure(let error):
+                        print("Error: \(error.localizedDescription)")
+                    }
+                }
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.48, green: 0.14, blue: 0.58))
+                    if (!audioController.isRecording) {
+                        Image(systemName: "microphone.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60)
+                            .foregroundStyle(Color.white)
+                    } else {
+                        RecordingAnimationView(soundLevels: audioController.soundLevels)
+                    }
+                    
+                }
+                .padding(75)
+                .shadow(radius: 10)
             }
-            .padding(75)
-            .shadow(radius: 10)
-        }.sheet(isPresented: $isSheetPresent) {
-            NavigationView {
-                if (areDancesDisplayed) {
-                    DancesView(viewModel: viewModel)
-                        .toolbar {
-                            ToolbarItem(placement: .topBarLeading) {
-                                Button {
-                                    areDancesDisplayed.toggle()
-                                } label:{
-                                    HStack {
-                                        Image(systemName: "chevron.left")
-                                        Text("Back")
-                                    }
-                                    .foregroundStyle(Color.purple)
-                                }
-                            }
-                        }
-                } else {
+            .disabled(audioController.isRecording)
+            .onAppear() {
+                isSheetPresent = viewModel.predictions.count != 0
+            }
+            .onReceive(audioController.$soundLevels) { levels in
+                print("sound levels: \(levels)")
+            }
+            .sheet(isPresented: $isSheetPresent) {
+                NavigationView {
                     PredictionsView(viewModel: viewModel)
-                        .toolbar {
-                            if (selectedDetent != .fraction(0.125)) {
-                                ToolbarItem(placement: .topBarLeading) {
-                                    Button(action: {
-                                        areDancesDisplayed.toggle()
-                                        print("Dance button tapped, areDancesDisplayed: \(areDancesDisplayed)")
-                                    }) {
-                                        Image(systemName: "figure.dance")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 32, height: 32)
-                                            .foregroundStyle(Color(red: 0.48, green: 0.14, blue: 0.58))
-                                    }
-                            }
+                }
+                .presentationDetents(
+                    [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
+                    selection: $selectedDetent
+                )
+                .presentationBackgroundInteraction(
+                    .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
+                )
+                .presentationDragIndicator(.visible)
+                .interactiveDismissDisabled(true)
+            }
+            Spacer()
+            Spacer()
+            Spacer()
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink(destination: {
+                        Text("Avaliable Dances").font(.headline)
+                        DancesView(viewModel: viewModel)
+                        .onAppear {
+                            isSheetPresent = false
+                        }.onDisappear {
+                            isSheetPresent = true
                         }
+                    }) {
+                        Image(systemName: "list.bullet.circle.fill")
+                            .resizable()
+                            .frame(width: 30, height: 30)
                     }
                 }
             }
-            .presentationDetents(
-                [.fraction(0.125), .fraction(0.7), .fraction(1)],
-                selection: $selectedDetent
-            )
-            .presentationBackgroundInteraction(
-                .enabled(upThrough: .fraction(1))
-            )
-            .presentationDragIndicator(.visible)
-            .interactiveDismissDisabled(true)
         }
-        Spacer()
-        Spacer()
-        Spacer()
         .task {
             queue.async(execute: {
                 let dances = loadDances()
@@ -93,99 +104,6 @@ struct ContentView: View {
                     viewModel.model.dances = dances
                 })
             })
-        }
-    }
-    
-    func startRecording(length:Double) {
-        let input = engine.inputNode
-        
-        let format = input.outputFormat(forBus: 0)
-        print("Output format: \(format)")
-        
-        // find Documents Directory in current Container and set the URL
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let outputFileURL = documentsDirectory.appendingPathComponent("recordedAudio.wav")
-        
-        // Define WAV format settings (courtesy of DeepSeek)
-        let wavSettings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatLinearPCM, // Linear PCM for WAV
-            AVSampleRateKey: format.sampleRate,
-            AVNumberOfChannelsKey: format.channelCount,
-            AVLinearPCMBitDepthKey: 16, // 16-bit depth
-            AVLinearPCMIsBigEndianKey: false, // Little-endian
-            AVLinearPCMIsFloatKey: false, // Integer format
-            AVLinearPCMIsNonInterleaved: false // Interleaved
-        ]
-        
-        
-        func record(){
-            do {
-                audioFile = try AVAudioFile(forWriting: outputFileURL, settings: wavSettings)
-            } catch {
-                print("Error creating audio file: \(error)")
-                return
-            }
-            
-            // installs a Tap to capture audio Stream until engine is stopped
-            input.installTap(onBus: 0, bufferSize: 4096, format: format) { (buffer, when) in
-                
-                do {
-                    try self.audioFile?.write(from: buffer)
-                } catch {
-                    print("Error writing to audio file: \(error)")
-                }
-            }
-            
-            // Start engine
-            do {
-                try engine.start()
-            } catch {
-                print("Error starting audio engine: \(error)")
-                return
-            }
-            
-            // Stop recording after x seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + length) {
-                engine.stop()
-                engine.reset()
-                print("Recording stopped and saved to \(outputFileURL)")
-                saveRecording(fileURL: outputFileURL)
-            }
-        }
-        recordingQueue.async{record()}
-    }
-    
-    private func saveRecording(fileURL: URL) {
-        DispatchQueue.global(qos: .background).async {
-            do {
-                
-                let fileData = try Data(contentsOf: fileURL)
-                print (fileData)
-                
-                guard let url = URL(string: "http://<YOUR_SERVER_IP>:8080/uploadStream") else {
-                    print("Invalid server URL")
-                    return
-                }
-                
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                
-                request.setValue("audio/wav", forHTTPHeaderField: "Content-Type")
-                
-                request.httpBody = fileData
-                
-                
-                let task = URLSession.shared.dataTask(with: request) {data, response, error in
-                    if let httpResponse = response as? HTTPURLResponse {
-                        print("Server response status code: \(httpResponse.statusCode)")
-                    }
-                }
-                
-                task.resume()
-                
-            } catch {
-                print("Error reading file or sending to server: \(error)")
-            }
         }
     }
 }

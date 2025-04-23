@@ -44,7 +44,7 @@ public class SongResource {
 
         songRepository.persist(song);
 
-        return Response.created(URI.create(BASE_PATH + "/" + song.getId())).build();
+        return Response.created(URI.create(BASE_PATH + "/" + song.getId())).entity(song).build();
     }
 
     @Transactional
@@ -84,7 +84,6 @@ public class SongResource {
             if (songDto.speed() != null) {
                 song.setSpeed(songDto.speed());
             }
-
             if (songDto.title() != null) {
                 song.setTitle(songDto.title());
             }
