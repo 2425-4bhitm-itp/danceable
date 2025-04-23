@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score
 import coremltools as ct
 import joblib
 import re
+import numpy as np
 
 model = None
 
@@ -35,9 +36,10 @@ def train():
     val_df = df[df['song_name'].isin(val_songs)]
 
     # Separate features and labels
-    X_train, y_train = train_df.drop(columns=["filename", "label", "song_name"]).values, train_df["label"].values
-    X_val, y_val = val_df.drop(columns=["filename", "label", "song_name"]).values, val_df["label"].values
-    X_test, y_test = test_df.drop(columns=["filename", "label", "song_name"]).values, test_df["label"].values
+    feature_columns = [col for col in df.columns if col not in ["filename", "label", "song_name"]]
+    X_train, y_train = train_df[feature_columns].values, train_df["label"].values
+    X_val, y_val = val_df[feature_columns].values, val_df["label"].values
+    X_test, y_test = test_df[feature_columns].values, test_df["label"].values
 
     # Train the model
     model = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -65,10 +67,15 @@ def train():
 def classify_audio(file_path, extractor):
     global model
     if model is not None:
-        features = extractor.extract_features_from_file(file_path).reshape(1, -1)
-        probabilities = model.predict_proba(features)[0]
+        features = extractor.extract_features_from_file(file_path)
+
+        feature_vector = [value for key in sorted(features.keys()) for value in features[key]]
+        feature_vector = np.array(feature_vector).reshape(1, -1)
+
+        probabilities = model.predict_proba(feature_vector)[0]
         dance_styles = model.classes_
         predictions = sorted(zip(dance_styles, probabilities), key=lambda x: x[1], reverse=True)
+
     return predictions
 
 def load_model():

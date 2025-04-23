@@ -36,7 +36,8 @@ def extract_features():
     data = request.get_json()
     file_path = data["file_path"]
     features = extractor.extract_features_from_file(file_path)
-    return jsonify({"features": features.tolist()}), 200
+    features_serialized = {key: value.tolist() for key, value in features.items()}
+    return jsonify({"features": features_serialized}), 200
 
 @app.route("/train", methods=["GET"])
 def train_model():
