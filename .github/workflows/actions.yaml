@@ -138,7 +138,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./${{ steps.find-backend.outputs.BACKEND_DIR }}
-          file: ./${{ steps.find-backend.outputs.BACKEND_DIR }}/Dockerfile  
+          file: ./${{ steps.find-backend.outputs.BACKEND_DIR }}/docker/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
