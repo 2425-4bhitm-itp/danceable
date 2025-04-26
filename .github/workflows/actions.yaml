@@ -145,7 +145,7 @@ jobs:
 
   deploy:
     needs: containerize
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Install SSH key
