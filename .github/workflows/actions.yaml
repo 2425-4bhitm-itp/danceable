@@ -21,9 +21,6 @@ on:
   pull_request:
     branches: [ main ]
 
-  env:
-    REGISTRY: ghcr.io
-    BACKEND_IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   debug-structure:
