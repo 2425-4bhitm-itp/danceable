@@ -54,16 +54,19 @@ jobs:
           sleep 10
 
       - name: Find and build backend
+        id: find-backend
         run: |
-          # Versuche, das Backend-Verzeichnis zu finden
+          # Backend-Verzeichnis finden
           if [ -d "backend" ]; then
             echo "BACKEND_DIR=backend" >> $GITHUB_ENV
+            echo "BACKEND_DIR=backend" >> $GITHUB_OUTPUT
             cd backend
           elif [ -d "code/backend" ]; then
             echo "BACKEND_DIR=code/backend" >> $GITHUB_ENV
+            echo "BACKEND_DIR=code/backend" >> $GITHUB_OUTPUT
             cd code/backend
           else
-            echo "Backend-Verzeichnis nicht gefunden. Aktuelle Struktur:"
+            echo "Backend-Verzeichnis nicht gefunden. Suche nach pom.xml:"
             find . -name "pom.xml" -not -path "*/target/*"
             exit 1
           fi
@@ -75,11 +78,9 @@ jobs:
           else
             mvn clean package
           fi
-          
-          # Speichere Pfad für nächsten Job
-               echo "BACKEND_DIR=$BACKEND_DIR" >> $GITHUB_ENV
 
       - name: Archive backend artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: backend-artifacts
