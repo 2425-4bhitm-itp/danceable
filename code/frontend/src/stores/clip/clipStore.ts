@@ -9,9 +9,12 @@ type ClipStore = {
   switchSongClipId: number | null
   setSwitchSongClipId: (id: number | null) => void
   fetchClips: (onError: OnError) => Promise<boolean>
-  createClip: (clip: Clip, onError: OnError) => Promise<boolean>
+  addClip: (clip: Clip, onError: OnError) => Promise<boolean>
   updateClip: (clip: Clip, onError: OnError) => Promise<boolean>
   deleteClip: (id: number, onError: OnError) => Promise<boolean>
+  uploadAddClips: (clipFiles: File[], onError: OnError) => Promise<boolean>
+  isAddingClip: boolean
+  setIsAddingClip: (isAddingClip: boolean) => void
 }
 
 export const useClipStore = create<ClipStore>((set) => ({
@@ -31,7 +34,7 @@ export const useClipStore = create<ClipStore>((set) => ({
 
     return response.ok
   },
-  createClip: async (clip, onError) => {
+  addClip: async (clip, onError) => {
     const response = await fetch(CLIPS_URL, {
       method: 'POST',
       body: JSON.stringify(clip),
@@ -92,5 +95,12 @@ export const useClipStore = create<ClipStore>((set) => ({
     }
 
     return response.ok
+  },
+  uploadAddClips: async (clipFiles, onError) => {
+    return true
+  },
+  isAddingClip: false,
+  setIsAddingClip: (isAddingClip) => {
+    set({ isAddingClip: isAddingClip })
   },
 }))

@@ -147,7 +147,7 @@ function AddSongModal() {
             className="cursor-pointer rounded-lg bg-gray-100 px-5 py-1 hover:bg-gray-200"
             onClick={close}
           >
-            Cancel
+            cancel
           </button>
           <button
             type="submit"

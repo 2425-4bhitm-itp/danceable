@@ -129,7 +129,7 @@ function EditSongModal() {
             className="cursor-pointer rounded-lg bg-gray-100 px-5 py-1 hover:bg-gray-200"
             onClick={close}
           >
-            Cancel
+            cancelr
           </button>
           <button
             type="submit"
