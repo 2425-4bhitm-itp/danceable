@@ -15,6 +15,7 @@ type ClipStore = {
   uploadAddClips: (clipFiles: File[], onError: OnError) => Promise<boolean>
   isAddingClip: boolean
   setIsAddingClip: (isAddingClip: boolean) => void
+  uploadClipFiles: (clipFiles: File[], onError: OnError) => Promise<boolean>
 }
 
 export const useClipStore = create<ClipStore>((set) => ({
@@ -102,5 +103,9 @@ export const useClipStore = create<ClipStore>((set) => ({
   isAddingClip: false,
   setIsAddingClip: (isAddingClip) => {
     set({ isAddingClip: isAddingClip })
+  },
+  uploadClipFiles: async (clipFiles, onError) => {
+    // TODO: implement sending to server and adding clips
+    return true
   },
 }))

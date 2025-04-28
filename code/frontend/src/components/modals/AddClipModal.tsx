@@ -30,10 +30,8 @@ function AddClipModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log('song id: ', songId)
-    console.log('number of clip files: ', clipFiles)
-
-    if (songId && clipFiles) {
+    if (songId && clipFiles.length > 0) {
+      clipFiles.forEach((clipFile) => addClip(clipFile))
     }
 
     close()
