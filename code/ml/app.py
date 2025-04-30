@@ -33,11 +33,16 @@ def upload_wav_file():
 
 @app.route("/features", methods=["POST"])
 def extract_features():
-    data = request.get_json()
-    file_path = data["file_path"]
+    data = request.get_json(silent=True)
+    file_path = request.args.get("file_path") or (data and data.get("file_path"))
+
+    if not file_path:
+        return jsonify({"error": "Missing 'file_path' in request query parameters or JSON body"}), 400
+
     features = extractor.extract_features_from_file(file_path)
     features_serialized = {key: value.tolist() for key, value in features.items()}
     return jsonify({"features": features_serialized}), 200
+
 
 @app.route("/train", methods=["GET"])
 def train_model():
