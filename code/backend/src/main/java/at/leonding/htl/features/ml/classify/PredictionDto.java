@@ -1,8 +1,7 @@
 
-package at.leonding.htl.features.prediction;
+package at.leonding.htl.features.ml.classify;
 
 public record PredictionDto(
-        Long id,
         Long danceId,
         double confidence,
         SpeedCategory speedCategory

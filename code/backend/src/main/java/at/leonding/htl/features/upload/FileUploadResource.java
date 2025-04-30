@@ -24,9 +24,6 @@ public class FileUploadResource {
     @ConfigProperty(name = "UPLOAD_DIRECTORY", defaultValue = "./")
     String UPLOAD_DIRECTORY;
 
-    @Inject
-    PythonResource pythonService;
-
     @Path("/save")
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)

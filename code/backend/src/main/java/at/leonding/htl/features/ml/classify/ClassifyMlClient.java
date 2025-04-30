@@ -10,5 +10,5 @@ public interface ClassifyMlClient {
     @Path("classify_audio")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    ClassifyResponseDto classify(ClassifyRequestDto filePath);
+    ClassifyResponse classify(@QueryParam("file_path") String filePath);
 }

@@ -1,5 +1,5 @@
 
-package at.leonding.htl.features.prediction;
+package at.leonding.htl.features.ml.classify;
 
 public enum SpeedCategory {
     slow,

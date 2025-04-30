@@ -1,9 +1,10 @@
 package at.leonding.htl.features.upload;
 
+import at.leonding.htl.features.library.dance.Dance;
+import at.leonding.htl.features.library.dance.DanceRepository;
 import at.leonding.htl.features.ml.classify.ClassifyMlClient;
-import at.leonding.htl.features.ml.classify.ClassifyRequestDto;
-import at.leonding.htl.features.prediction.PredictionDto;
-import at.leonding.htl.features.prediction.PredictionRepository;
+import at.leonding.htl.features.ml.classify.ClassifyResponse;
+import at.leonding.htl.features.ml.classify.PredictionDto;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -16,11 +17,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("/audio")
 public class AudioResource {
     @Inject
-    PredictionRepository predictionRepository;
+    DanceRepository danceRepository;
 
     @RestClient
     ClassifyMlClient classifyMlClient;
@@ -35,20 +38,26 @@ public class AudioResource {
 
         Files.copy(inputStream, audioFilePath);
 
+        ClassifyResponse classifyResponseDto = classifyMlClient.classify(
+                audioFilePath.toAbsolutePath().toString()
+        );
+
         Log.info(audioFilePath.toAbsolutePath().toString());
-        Log.info(classifyMlClient.classify(
-                new ClassifyRequestDto(audioFilePath.toAbsolutePath().toString())
-        ));
+        Log.info(classifyResponseDto);
 
-        List<PredictionDto> predictions = predictionRepository.listAll().stream()
-                .map(p -> new PredictionDto(
-                                p.getId(),
-                                p.getDance().getId(),
-                                p.getConfidence(),
-                                p.getSpeedCategory()
-                        )
-                ).toList();
+        List<Dance> dances = danceRepository.findAll().list();
 
-        return Response.ok().entity(predictions).build();
+//        Set<PredictionDto> predictions = classifyResponseDto.predictions.stream()
+//                .map(p -> new PredictionDto(dances.stream()
+//                        .filter(d -> d.getName().equalsIgnoreCase(p.danceName()))
+//                        .map(Dance::getId)
+//                        .findFirst()
+//                        .orElse(null),
+//                        p.confidence(),
+//                        p.speedCategory())
+//                ).filter(p -> p.danceId() != null)
+//                .collect(Collectors.toSet());
+
+        return Response.ok().entity(classifyResponseDto).build();
     }
 }
