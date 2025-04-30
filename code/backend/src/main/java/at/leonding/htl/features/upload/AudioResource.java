@@ -5,6 +5,7 @@ import at.leonding.htl.features.library.dance.DanceRepository;
 import at.leonding.htl.features.ml.classify.ClassifyMlClient;
 import at.leonding.htl.features.ml.classify.ClassifyResponse;
 import at.leonding.htl.features.ml.classify.PredictionDto;
+import at.leonding.htl.features.ml.features.AudioFeatureClient;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -28,36 +29,57 @@ public class AudioResource {
     @RestClient
     ClassifyMlClient classifyMlClient;
 
+    @RestClient
+    AudioFeatureClient audioFeatureClient;
+
     @POST
     @Path("uploadStream")
     @Consumes("audio/wave")
     public Response uploadAudioStream(InputStream inputStream) throws IOException {
+        String absolutePath = saveAudioFile(inputStream);
+
+        ClassifyResponse classifyResponseDto = classifyMlClient.classify(
+                absolutePath
+        );
+
+        Log.info("Classify file: ");
+        Log.info(absolutePath);
+        Log.info(classifyResponseDto);
+
+        List<Dance> dances = danceRepository.findAll().list();
+
+        Set<PredictionDto> predictions = classifyResponseDto.predictions.stream()
+                .map(p -> new PredictionDto(dances.stream()
+                        .filter(d -> d.getName().equalsIgnoreCase(p.danceName()))
+                        .map(Dance::getId)
+                        .findFirst()
+                        .orElse(null),
+                        p.confidence(),
+                        p.speedCategory())
+                ).filter(p -> p.danceId() != null)
+                .collect(Collectors.toSet());
+
+        return Response.ok().entity(predictions).build();
+    }
+
+    @POST
+    @Path("features")
+    @Consumes("audio/wave")
+    public Response extractFeatures(InputStream inputStream) throws IOException {
+        String absolutePath = saveAudioFile(inputStream);
+
+        return Response.ok().entity(
+                audioFeatureClient.extractFeatures(absolutePath)
+        ).build();
+    }
+
+    private String saveAudioFile(InputStream inputStream) throws IOException {
         String audioFileLocation = "/app/song-storage/uploadedAudio_" + System.currentTimeMillis() + ".wav";
         java.nio.file.Path audioFilePath = java.nio.file.Path.of(
                 audioFileLocation);
 
         Files.copy(inputStream, audioFilePath);
 
-        ClassifyResponse classifyResponseDto = classifyMlClient.classify(
-                audioFilePath.toAbsolutePath().toString()
-        );
-
-        Log.info(audioFilePath.toAbsolutePath().toString());
-        Log.info(classifyResponseDto);
-
-        List<Dance> dances = danceRepository.findAll().list();
-
-//        Set<PredictionDto> predictions = classifyResponseDto.predictions.stream()
-//                .map(p -> new PredictionDto(dances.stream()
-//                        .filter(d -> d.getName().equalsIgnoreCase(p.danceName()))
-//                        .map(Dance::getId)
-//                        .findFirst()
-//                        .orElse(null),
-//                        p.confidence(),
-//                        p.speedCategory())
-//                ).filter(p -> p.danceId() != null)
-//                .collect(Collectors.toSet());
-
-        return Response.ok().entity(classifyResponseDto).build();
+        return audioFilePath.toAbsolutePath().toString();
     }
 }

@@ -65,7 +65,9 @@ public class Dance implements Comparable<Dance> {
 
     public Dance(String name) {
         this.name = name;
-        public Dance(String name, int minBpm, int maxBpm) {
+    }
+
+    public Dance(String name, int minBpm, int maxBpm) {
         this.name = name;
         this.minBpm = minBpm;
         this.maxBpm = maxBpm;
