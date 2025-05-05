@@ -36,5 +36,5 @@ struct PredictionView: View {
     let model: Model = Model()
     let viewModel: ViewModel = ViewModel(model: model)
     
-    PredictionView(prediction: Prediction(id: 1, danceId: 1, confidence: 0.75, speedCategory: SpeedCategory.slow), viewModel: viewModel)
+    PredictionView(prediction: Prediction(danceId: 1, confidence: 0.75, speedCategory: SpeedCategory.slow), viewModel: viewModel)
 }

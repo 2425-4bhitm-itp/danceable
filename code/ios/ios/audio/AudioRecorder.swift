@@ -7,7 +7,7 @@ class AudioRecorder: ObservableObject {
     var engine = AVAudioEngine()
     var audioFile: AVAudioFile?
 
-    @Published var soundLevels: [CGFloat] = Array(repeating: 0.0, count: 10)
+    @Published var soundLevels: [CGFloat] = Array(repeating: 0.0, count: 11)
 
     func startRecording(length: Double, outputURLString: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let input = engine.inputNode
@@ -53,8 +53,9 @@ class AudioRecorder: ObservableObject {
                 let db = 20 * log10(rms)
                 let normalized = self.normalize(db)
 
+                let newLevels = self.generateSmoothedLevels(from: normalized)
                 DispatchQueue.main.async {
-                    self.soundLevels = Array(repeating: normalized, count: self.soundLevels.count)
+                    self.soundLevels = newLevels
                 }
             }
 
@@ -77,9 +78,21 @@ class AudioRecorder: ObservableObject {
             }
         }
     }
+    
+    private func generateSmoothedLevels(from normalized: CGFloat) -> [CGFloat] {
+        let count = self.soundLevels.count
+        let center = count / 2
+
+        return (0..<count).map { i in
+            let distance = abs(i - center)
+            let scale = 1.0 - (CGFloat(distance) / CGFloat(center)) * 0.75
+            let jitter = CGFloat.random(in: -0.075...0.075)
+            return min(max(normalized * scale + jitter, 0), 1)
+        }
+    }
 
     private func normalize(_ db: Float) -> CGFloat {
-        let clamped = CGFloat(db + 50) / 50 // max(0, CGFloat(db + 50) / 50)
+        let clamped = max(0, CGFloat(db + 50) / 50)
         return min(clamped, 1.0)
     }
 }

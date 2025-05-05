@@ -11,7 +11,7 @@ let possibleSpeedImageSystemNames = [
 ]
 
 struct Prediction: Identifiable, Decodable {
-    var id: Int
+    var id:Int {danceId}
     var danceId: Int
     var confidence: Double
     var speedCategory: SpeedCategory
