@@ -15,11 +15,13 @@ struct ContentView: View {
     
     @State var showDancesView = false
     
-    @State private var isSheetPresent: Bool = false
+    @State private var isSheetPresent = false
     
     @State private var selectedDetent: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
     
-    @State private var areDancesDisplayed: Bool = false
+    @State private var areDancesDisplayed = false
+    
+    @State private var hasPredicted = false
     
     var body: some View {
         NavigationStack {
@@ -32,6 +34,7 @@ struct ContentView: View {
                         viewModel.predictions = predictions
                         selectedDetent = .fraction(MAX_SHEET_FRACTION)
                         isSheetPresent = true
+                        hasPredicted = true
                     case .failure(let error):
                         print("Error: \(error.localizedDescription)")
                     }
@@ -55,16 +58,11 @@ struct ContentView: View {
                 .shadow(radius: 10)
             }
             .disabled(audioController.isRecording)
-            .onAppear() {
-                isSheetPresent = viewModel.predictions.count != 0
-            }
             .onReceive(audioController.$soundLevels) { levels in
                 print("sound levels: \(levels)")
             }
             .sheet(isPresented: $isSheetPresent) {
-                NavigationView {
-                    PredictionsView(viewModel: viewModel)
-                }
+                PredictionsView(viewModel: viewModel)
                 .presentationDetents(
                     [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
                     selection: $selectedDetent
@@ -86,7 +84,7 @@ struct ContentView: View {
                         .onAppear {
                             isSheetPresent = false
                         }.onDisappear {
-                            isSheetPresent = true
+                            isSheetPresent = hasPredicted
                         }
                     }) {
                         Image(systemName: "list.bullet.circle.fill")

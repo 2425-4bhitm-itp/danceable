@@ -6,16 +6,8 @@ struct PredictionsView: View {
     @ObservedObject var viewModel: ViewModel
     
     var body: some View {
-        List(viewModel.predictions) { prediction in
+        List(viewModel.predictions.sorted { $0.confidence > $1.confidence }.prefix(3)) { prediction in
             PredictionView(prediction: prediction, viewModel: viewModel)
-        }.task {
-            /*let predictions: [Prediction] = [
-                Prediction(id: 1, danceId: 1, confidence: 0.85, speedCategory: SpeedCategory.slow),
-                Prediction(id: 3, danceId: 3, confidence: 0.32, speedCategory: SpeedCategory.medium),
-                Prediction(id: 4, danceId: 4, confidence: 0.12, speedCategory: SpeedCategory.fast)
-            ]
-            
-            viewModel.predictions = predictions*/
         }
     }
 }
