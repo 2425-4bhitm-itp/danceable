@@ -1,8 +1,6 @@
 import SwiftUI
 import AVFoundation
 
-var recordingQueue = DispatchQueue(label: "recording")
-
 let MIN_SHEET_FRACTION: CGFloat = 0.175
 let MAX_SHEET_FRACTION: CGFloat = 0.7
 
@@ -13,13 +11,9 @@ struct ContentView: View {
     
     let queue = DispatchQueue(label: "at.htl.leonding")
     
-    @State var showDancesView = false
-    
     @State private var isSheetPresent = false
     
     @State private var selectedDetent: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
-    
-    @State private var areDancesDisplayed = false
     
     @State private var hasPredicted = false
     
@@ -27,7 +21,7 @@ struct ContentView: View {
         NavigationStack {
             Spacer()
             Button(action: {
-                audioController.recordAndUploadAudio(duration: 5.0) { result in
+                audioController.recordAndUploadAudio(duration: 3.0) { result in
                     switch result {
                     case .success(let predictions):
                         print("Received predictions: \(predictions)")
@@ -40,27 +34,12 @@ struct ContentView: View {
                     }
                 }
             }) {
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.48, green: 0.14, blue: 0.58))
-                    if (!audioController.isRecording) {
-                        Image(systemName: "microphone.fill")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 60)
-                            .foregroundStyle(Color.white)
-                    } else {
-                        RecordingAnimationView(soundLevels: audioController.soundLevels)
-                    }
-                    
-                }
-                .padding(75)
-                .shadow(radius: 10)
+                RecordButtonView(audioController: audioController)
             }
             .disabled(audioController.isRecording)
-            .onReceive(audioController.$soundLevels) { levels in
+            /*.onReceive(audioController.$soundLevels) { levels in
                 print("sound levels: \(levels)")
-            }
+            }*/
             .sheet(isPresented: $isSheetPresent) {
                 PredictionsView(viewModel: viewModel)
                 .presentationDetents(
