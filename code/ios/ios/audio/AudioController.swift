@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+
 class AudioController: ObservableObject {
     @Published var soundLevels: [CGFloat] = Array(repeating: 0.0, count: 10)
     @Published var isRecording = false
@@ -31,14 +32,8 @@ class AudioController: ObservableObject {
     }
 
     private func uploadFile(fileURL: URL, completion: @escaping (Result<[Prediction], Error>) -> Void) {
-        uploader.upload(fileURL: fileURL) { result in
-            switch result {
-            case .success(let serverResponse):
-                completion(.success(serverResponse))
-            case .failure(let error):
-                print("Upload failed: \(error.localizedDescription)")
-                completion(.failure(error))
-            }
-        }
+        uploader.upload(fileURL: fileURL)
     }
+    
+    
 }

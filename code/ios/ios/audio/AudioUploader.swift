@@ -1,58 +1,58 @@
 import Foundation
 
 class AudioUploader {
-    func upload(fileURL: URL, completion: @escaping (Result<[Prediction], Error>) -> Void) {
+    let onDevice = true;
+    
+    func upload(fileURL: URL) {
+        var serverAddress = "";
+        
+        if(onDevice){
+            //replace address here
+            serverAddress = Config.API_URL + "/audio/features"
+        }else{
+            serverAddress = Config.API_URL + "/audio/uploadStream"
+        }
+        
         DispatchQueue.global(qos: .background).async {
             do {
                 let fileData = try Data(contentsOf: fileURL)
-                let serverAddress = Config.API_URL + "/audio/uploadStream"
                 
                 guard let url = URL(string: serverAddress) else {
-                    let error = NSError(domain: "Uploader", code: 1001, userInfo: [NSLocalizedDescriptionKey: "Invalid server URL"])
-                    completion(.failure(error))
-                    return
+                    print("Error: Invalid Server URL")
+                    return;
                 }
-
+                
                 var request = URLRequest(url: url)
                 request.httpMethod = "POST"
                 request.setValue("audio/wave", forHTTPHeaderField: "Content-Type")
                 request.httpBody = fileData
-
+                
                 let task = URLSession.shared.dataTask(with: request) { data, response, error in
                     if let error = error {
-                        completion(.failure(error))
+                        print(error)
                         return
                     }
-
                     
                     if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                        let statusError = NSError(domain: "Uploader", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Server returned an error: \(httpResponse.statusCode)"])
-                        completion(.failure(statusError))
+                        print("Server returned error: \(httpResponse.statusCode)")
                         return
                     }
-
                     
                     guard let data = data else {
-                        let error = NSError(domain: "Uploader", code: 1002, userInfo: [NSLocalizedDescriptionKey: "No data received from server"])
-                        completion(.failure(error))
+                        print("Error:  No data received from server")
                         return
                     }
-
                     
-                    let decoder = JSONDecoder()
-                    do {
-                        let predictions = try decoder.decode([Prediction].self, from: data)
-                        completion(.success(predictions))
-                    } catch {
-                        let decodingError = NSError(domain: "Uploader", code: 1003, userInfo: [NSLocalizedDescriptionKey: "Failed to decode predictions"])
-                        completion(.failure(decodingError))
+                    DispatchQueue.main.async{
+                        predict(data:data, onDevice: true)
                     }
                 }
-
+                
                 task.resume()
             } catch {
-                completion(.failure(error))
+                print(error)
             }
         }
+        
     }
 }
