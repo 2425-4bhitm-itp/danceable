@@ -17,10 +17,15 @@ snippets_path = "/app/song-storage/songs/snippets"
 @app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
     open("/app/song-storage/features.csv", "w").close()
+    count = 0
+    label_count = len(os.listdir(snippets_path))
 
     for label in os.listdir(snippets_path):
         single_folder_path = os.path.join(snippets_path, label)
+
+        print(f"Processing folder {single_folder_path} ({count}/{label_count}):")
         dataset_creator.process_folder(single_folder_path, label)
+        count += 1
     return jsonify({"message": "Processing completed."}), 200
 
 @app.route("/upload_wav_file", methods=["POST"])
@@ -42,7 +47,6 @@ def extract_features():
     features = extractor.extract_features_from_file(file_path)
     features_serialized = {key: value.tolist() for key, value in features.items()}
     return jsonify({"features": features_serialized}), 200
-
 
 @app.route("/train", methods=["GET"])
 def train_model():
