@@ -2,11 +2,16 @@ FROM python:3.10-slim
 
 WORKDIR /opt/application
 
-COPY . /opt/application
+COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
-RUN apt-get update && apt-get install -y curl
-RUN apt-get install -y ffmpeg
+
+RUN apt-get update && \
+    apt-get install -y curl ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . .
 
 EXPOSE 5001
 
