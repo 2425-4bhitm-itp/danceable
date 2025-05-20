@@ -1,84 +1,104 @@
 import Foundation
 import AVFoundation
-import Combine
 import SwiftUI
+import Accelerate
 
 class AudioRecorder: ObservableObject {
-    var engine = AVAudioEngine()
-    var audioFile: AVAudioFile?
+    private let engine = AVAudioEngine()
+    private var audioFile: AVAudioFile?
 
     @Published var soundLevels: [CGFloat] = Array(repeating: 0.0, count: 11)
 
     func startRecording(length: Double, outputURLString: String, completion: @escaping (Result<URL, Error>) -> Void) {
-        let input = engine.inputNode
-        let format = input.outputFormat(forBus: 0)
-
+        // Construct a valid file URL in the Documents directory
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let outputFileURL = documentsDirectory.appendingPathComponent(outputURLString)
+        let fileURL = documentsDirectory.appendingPathComponent(outputURLString)
 
-        let wavSettings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: format.sampleRate,
-            AVNumberOfChannelsKey: format.channelCount,
-            AVLinearPCMBitDepthKey: 16,
-            AVLinearPCMIsBigEndianKey: false,
-            AVLinearPCMIsFloatKey: false,
-            AVLinearPCMIsNonInterleaved: false
-        ]
+        // Make sure directory exists
+        do {
+            try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        } catch {
+            completion(.failure(error))
+            return
+        }
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        // Remove existing file if any
+        if FileManager.default.fileExists(atPath: fileURL.path) {
             do {
-                self.audioFile = try AVAudioFile(forWriting: outputFileURL, settings: wavSettings)
+                try FileManager.default.removeItem(at: fileURL)
             } catch {
-                DispatchQueue.main.async {
-                    completion(.failure(error))
-                }
+                completion(.failure(error))
                 return
-            }
-
-            input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
-                do {
-                    try self.audioFile?.write(from: buffer)
-                } catch {
-                    print("Error writing buffer: \(error)")
-                }
-
-                guard let channelData = buffer.floatChannelData?[0] else { return }
-                let frameLength = Int(buffer.frameLength)
-                let samples = stride(from: 0, to: frameLength, by: buffer.stride).map {
-                    channelData[$0]
-                }
-
-                let rms = sqrt(samples.map { $0 * $0 }.reduce(0, +) / Float(frameLength))
-                let db = 20 * log10(rms)
-                let normalized = self.normalize(db)
-
-                let newLevels = self.generateSmoothedLevels(from: normalized)
-                DispatchQueue.main.async {
-                    self.soundLevels = newLevels
-                }
-            }
-
-            do {
-                try self.engine.start()
-            } catch {
-                DispatchQueue.main.async {
-                    completion(.failure(error))
-                }
-                return
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + length) {
-                self.engine.stop()
-                input.removeTap(onBus: 0)
-
-                DispatchQueue.main.async {
-                    completion(.success(outputFileURL))
-                }
             }
         }
+
+        // Prepare audio file for writing
+        let inputNode = engine.inputNode
+        let format = inputNode.outputFormat(forBus: 0)
+
+        do {
+            audioFile = try AVAudioFile(forWriting: fileURL, settings: format.settings)
+        } catch {
+            completion(.failure(error))
+            return
+        }
+
+        // Install tap to capture microphone audio
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+            guard let self = self else { return }
+            do {
+                try self.audioFile?.write(from: buffer)
+            } catch {
+                print("Audio write error: \(error)")
+            }
+            self.processSoundLevel(from: buffer)
+        }
+
+        // Start audio session and engine
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
+            try session.setActive(true)
+            try engine.start()
+        } catch {
+            completion(.failure(error))
+            return
+        }
+
+        // Automatically stop recording after 'length' seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + length) { [weak self] in
+            guard let self = self else { return }
+            self.stopRecording()
+            completion(.success(fileURL))
+        }
     }
-    
+
+    func stopRecording() {
+        engine.inputNode.removeTap(onBus: 0)
+        engine.stop()
+    }
+
+    private func processSoundLevel(from buffer: AVAudioPCMBuffer) {
+        guard let channelData = buffer.floatChannelData?[0] else { return }
+
+        var rms: Float = 0
+        vDSP_rmsqv(channelData, 1, &rms, vDSP_Length(buffer.frameLength))
+
+        let avgPower = 20 * log10(rms)
+        let normalized = normalize(avgPower)
+        let smoothed = generateSmoothedLevels(from: normalized)
+
+        DispatchQueue.main.async {
+            self.soundLevels = smoothed
+        }
+    }
+
+    // Keep your original normalization & smoothing methods unchanged:
+    private func normalize(_ db: Float) -> CGFloat {
+        let clamped = max(0, CGFloat(db + 50) / 50)
+        return min(clamped, 1.0)
+    }
+
     private func generateSmoothedLevels(from normalized: CGFloat) -> [CGFloat] {
         let count = self.soundLevels.count
         let center = count / 2
@@ -89,10 +109,5 @@ class AudioRecorder: ObservableObject {
             let jitter = CGFloat.random(in: -0.075...0.075)
             return min(max(normalized * scale + jitter, 0), 1)
         }
-    }
-
-    private func normalize(_ db: Float) -> CGFloat {
-        let clamped = max(0, CGFloat(db + 50) / 50)
-        return min(clamped, 1.0)
     }
 }

@@ -7,14 +7,14 @@ class AudioController: ObservableObject {
     
     @Published var soundLevels: [CGFloat] = []
     @Published var isRecording = false
-
+ 
     init() {
         recorder.$soundLevels
             .receive(on: DispatchQueue.main)
             .assign(to: &$soundLevels)
     }
 
-    func recordAndUploadAudio(duration: Double, fileName: String = UUID().uuidString + ".wav", completion: @escaping (Result<[Prediction], Error>) -> Void) {
+    func recordAndUploadAudio(duration: Double, fileName: String = UUID().uuidString + ".caf", completion: @escaping (Result<[Prediction], Error>) -> Void) {
         isRecording = true
         recorder.startRecording(length: duration, outputURLString: fileName) { result in
             switch result {
