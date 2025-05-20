@@ -14,5 +14,5 @@ public interface AudioFeatureClient {
     @POST
     @Path("features")
     @Produces(MediaType.APPLICATION_JSON)
-    Map<String, Object> extractFeatures(@QueryParam("file_path") String filePath);
+    Double[] extractFeatures(@QueryParam("file_path") String filePath);
 }
