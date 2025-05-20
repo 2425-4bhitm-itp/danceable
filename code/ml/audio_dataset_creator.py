@@ -9,8 +9,6 @@ class AudioDatasetCreator:
         self.header_written = False
 
     def process_folder(self, folder_path, label):
-        """Extract features from all WAV files in a folder and save them with labels."""
-        print(f"Processing folder {folder_path}")
         data = []
 
         for file in os.listdir(folder_path):
