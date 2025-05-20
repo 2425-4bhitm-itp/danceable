@@ -14,8 +14,13 @@ dataset_creator = AudioDatasetCreator(extractor)
 folder_path = "/app/song-storage/songs"
 snippets_path = "/app/song-storage/songs/snippets"
 
+is_processing = False
+
 @app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
+    global is_processing
+    is_processing = True
+
     open("/app/song-storage/features.csv", "w").close()
     count = 0
     label_count = len(os.listdir(snippets_path))
@@ -26,7 +31,13 @@ def process_all_audio():
         print(f"Processing folder {single_folder_path} ({count}/{label_count}):")
         dataset_creator.process_folder(single_folder_path, label)
         count += 1
+
+    is_processing = False
     return jsonify({"message": "Processing completed."}), 200
+
+@app.route("processing", methods=["GET"])
+def is_processing():
+    return jsonify({"processing": is_processing}), 200
 
 @app.route("/upload_wav_file", methods=["POST"])
 def upload_wav_file():
