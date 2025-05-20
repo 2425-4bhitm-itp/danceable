@@ -31,7 +31,6 @@ func predict(data: Data, onDevice: Bool){
     ]
     
     if(onDevice){
-        
         var featureArray = (try? decoder.decode([Double].self, from:data)) ?? [0.0] //Default Value gets written every time
         print(featureArray)
         var multiArray = (try? convertToMultiArray(featureArray))!

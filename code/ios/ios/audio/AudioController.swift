@@ -1,14 +1,12 @@
 import Foundation
 import Combine
 
-
 class AudioController: ObservableObject {
-    @Published var soundLevels: [CGFloat] = Array(repeating: 0.0, count: 10)
-    @Published var isRecording = false
-
     private let recorder = AudioRecorder()
     private let uploader = AudioUploader()
-    private var cancellables = Set<AnyCancellable>()
+    
+    @Published var soundLevels: [CGFloat] = []
+    @Published var isRecording = false
 
     init() {
         recorder.$soundLevels
@@ -22,18 +20,14 @@ class AudioController: ObservableObject {
             switch result {
             case .success(let fileURL):
                 print("Recording saved at: \(fileURL)")
-                self.uploadFile(fileURL: fileURL, completion: completion)
+                self.uploader.upload(fileURL: fileURL, completion: completion)
             case .failure(let error):
                 print("Recording failed: \(error.localizedDescription)")
                 completion(.failure(error))
             }
+            
             self.isRecording = false
+            self.recorder.soundLevels = Array(repeating: 0.0, count: self.recorder.soundLevels.count)
         }
     }
-
-    private func uploadFile(fileURL: URL, completion: @escaping (Result<[Prediction], Error>) -> Void) {
-        uploader.upload(fileURL: fileURL)
-    }
-    
-    
 }

@@ -3,15 +3,8 @@ import Foundation
 class AudioUploader {
     let onDevice = true;
     
-    func upload(fileURL: URL) {
-        var serverAddress = "";
-        
-        if(onDevice){
-            //replace address here
-            serverAddress = Config.API_URL + "/audio/features"
-        }else{
-            serverAddress = Config.API_URL + "/audio/uploadStream"
-        }
+    func upload(fileURL: URL, completion: @escaping (Result<[Prediction], Error>) -> Void) {
+        let serverAddress = Config.API_URL + (onDevice ? "/audio/features" : "/audio/uploadStream");
         
         DispatchQueue.global(qos: .background).async {
             do {
@@ -39,12 +32,31 @@ class AudioUploader {
                     }
                     
                     guard let data = data else {
-                        print("Error:  No data received from server")
+                        print("Error: No data received from server")
                         return
                     }
                     
-                    DispatchQueue.main.async{
-                        predict(data:data, onDevice: true)
+                    let decoder = JSONDecoder()
+                    
+                    if (self.onDevice) {
+                        DispatchQueue.main.async{
+                            completion(
+                                .success(
+                                    predictUsingLocalModel(
+                                        featuresArray: (try? decoder.decode([Double].self, from:data)) ?? [0.0]
+                                    )
+                                )
+                            )
+                            // predict(data:data, onDevice: true)
+                        }
+                    } else {
+                        do {
+                            let predictions = try decoder.decode([Prediction].self, from: data)
+                            completion(.success(predictions))
+                        } catch {
+                            let decodingError = NSError(domain: "Uploader", code: 1003, userInfo: [NSLocalizedDescriptionKey: "Failed to decode predictions"])
+                            completion(.failure(decodingError))
+                        }
                     }
                 }
                 
@@ -53,6 +65,5 @@ class AudioUploader {
                 print(error)
             }
         }
-        
     }
 }
