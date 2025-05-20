@@ -1,18 +1,50 @@
-//
-//  PredictionUtilities.swift
-//  ios
-//
-//  Created by Marvin Anderson on 30.04.25.
-//
-
 import Foundation
 import CoreML
 
 let decoder = JSONDecoder()
 
-func predict(data: Data, onDevice: Bool){
-    
+func predictUsingLocalModel(featuresArray: [Double]) -> [Prediction] {
     let aiModel = try? danceAi(configuration: MLModelConfiguration())
+    
+    //replace this with a get all dances route
+    let danceIDs: [String: Int] = [
+        "discofox": 1,
+        "slowwaltz": 2,
+        "viennawaltz": 3,
+        "chacha": 4,
+        "foxtrott": 5,
+        "quickstep": 6,
+        "salsa": 7,
+        "rumba": 8,
+        "samba": 9,
+        "jive": 10
+    ]
+    
+    print(featuresArray)
+    
+    let multiArray = (try? convertToMultiArray(featuresArray))!
+    let apiPredictions = try? aiModel?.prediction(input: multiArray).classProbability
+    
+    // print(apiPredictions)
+    
+    let predictions = apiPredictions?.compactMap { (danceName, confidence) -> Prediction? in
+        guard let danceId = danceIDs[danceName.lowercased()] else {
+            return nil  // Skip if the dance name doesn't exist in the dictionary
+        }
+        
+        return Prediction(
+            danceId: danceId,
+            confidence: confidence / 100,
+            speedCategory: .slow // CHANGE THIS
+        )
+    }
+    
+    return predictions ?? []
+}
+
+/*func predict(data: Data, onDevice: Bool) {
+    let aiModel = try? danceAi(configuration: MLModelConfiguration())
+    
     //replace this with a get all dances route
     let danceIDs: [String: Int] = [
         "Slow Waltz": 1,
@@ -30,13 +62,15 @@ func predict(data: Data, onDevice: Bool){
         "Bachata": 13
     ]
     
-    if(onDevice){
-        var featureArray = (try? decoder.decode([Double].self, from:data)) ?? [0.0] //Default Value gets written every time
-        print(featureArray)
-        var multiArray = (try? convertToMultiArray(featureArray))!
-        var predictions = try? aiModel?.prediction(input: multiArray).classProbability
+    if (onDevice) {
+        let featureArray = (try? decoder.decode([Double].self, from:data)) ?? [0.0] // Default Value gets written every time
         
-        var allPredictions = predictions?.compactMap { (danceName, confidence) -> Prediction? in
+        print(featureArray)
+        
+        let multiArray = (try? convertToMultiArray(featureArray))!
+        let predictions = try? aiModel?.prediction(input: multiArray).classProbability
+        
+        let allPredictions = predictions?.compactMap { (danceName, confidence) -> Prediction? in
             let danceId = danceIDs[danceName.lowercased()]
             
             return Prediction(
@@ -46,10 +80,14 @@ func predict(data: Data, onDevice: Bool){
             )
         }
         
-        let sortedPredictions = allPredictions!.sorted{$0.confidence > $1.confidence}
+        //let sortedPredictions = allPredictions!.sorted{$0.confidence > $1.confidence}
+        // no need to sort here => gets sorted in view
+        
+        
+        
         //Write this into Model!
         
-    }else{
+    } else {
         do {
             let predictions = try decoder.decode([Prediction].self, from: data)
         } catch {
@@ -58,7 +96,7 @@ func predict(data: Data, onDevice: Bool){
         }
     }
     
-}
+}*/
 
 func convertToMultiArray(_ array: [Double]) throws -> MLMultiArray {
     

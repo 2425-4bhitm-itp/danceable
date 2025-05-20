@@ -19,7 +19,7 @@ struct PredictionView: View {
             
             HStack {
                 ProgressView(value: prediction.confidence)
-                Text(String(prediction.confidence * 100) + "%")
+                Text(String(format: "%.0f", prediction.confidence * 100) + "%")
             }
         }
         .padding()
