@@ -94,9 +94,11 @@ def upload_webm_file():
 
 @app.route("/classify_caf_audio", methods=["POST"])
 def upload_caf_file():
-    data = request.get_json()
-    file_path = data["file_path"]
+    data = request.get_json(silent=True)
+    if not data or "file_path" not in data:
+        return jsonify({"error": "Invalid or missing 'file_path' in request body"}), 400
 
+    file_path = data["file_path"]
     wav_file = file_path.replace(".caf", ".wav")
     wav_file_path = file_converter.convert_caf_to_wav(file_path, wav_file)
 
