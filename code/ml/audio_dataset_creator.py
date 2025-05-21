@@ -15,10 +15,9 @@ class AudioDatasetCreator:
             if file.endswith(".wav"):
                 file_path = os.path.join(folder_path, file)
                 features = self.extractor.extract_features_from_file(file_path)
-                flattened_features = self.flatten_features(features)
-                flattened_features["filename"] = file
-                flattened_features["label"] = label
-                data.append(flattened_features)
+                features["filename"] = file
+                features["label"] = label
+                data.append(features)
 
         self.save_to_csv(data)
 
@@ -35,18 +34,6 @@ class AudioDatasetCreator:
     def upload_single_file(self, file_path, label):
         """Extract features from a single WAV file and save them with a label."""
         features = self.extractor.extract_features_from_file(file_path)
-        flattened_features = self.flatten_features(features)
-        flattened_features["filename"] = os.path.basename(file_path)
-        flattened_features["label"] = label
-        self.save_to_csv([flattened_features])
-
-    def flatten_features(self, features):
-        """Flatten feature arrays into a single dictionary of doubles."""
-        flattened = {}
-        for key, value in features.items():
-            if isinstance(value, np.ndarray):
-                for i, v in enumerate(value):
-                    flattened[f"{key}_{i}"] = v
-            else:
-                flattened[key] = value
-        return flattened
+        features["filename"] = os.path.basename(file_path)
+        features["label"] = label
+        self.save_to_csv([features])
