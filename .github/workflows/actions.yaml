@@ -1,5 +1,5 @@
 name: Danceable CI/CD Pipeline
-run-name: ${{ github.actor }} is testing if everything is going well 🚀
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 #on: [ push ]
 #jobs:
 #  Explore-GitHub-Actions:
@@ -15,14 +15,11 @@ run-name: ${{ github.actor }} is testing if everything is going well 🚀
 #      - name: Build with Maven
 #        working-directory: code/backend
 #        run: mvn -B package --file pom.xml
-
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
 
 jobs:
   debug-structure:
@@ -38,7 +35,7 @@ jobs:
           echo "Searching for relevant directories:"
           find . -type d -not -path "*/\.*" | sort
 
-  build-and-test-backend:
+  build-frontend-and-backend:
     needs: debug-structure
     runs-on: ubuntu-latest
     steps:
@@ -52,120 +49,64 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
           cache-dependency-path: 'code/backend/pom.xml'
-      - name: Build with Maven
-        working-directory: code/backend
-        run: mvn -B package --file pom.xml
 
-      - name: Start PostgreSQL
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'code/frontend/package.json'
+
+      - name: Build Project
         run: |
-          docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:14
-          sleep 10
+          chmod +x build.sh
+          ./build.sh
+        working-directory: code
 
-      - name: Find and build backend
-        id: find-backend
-        run: |
-          # Backend-Verzeichnis finden
-          if [ -d "code/backend" ]; then
-            echo "BACKEND_DIR=code/backend" >> $GITHUB_ENV
-            echo "BACKEND_DIR=code/backend" >> $GITHUB_OUTPUT
-            cd code/backend
-          else
-            echo "Backend-Verzeichnis nicht gefunden. Suche nach pom.xml:"
-            find . -name "pom.xml" -not -path "*/target/*"
-            exit 1
-          fi
-
-          # Baue das Backend (entweder dann mit ./mvnw oder global
-          if [ -f "./mvnw" ]; then
-            chmod +x ./mvnw
-            ./mvnw clean package
-          else
-            mvn clean package
-          fi
-
-      - name: Archive backend artifacts
-        if: success()
+      - name: Archive backend artefacts
         uses: actions/upload-artifact@v4
         with:
-          name: backend-artifacts
-          path: ${{ env.BACKEND_DIR }}/target/*.jar
-          retention-days: 1
+          name: backend-artifact
+          path: code/backend/target
 
-  containerize:
-    needs: build-and-test-backend
+      - name: Archive frontend Artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifact
+          path: code/frontend/build
+
+
+  test-backend:
+    needs: build-frontend-and-backend
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    if: success() && (github.event_name == 'push' || startsWith(github.ref, 'refs/tags/v'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Find backend directory
-        id: find-backend
-        run: |
-          if [ -d "code/backend" ]; then
-            echo "BACKEND_DIR=code/backend" >> $GITHUB_OUTPUT
-          else
-            echo "Backend-Verzeichnis nicht gefunden."
-            exit 1
-          fi
-
-      - name: Download backend artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: backend-artifacts
-          path: ${{ steps.find-backend.outputs.BACKEND_DIR }}/target
+          name: backend-artifact
+          path: code/backend/target
+      - name: Run Backend Tests
+        run: |
+          echo "Running backend tests..."
+          cd code/backend
+          mvn test
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}/backend
-          tags: |
-            type=semver,pattern={{version}}
-            type=ref,event=branch
-            type=sha,format=short
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./${{ steps.find-backend.outputs.BACKEND_DIR }}
-          file: ./${{ steps.find-backend.outputs.BACKEND_DIR }}/docker/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  deploy:
-    needs: containerize
-    if: startsWith(github.ref, 'refs/tags/v')
+  containerize:
+    needs: test-backend
     runs-on: ubuntu-latest
     steps:
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download backend artefacts
+        uses: actions/download-artifact@v4
         with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
-          if_key_exists: replace
-
-      - name: Deploy to server
+          name: backend-artifact
+          path: code/backend/target
+      - name: Build Docker image
         run: |
-          # Version aus Tag extrahieren
-          VERSION=${GITHUB_REF#refs/tags/v}
-          
-          # Via SSH auf Server deployen
-          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
-            cd ${{ secrets.DEPLOY_PATH }} && \
-            export BACKEND_IMAGE=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${VERSION} && \
-            docker pull \${BACKEND_IMAGE} && \
-            docker-compose down backend && \
-            docker-compose up -d backend
-          "
+          echo "Building Docker image..."
+          cd code/backend
+          ./mvnw package -DskipTests -Dquarkus.container-image.build=true
+
