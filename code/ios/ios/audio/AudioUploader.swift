@@ -1,10 +1,10 @@
 import Foundation
 
 class AudioUploader {
-    let onDevice = true;
+    let onDevice = false
     
     func upload(fileURL: URL, completion: @escaping (Result<[Prediction], Error>) -> Void) {
-        let serverAddress = Config.API_URL + (onDevice ? "/audio/features" : "/audio/uploadStream");
+        let serverAddress = Config.API_URL + (onDevice ? "/audio/features" : "/audio/uploadStream")
         
         DispatchQueue.global(qos: .background).async {
             do {
@@ -39,6 +39,8 @@ class AudioUploader {
                     let decoder = JSONDecoder()
                     
                     if (self.onDevice) {
+                        print((try? decoder.decode([Double].self, from:data)) ?? [0.0])
+                        
                         DispatchQueue.main.async{
                             completion(
                                 .success(
@@ -47,7 +49,6 @@ class AudioUploader {
                                     )
                                 )
                             )
-                            // predict(data:data, onDevice: true)
                         }
                     } else {
                         do {
