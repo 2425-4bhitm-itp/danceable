@@ -35,7 +35,7 @@ def process_all_audio():
     is_processing = False
     return jsonify({"message": "Processing completed."}), 200
 
-@app.route("processing", methods=["GET"])
+@app.route("/processing", methods=["GET"])
 def is_processing():
     return jsonify({"processing": is_processing}), 200
 
@@ -93,10 +93,12 @@ def upload_webm_file():
     return jsonify({"prediction": prediction}), 200
 
 @app.route("/classify_caf_audio", methods=["POST"])
-def upload_webm_file():
-    data = request.get_json()
-    file_path = data["file_path"]
+def upload_caf_file():
+    data = request.get_json(silent=True)
+    if not data or "file_path" not in data:
+        return jsonify({"error": "Invalid or missing 'file_path' in request body"}), 400
 
+    file_path = data["file_path"]
     wav_file = file_path.replace(".caf", ".wav")
     wav_file_path = file_converter.convert_caf_to_wav(file_path, wav_file)
 

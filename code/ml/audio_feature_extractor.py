@@ -43,7 +43,7 @@ class AudioFeatureExtractor:
         tempogram_mean = np.mean(tempogram, axis=1)
         tempogram_var = np.var(tempogram, axis=1)
 
-        features_array = np.concatenate([
+        features = np.concatenate([
             mfccs_mean, mfccs_var,
             chroma_mean, chroma_var,
             mel_mean, mel_var,

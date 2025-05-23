@@ -69,8 +69,7 @@ def classify_audio(file_path, extractor):
     if model is not None:
         features = extractor.extract_features_from_file(file_path)
 
-        feature_vector = [value for key in sorted(features.keys()) for value in features[key]]
-        feature_vector = np.array(feature_vector).reshape(1, -1)
+        feature_vector = features.flatten().reshape(1, -1)
 
         probabilities = model.predict_proba(feature_vector)[0]
         dance_styles = model.classes_
