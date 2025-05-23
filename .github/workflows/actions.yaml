@@ -57,7 +57,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'code/frontend/package.json'
 
-      - name: Build Project
+      - name: Build Projectttt
         run: |
           chmod +x build.sh
           ./build.sh
