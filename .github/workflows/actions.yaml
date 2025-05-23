@@ -93,3 +93,19 @@ jobs:
           cd code/backend
           mvn test
 
+  containerize:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download backend artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifact
+          path: code/backend/target
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          ./mvnw package -DskipTests -Dquarkus.container-image.build=true
+

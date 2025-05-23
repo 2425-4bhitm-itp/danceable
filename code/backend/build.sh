@@ -3,5 +3,5 @@
 # shellcheck disable=SC2164
 cd "$(dirname "$0")"
 
-mvn clean install -Dquarkus.config.locations=./src/main/resources/application.properties
+mvn clean install -DskipTests -Dquarkus.config.locations=./src/main/resources/application.properties
 
