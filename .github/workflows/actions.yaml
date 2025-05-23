@@ -58,7 +58,7 @@ jobs:
           cache-dependency-path: 'code/frontend/package.json'
 
       - name: Build Backend
-        run: ./build.sh
+        run: ./code/backend/build.sh
         working-directory: code
 
   test-backend:
