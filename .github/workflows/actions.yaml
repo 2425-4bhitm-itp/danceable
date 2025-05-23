@@ -107,5 +107,5 @@ jobs:
       - name: Build Docker image
         run: |
           echo "Building Docker image..."
-          ./mvnw package -DskipTests -Dquarkus.container-image.build=true
+          ./code/backend/mvnw package -DskipTests -Dquarkus.container-image.build=true
 
