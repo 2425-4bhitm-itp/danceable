@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Project
         run: |
-          chmod+x build.sh
+          chmod +x build.sh
           ./build.sh
         working-directory: code
 
