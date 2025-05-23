@@ -63,10 +63,30 @@ jobs:
           ./build.sh
         working-directory: code
 
+      - name: Archive backend artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifact
+          path: code/backend/target
+
+      - name: Archive frontend Artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifact
+          path: code/frontend/build
+
+
   test-backend:
     needs: build-frontend-and-backend
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifact
+          path: code/backend/target
       - name: Run Backend Tests
         run: |
           echo "Running backend tests..."
