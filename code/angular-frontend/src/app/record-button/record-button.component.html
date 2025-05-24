@@ -1,16 +1,17 @@
 
-
 <div>
-  <div id="record-button" (click)="toggleRecording()">
-    @if (!isRecording) {
+  <div id="record-button" (click)="toggleRecording()" [attr.disabled]="buttonState ? true : null">
+    @if (!buttonState) {
       <app-record-svg></app-record-svg>
     } @else {
+      <div class="app-container">
       <app-visualizer></app-visualizer>
+      </div>
     }
   </div>
 </div>
 
-@if (!isRecording) {
+@if (!buttonState) {
   <p id="recording-description">Press to record audio and get matching dance styles!</p>
 } @else {
   <div><app-record-stop-button (click)="toggleRecording()"></app-record-stop-button></div>
