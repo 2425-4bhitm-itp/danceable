@@ -26,4 +26,18 @@ p{
   background: linear-gradient(140.37deg, #B0429C 96.11%, #922BAE 40.78%);
 }
 
+#record-button[disabled] {
+  pointer-events: none;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: white;
+  font-family: 'Arial', sans-serif;
+}
+
 
