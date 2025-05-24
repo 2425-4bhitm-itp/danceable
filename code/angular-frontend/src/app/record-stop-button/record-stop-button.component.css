@@ -10,3 +10,6 @@ button{
   font-family: Inter, sans-serif;
 }
 
+.button:hover{
+  background: linear-gradient(140.37deg, #B0429C 96.11%, #922BAE 40.78%);
+}
