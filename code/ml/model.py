@@ -6,34 +6,39 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import coremltools as ct
 import pandas as pd
-import re
+import joblib
+import json
+import os
 
 model = None
+scaler = None
+
+MODEL_PATH = "/app/song-storage/model.keras"
+SCALER_PATH = "/app/song-storage/scaler.pkl"
+LABELS_PATH = "/app/song-storage/label_order.json"
+COREML_PATH = "/app/song-storage/model.mlmodel"
+FEATURES_CSV = "/app/song-storage/features.csv"
 
 def train():
     print('Training...')
 
-    # Load dataset
-    df = pd.read_csv("/app/song-storage/features.csv")
+    df = pd.read_csv(FEATURES_CSV)
 
-    # Separate features and labels
     feature_columns = [col for col in df.columns if col not in ["filename", "label"]]
     X = df[feature_columns].values
     y = df["label"].values
 
-    # Normalize features
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
+    joblib.dump(scaler, SCALER_PATH)
+    print("Scaler saved.")
 
-    # Convert labels to one-hot encoding
     unique_labels = sorted(df["label"].unique())
     label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
     y = to_categorical([label_to_index[label] for label in y], num_classes=len(unique_labels))
 
-    # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Build the TensorFlow model
     model = Sequential([
         Input(shape=(X_train.shape[1],)),
         Dense(128, activation='relu'),
@@ -45,55 +50,76 @@ def train():
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    # Train the model
     model.fit(X_train, y_train, validation_split=0.2, epochs=60, batch_size=32)
 
-    # Save the model in TensorFlow format
-    model.save("/app/song-storage/model.keras")
+    model.save(MODEL_PATH)
+    print("Model saved.")
 
-    # Reload the model before Core ML conversion
-    reloaded_model = tf.keras.models.load_model("/app/song-storage/model.keras")
+    with open(LABELS_PATH, "w") as f:
+        json.dump(unique_labels, f)
+    print("Label order saved.")
 
-    # Create a concrete function for Core ML conversion
-    input_spec = tf.TensorSpec([None, X_train.shape[1]], tf.float32)
-    reloaded_model_func = tf.function(reloaded_model).get_concrete_function(input_spec)
+    coreml_model = ct.convert(
+        model,
+        source="tensorflow",
+        inputs=[ct.TensorType(shape=(ct.RangeDim(), X_train.shape[1]))],
+        minimum_deployment_target=ct.target.iOS14
+    )
+    coreml_model.save(COREML_PATH)
+    print("CoreML model saved.")
 
-    # Convert the TensorFlow model to Core ML format
-    coreml_model = ct.convert(reloaded_model_func, source="tensorflow", minimum_deployment_target=ct.target.iOS14)
-
-    # Save the Core ML model
-    coreml_model.save("/app/song-storage/model.mlmodel")
-
-    return model.evaluate(X_test, y_test, verbose=0)
+    loss, acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Evaluation - Loss: {loss:.4f}, Accuracy: {acc:.4f}")
+    return loss, acc
 
 def classify_audio(file_path, extractor):
-    global model
-    if model is not None:
+    global model, scaler
+
+    try:
+        if model is None or not isinstance(model, tf.keras.Model):
+            model = tf.keras.models.load_model(MODEL_PATH)
+            print("Model loaded.")
+
+        if scaler is None:
+            scaler = joblib.load(SCALER_PATH)
+            print("Scaler loaded.")
+
+        # Extract and preprocess features
         features = extractor.extract_features_from_file(file_path)
-
         feature_vector = features.flatten().reshape(1, -1)
+        print("Raw feature shape:", feature_vector.shape)
 
-        # Load the model if not already loaded
-        if not isinstance(model, tf.keras.Model):
-            model = tf.keras.models.load_model("/app/song-storage/model.h5")
+        feature_vector = scaler.transform(feature_vector)
+        print("Feature vector normalized.")
 
+        # Load label order
+        with open(LABELS_PATH, "r") as f:
+            dance_styles = json.load(f)
+
+        # Predict
         probabilities = model.predict(feature_vector)[0]
-        dance_styles = sorted(model.output_names)
         predictions = sorted(zip(dance_styles, probabilities), key=lambda x: x[1], reverse=True)
 
-        prediction_dtos = [
-            {
-                "danceName": dance,
-                "confidence": float(f"{confidence:.6f}"),
-                "speedCategory": "slow"
-            }
-            for dance, confidence in predictions
-        ]
-        return prediction_dtos
+        return {
+            "predictions": [
+                {
+                    "danceName": dance,
+                    "confidence": float(f"{confidence:.6f}"),
+                    "speedCategory": "slow"
+                }
+                for dance, confidence in predictions
+            ]
+        }
 
-    return []
+    except Exception as e:
+        print("Error during classification:", str(e))
+        return {"error": str(e)}
 
 def load_model():
-    global model
-    model = tf.keras.models.load_model("/app/song-storage/model.keras")
-    print("Model loaded from .keras file")
+    global model, scaler
+    try:
+        model = tf.keras.models.load_model(MODEL_PATH)
+        scaler = joblib.load(SCALER_PATH)
+        print("Model and scaler loaded successfully.")
+    except Exception as e:
+        print("Failed to load model or scaler:", e)

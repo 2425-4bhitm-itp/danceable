@@ -123,5 +123,5 @@ def split_files():
     return jsonify({"message": "Shortening completed"}), 200
 
 if __name__ == '__main__':
-    #load_model()
+    load_model()
     app.run(host='0.0.0.0', port=5001, debug=True)
