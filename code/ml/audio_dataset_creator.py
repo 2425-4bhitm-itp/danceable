@@ -14,7 +14,9 @@ class AudioDatasetCreator:
         for file in os.listdir(folder_path):
             if file.endswith(".wav"):
                 file_path = os.path.join(folder_path, file)
-                features = self.extractor.extract_features_from_file(file_path)
+                features_array = self.extractor.extract_features_from_file(file_path)
+                features = {f"feature_{i}": value for i, value in enumerate(features_array)}
+
                 features["filename"] = file
                 features["label"] = label
                 data.append(features)
