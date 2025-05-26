@@ -28,7 +28,7 @@ def process_all_audio():
     for label in os.listdir(snippets_path):
         single_folder_path = os.path.join(snippets_path, label)
 
-        print(f"Processing folder {single_folder_path} ({count}/{label_count}):")
+        print(f"Processing folder {single_folder_path} ({count+1}/{label_count}):")
         dataset_creator.process_folder(single_folder_path, label)
         count += 1
 
@@ -123,5 +123,5 @@ def split_files():
     return jsonify({"message": "Shortening completed"}), 200
 
 if __name__ == '__main__':
-    load_model()
+    #load_model()
     app.run(host='0.0.0.0', port=5001, debug=True)
