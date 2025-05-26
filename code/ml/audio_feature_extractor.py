@@ -48,8 +48,8 @@ class AudioFeatureExtractor:
             chroma_mean, chroma_var,
             mel_mean, mel_var,
             contrast_mean, contrast_var,
-            tonnetz_mean, tonnetz_var,
-            tempogram_mean, tempogram_var
+            tonnetz_mean, tonnetz_var#,
+            #tempogram_mean, tempogram_var
         ])
 
         return features
