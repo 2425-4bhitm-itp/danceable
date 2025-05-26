@@ -78,7 +78,7 @@ def classify_audio_api():
 
     print(file_path)
     predictions = classify_audio(file_path, extractor)
-    return jsonify({"predictions": predictions}), 200
+    return jsonify(predictions), 200
 
 
 @app.route("/classify_webm_audio", methods=["POST"])
