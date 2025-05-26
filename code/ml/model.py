@@ -1,68 +1,70 @@
-import pandas as pd
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Input
+from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 import coremltools as ct
-import joblib
+import pandas as pd
 import re
-import numpy as np
 
 model = None
 
 def train():
-    global model
     print('Training...')
 
     # Load dataset
     df = pd.read_csv("/app/song-storage/features.csv")
 
-    # Extract song name by removing the last "X_partX.wav" section using regex
-    df['song_name'] = df['filename'].apply(lambda x: re.sub(r'\d+_part\d+\.wav$', '', x))
-
-    # Group by song name to ensure all segments from a song are treated together
-    grouped = df.groupby('song_name')
-
-    # Create separate lists for training and testing songs
-    song_names = list(grouped.groups.keys())
-    train_songs, test_songs = train_test_split(song_names, test_size=0.2, random_state=42)
-
-    # Create new DataFrames for training and testing
-    train_df = df[df['song_name'].isin(train_songs)]
-    test_df = df[df['song_name'].isin(test_songs)]
-
-    # Further split the training data into training and validation sets
-    train_songs, val_songs = train_test_split(train_songs, test_size=0.2, random_state=42)
-    train_df = df[df['song_name'].isin(train_songs)]
-    val_df = df[df['song_name'].isin(val_songs)]
-
     # Separate features and labels
-    feature_columns = [col for col in df.columns if col not in ["filename", "label", "song_name"]]
-    X_train, y_train = train_df[feature_columns].values, train_df["label"].values
-    X_val, y_val = val_df[feature_columns].values, val_df["label"].values
-    X_test, y_test = test_df[feature_columns].values, test_df["label"].values
+    feature_columns = [col for col in df.columns if col not in ["filename", "label"]]
+    X = df[feature_columns].values
+    y = df["label"].values
+
+    # Normalize features
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    # Convert labels to one-hot encoding
+    unique_labels = sorted(df["label"].unique())
+    label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
+    y = to_categorical([label_to_index[label] for label in y], num_classes=len(unique_labels))
+
+    # Split data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Build the TensorFlow model
+    model = Sequential([
+        Input(shape=(X_train.shape[1],)),
+        Dense(128, activation='relu'),
+        Dropout(0.3),
+        Dense(64, activation='relu'),
+        Dropout(0.3),
+        Dense(len(unique_labels), activation='softmax')
+    ])
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train the model
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
+    model.fit(X_train, y_train, validation_split=0.2, epochs=60, batch_size=32)
 
-    # Evaluate the model on the validation set
-    y_val_pred = model.predict(X_val)
-    val_accuracy = accuracy_score(y_val, y_val_pred)
+    # Save the model in TensorFlow format
+    model.save("/app/song-storage/model.keras")
 
-    # Evaluate the model on the test set
-    y_test_pred = model.predict(X_test)
-    test_accuracy = accuracy_score(y_test, y_test_pred)
+    # Reload the model before Core ML conversion
+    reloaded_model = tf.keras.models.load_model("/app/song-storage/model.keras")
 
-    # Save model as joblib (optional)
-    joblib.dump(model, "/app/song-storage/model.joblib")
+    # Create a concrete function for Core ML conversion
+    input_spec = tf.TensorSpec([None, X_train.shape[1]], tf.float32)
+    reloaded_model_func = tf.function(reloaded_model).get_concrete_function(input_spec)
 
-    # Convert to Core ML
-    coreml_model = ct.converters.sklearn.convert(model)
+    # Convert the TensorFlow model to Core ML format
+    coreml_model = ct.convert(reloaded_model_func, source="tensorflow", minimum_deployment_target=ct.target.iOS14)
 
-    # Save Core ML model
+    # Save the Core ML model
     coreml_model.save("/app/song-storage/model.mlmodel")
 
-    return test_accuracy, val_accuracy
+    return model.evaluate(X_test, y_test, verbose=0)
 
 def classify_audio(file_path, extractor):
     global model
@@ -71,8 +73,12 @@ def classify_audio(file_path, extractor):
 
         feature_vector = features.flatten().reshape(1, -1)
 
-        probabilities = model.predict_proba(feature_vector)[0]
-        dance_styles = model.classes_
+        # Load the model if not already loaded
+        if not isinstance(model, tf.keras.Model):
+            model = tf.keras.models.load_model("/app/song-storage/model.h5")
+
+        probabilities = model.predict(feature_vector)[0]
+        dance_styles = sorted(model.output_names)
         predictions = sorted(zip(dance_styles, probabilities), key=lambda x: x[1], reverse=True)
 
         prediction_dtos = [
@@ -89,5 +95,5 @@ def classify_audio(file_path, extractor):
 
 def load_model():
     global model
-    model = joblib.load("/app/song-storage/model.joblib")
-    print("model loaded")
+    model = tf.keras.models.load_model("/app/song-storage/model.keras")
+    print("Model loaded from .keras file")
