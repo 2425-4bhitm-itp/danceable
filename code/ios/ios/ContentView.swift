@@ -37,9 +37,6 @@ struct ContentView: View {
                 RecordButtonView(audioController: audioController)
             }
             .disabled(audioController.isRecording)
-            /*.onReceive(audioController.$soundLevels) { levels in
-                print("sound levels: \(levels)")
-            }*/
             .sheet(isPresented: $isSheetPresent) {
                 PredictionsView(viewModel: viewModel)
                 .presentationDetents(
