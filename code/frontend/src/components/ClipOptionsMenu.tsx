@@ -8,29 +8,15 @@ interface ClipOptionsMenuProps {
 }
 
 function ClipOptionsMenu(props: ClipOptionsMenuProps) {
-  const [isVisible, setIsVisible] = useState(false)
-  const { setEditSongId } = useSongStore()
-  const { setSwitchSongClipId, deleteClip } = useClipStore()
-  const clip = useClipStore((state) => state.clips.get(props.clipId))
 
-  if (!clip || !clip.songId) {
-    return null
-  }
-
-  const popoverRef = useRef<HTMLDivElement | null>(null)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
-
-  const toggleVisibility = () => {
-    setIsVisible(!isVisible)
-  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        popoverRef.current &&
-        triggerRef.current &&
-        !popoverRef.current.contains(event.target as Node) &&
-        !triggerRef.current.contains(event.target as Node)
+          popoverRef.current &&
+          triggerRef.current &&
+          !popoverRef.current.contains(event.target as Node) &&
+          !triggerRef.current.contains(event.target as Node)
       ) {
         close()
       }
@@ -41,6 +27,21 @@ function ClipOptionsMenu(props: ClipOptionsMenuProps) {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+  const popoverRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+
+  const [isVisible, setIsVisible] = useState(false)
+  const { setEditSongId } = useSongStore()
+  const { setSwitchSongClipId, deleteClip } = useClipStore()
+  const clip = useClipStore((state) => state.clips.get(props.clipId))
+
+  if (!clip || !clip.songId) {
+    return null
+  }
+
+  const toggleVisibility = () => {
+    setIsVisible(!isVisible)
+  }
 
   const close = () => {
     setIsVisible(false)
@@ -84,7 +85,7 @@ function ClipOptionsMenu(props: ClipOptionsMenuProps) {
           </button>
           <button
             className="delete-song-option rounded px-2 py-1 text-left text-red-400 hover:bg-gray-100"
-            onClick={() => deleteClip(clip.id)}
+            onClick={() => deleteClip(clip.id, (message) => console.log(message))}
           >
             delete clip
           </button>
