@@ -33,8 +33,9 @@ struct ContentView: View {
                 }
             }
         }) {
-            RecordButtonView(audioController: audioController)
+            RecordButtonView(isWatch: true, audioController: audioController)
         }
+        .buttonStyle(DefaultButtonStyle())
         .disabled(audioController.isRecording)
         .sheet(isPresented: $isSheetPresent) {
             PredictionsView(viewModel: viewModel)

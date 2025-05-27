@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RecordButtonView: View {
+    var isWatch = false;
     @ObservedObject var audioController: AudioController
     @State private var animatePulse = false
 
@@ -23,7 +24,7 @@ struct RecordButtonView: View {
                 RecordingAnimationView(soundLevels: audioController.soundLevels)
             }
         }
-        .padding(75)
+        .padding(isWatch ? 0 : 75)
         .shadow(radius: 10)
         .onReceive(audioController.$isRecording) { isRecording in
             if isRecording {
