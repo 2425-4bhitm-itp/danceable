@@ -2,6 +2,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Input
 from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.regularizers import l2
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import coremltools as ct
@@ -41,16 +43,18 @@ def train():
 
     model = Sequential([
         Input(shape=(X_train.shape[1],)),
-        Dense(128, activation='relu'),
-        Dropout(0.3),
-        Dense(64, activation='relu'),
-        Dropout(0.3),
+        Dense(128, activation='relu', kernel_regularizer=l2(0.01)),
+        Dropout(0.5),
+        Dense(64, activation='relu', kernel_regularizer=l2(0.01)),
+        Dropout(0.5),
         Dense(len(unique_labels), activation='softmax')
     ])
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(X_train, y_train, validation_split=0.2, epochs=60, batch_size=32)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+    model.fit(X_train, y_train, validation_split=0.2, epochs=100, batch_size=32, callbacks=[early_stopping])
 
     model.save(MODEL_PATH)
     print("Model saved.")
