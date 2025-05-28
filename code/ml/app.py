@@ -90,7 +90,7 @@ def upload_webm_file():
     wav_file_path = file_converter.convert_webm_to_wav(file_path, wav_file)
 
     prediction = classify_audio(wav_file_path, extractor)
-    return jsonify({"prediction": prediction}), 200
+    return jsonify(prediction), 200
 
 @app.route("/classify_caf_audio", methods=["POST"])
 def upload_caf_file():
@@ -103,7 +103,7 @@ def upload_caf_file():
     wav_file_path = file_converter.convert_caf_to_wav(file_path, wav_file)
 
     prediction = classify_audio(wav_file_path, extractor)
-    return jsonify({"prediction": prediction}), 200
+    return jsonify(prediction), 200
 
 @app.route('/health', methods=['GET'])
 def health_check():
