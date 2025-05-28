@@ -10,11 +10,9 @@ class AudioRecorder: ObservableObject {
     @Published var soundLevels: [CGFloat] = Array(repeating: 0.0, count: 11)
 
     func startRecording(length: Double, outputURLString: String, completion: @escaping (Result<URL, Error>) -> Void) {
-        // Construct a valid file URL in the Documents directory
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileURL = documentsDirectory.appendingPathComponent(outputURLString)
 
-        // Make sure directory exists
         do {
             try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         } catch {
@@ -22,7 +20,6 @@ class AudioRecorder: ObservableObject {
             return
         }
 
-        // Remove existing file if any
         if FileManager.default.fileExists(atPath: fileURL.path) {
             do {
                 try FileManager.default.removeItem(at: fileURL)
@@ -32,7 +29,6 @@ class AudioRecorder: ObservableObject {
             }
         }
 
-        // Prepare audio file for writing
         let inputNode = engine.inputNode
         let format = inputNode.outputFormat(forBus: 0)
 
@@ -43,7 +39,6 @@ class AudioRecorder: ObservableObject {
             return
         }
 
-        // Install tap to capture microphone audio
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             guard let self = self else { return }
             do {
@@ -54,10 +49,13 @@ class AudioRecorder: ObservableObject {
             self.processSoundLevel(from: buffer)
         }
 
-        // Start audio session and engine
         do {
             let session = AVAudioSession.sharedInstance()
+            #if os(iOS)
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
+            #elseif os(watchOS)
+            try session.setCategory(.playAndRecord, mode: .default)
+            #endif
             try session.setActive(true)
             try engine.start()
         } catch {
@@ -65,7 +63,6 @@ class AudioRecorder: ObservableObject {
             return
         }
 
-        // Automatically stop recording after 'length' seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + length) { [weak self] in
             guard let self = self else { return }
             self.stopRecording()
@@ -93,7 +90,6 @@ class AudioRecorder: ObservableObject {
         }
     }
 
-    // Keep your original normalization & smoothing methods unchanged:
     private func normalize(_ db: Float) -> CGFloat {
         let clamped = max(0, CGFloat(db + 50) / 50)
         return min(clamped, 1.0)

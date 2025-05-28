@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct RecordButtonView: View {
-    var isWatch = false;
+    var isWatch = true;
+    
     @ObservedObject var audioController: AudioController
     @State private var animatePulse = false
 
@@ -10,9 +11,17 @@ struct RecordButtonView: View {
             Circle()
                 .fill(Color.purple.opacity(0.25))
                 .scaleEffect(animatePulse ? 1.2 : 1)
+                .frame(
+                    width: isWatch ? 175 : nil,
+                    height: isWatch ? 175 : nil
+                )
 
             Circle()
                 .fill(Color(red: 0.48, green: 0.14, blue: 0.58))
+                .frame(
+                    width: isWatch ? 175 : nil,
+                    height: isWatch ? 175 : nil
+                )
 
             if !audioController.isRecording {
                 Image(systemName: "microphone.fill")
