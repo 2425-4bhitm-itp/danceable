@@ -12,7 +12,7 @@ class AudioController: ObservableObject {
         var numberOfSoundLevels = 11
         
         #if os(watchOS)
-            numberOfSoundLevels = 7
+            let numberOfSoundLevels = 7
         #endif
         
         recorder = AudioRecorder(numberOfSoundLevels: numberOfSoundLevels)
@@ -21,22 +21,40 @@ class AudioController: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: &$soundLevels)
     }
-
-    func recordAndUploadAudio(duration: Double, fileName: String = UUID().uuidString + ".caf", completion: @escaping (Result<[Prediction], Error>) -> Void) {
-        isRecording = true
+    
+    func recordAndClassify(
+        duration: Double,
+        fileName: String = UUID().uuidString + ".caf"
+    ) async throws -> [Prediction] {
+        let predictions: [Prediction]
         
-        recorder.startRecording(length: duration, outputURLString: fileName) { result in
-            switch result {
-            case .success(let fileURL):
-                print("Recording saved at: \(fileURL)")
-                self.uploader.upload(fileURL: fileURL, completion: completion)
-            case .failure(let error):
-                print("Recording failed: \(error.localizedDescription)")
-                completion(.failure(error))
-            }
-            
-            self.isRecording = false
-            self.recorder.soundLevels = Array(repeating: 0.0, count: self.recorder.soundLevels.count)
+        await MainActor.run {
+            isRecording = true
         }
+        
+        defer {
+            Task { @MainActor in
+                isRecording = false
+                recorder.soundLevels = Array(repeating: 0.0, count: recorder.soundLevels.count)
+            }
+        }
+
+        let fileURL: URL
+        do {
+            fileURL = try await recorder.record(length: duration, outputLocation: fileName)
+            print("Recording saved at: \(fileURL)")
+        } catch {
+            print("Recording failed: \(error.localizedDescription)")
+            throw error
+        }
+        
+        if (Config.ON_DEVICE) {
+            predictions = try await uploader.classifyOnDevice(fileURL: fileURL)
+        } else {
+            predictions = try await uploader.classify(fileURL: fileURL)
+        }
+
+        return predictions
     }
+
 }

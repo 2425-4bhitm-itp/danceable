@@ -1,6 +1,8 @@
 import Foundation
 
-@Observable class ViewModel {
+@MainActor
+@Observable
+class ViewModel {
     var model: Model
 
     var dances: [Dance] {
@@ -27,5 +29,9 @@ import Foundation
 
     init(model: Model) {
         self.model = model
+    }
+    
+    func updateDances() async {
+        self.dances = await fetchDances()
     }
 }

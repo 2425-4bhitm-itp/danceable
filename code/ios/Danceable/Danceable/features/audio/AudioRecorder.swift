@@ -7,86 +7,71 @@ class AudioRecorder: ObservableObject {
     private let engine = AVAudioEngine()
     private var audioFile: AVAudioFile?
     
+    var numberOfSoundLevels: Int
+    
     @Published var soundLevels: [CGFloat]
     
     init(numberOfSoundLevels: Int) {
-        soundLevels = Array(repeating: 0.0, count: numberOfSoundLevels)
+        self.numberOfSoundLevels = numberOfSoundLevels
+        soundLevels = AudioRecorder.emptySoundLevels(numberOfSoundLevels: numberOfSoundLevels)
     }
     
-    func startRecording(length: Double, outputURLString: String, completion: @escaping (Result<URL, Error>) -> Void) {
+    func record(
+        length: Double,
+        outputLocation: String
+    ) async throws -> URL {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let fileURL = documentsDirectory.appendingPathComponent(outputURLString)
-
-        do {
-            try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        } catch {
-            completion(.failure(error))
-            return
-        }
-
+        let fileURL = documentsDirectory.appendingPathComponent(outputLocation)
+        
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        
         if FileManager.default.fileExists(atPath: fileURL.path) {
-            do {
-                try FileManager.default.removeItem(at: fileURL)
-            } catch {
-                completion(.failure(error))
-                return
-            }
+            try FileManager.default.removeItem(at: fileURL)
         }
-
+        
         let inputNode = engine.inputNode
-        let format = inputNode.outputFormat(forBus: 0)
+            let format = inputNode.outputFormat(forBus: 0)
 
-        do {
             audioFile = try AVAudioFile(forWriting: fileURL, settings: format.settings)
-        } catch {
-            completion(.failure(error))
-            return
-        }
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            guard let self = self else { return }
-            do {
-                try self.audioFile?.write(from: buffer)
-            } catch {
-                print("Audio write error: \(error)")
+            inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+                guard let self = self else { return }
+                do {
+                    try self.audioFile?.write(from: buffer)
+                } catch {
+                    print("Audio write error: \(error)")
+                }
+                
+                self.soundLevels = self.processSoundLevel(from: buffer)
             }
-            self.processSoundLevel(from: buffer)
-        }
 
-        do {
             let session = AVAudioSession.sharedInstance()
-            
+
             #if os(iOS)
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
             #else
             try session.setCategory(.playAndRecord, mode: .default)
             #endif
-            
+
             try session.setActive(true)
             try engine.start()
-        } catch {
-            completion(.failure(error))
-            return
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + length) { [weak self] in
-            guard let self = self else { return }
-            self.stopRecording()
-            completion(.success(fileURL))
-        }
+            try await Task.sleep(nanoseconds: UInt64(length * 1_000_000_000))
+
+            stopRecording()
+            return fileURL
     }
 
     func stopRecording() {
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
     }
-    
-    func resetSoundLevels() {
-        
-    }
 
-    private func processSoundLevel(from buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData?[0] else { return }
+    private func processSoundLevel(from buffer: AVAudioPCMBuffer) -> [CGFloat] {
+        guard let channelData = buffer.floatChannelData?[0] else { return AudioRecorder.emptySoundLevels(numberOfSoundLevels: numberOfSoundLevels) }
 
         var rms: Float = 0
         vDSP_rmsqv(channelData, 1, &rms, vDSP_Length(buffer.frameLength))
@@ -95,9 +80,7 @@ class AudioRecorder: ObservableObject {
         let normalized = normalize(avgPower)
         let smoothed = generateSmoothedLevels(from: normalized)
 
-        DispatchQueue.main.async {
-            self.soundLevels = smoothed
-        }
+        return smoothed
     }
 
     private func normalize(_ db: Float) -> CGFloat {
@@ -115,5 +98,9 @@ class AudioRecorder: ObservableObject {
             let jitter = CGFloat.random(in: -0.075...0.075)
             return min(max(normalized * scale + jitter, 0), 1)
         }
+    }
+    
+    static func emptySoundLevels(numberOfSoundLevels: Int) -> [CGFloat] {
+        return Array(repeating: 0.0, count: numberOfSoundLevels)
     }
 }

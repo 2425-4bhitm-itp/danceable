@@ -37,7 +37,6 @@
 				features/audio/SoundBarView.swift,
 				features/dance/Dance.swift,
 				features/dance/DanceService.swift,
-				features/dance/DancesNavigationLinkView.swift,
 				features/prediction/danceAi.mlmodel,
 				features/prediction/Prediction.swift,
 				features/prediction/PredictionService.swift,

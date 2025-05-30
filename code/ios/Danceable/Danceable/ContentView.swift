@@ -5,11 +5,9 @@ let MIN_SHEET_FRACTION: CGFloat = 0.175
 let MAX_SHEET_FRACTION: CGFloat = 0.7
 
 struct ContentView: View {
-    let queue = DispatchQueue(label: "at.htl.leonding")
-    
     var viewModel: ViewModel
     
-    @StateObject private var audioController = AudioController()
+    var audioController = AudioController()
     
     @State private var isSheetPresent = false
     
@@ -20,8 +18,12 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             Spacer()
-            Button(action: { recordAndPredict() }) {
-                RecordButtonView(isWatch: false, audioController: audioController)
+            Button(action: {
+                Task {
+                    await recordAndClassify()
+                }
+            }) {
+                RecordButtonView(audioController: audioController)
             }
             .disabled(audioController.isRecording)
             .sheet(isPresented: $isSheetPresent) {
@@ -36,33 +38,30 @@ struct ContentView: View {
                 }
             }
         }
-        .task { loadDancesAsync() }
+        .task { await viewModel.updateDances() }
     }
     
-    private func recordAndPredict() {
-        audioController.recordAndUploadAudio(duration: 3.0) { result in
-            switch result {
-            case .success(let predictions):
-                print("Received predictions: \(predictions)")
+    private func recordAndClassify() async {
+        do {
+            let predictions = try await audioController.recordAndClassify(duration: 3.0)
+            
+            await MainActor.run {
                 viewModel.predictions = predictions
                 selectedDetent = .fraction(MAX_SHEET_FRACTION)
                 isSheetPresent = true
                 hasPredicted = true
-            case .failure(let error):
-                print("Error: \(error.localizedDescription)")
+            }
+            
+        } catch {
+            print("Failed to record and classify audio: \(error.localizedDescription)")
+            
+            await MainActor.run {
+                isSheetPresent = false
+                hasPredicted = false
             }
         }
     }
-    
-    private func loadDancesAsync() {
-        queue.async(execute: {
-            let dances = fetchDances()
-            
-            DispatchQueue.main.async(execute: {
-                viewModel.model.dances = dances
-            })
-        })
-    }
+
 }
 
 #Preview {

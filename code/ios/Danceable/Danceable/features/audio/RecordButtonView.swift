@@ -1,9 +1,16 @@
 import SwiftUI
 
 struct RecordButtonView: View {
-    var isWatch = true;
+    var isWatch: Bool = false
+    @ObservedObject var audioController: AudioController
     
-    var audioController: AudioController
+    init(audioController: AudioController) {
+        #if os(watchOS)
+            isWatch = true
+        #endif
+        self.audioController = audioController
+    }
+    
     @State private var animatePulse = false
 
     var body: some View {
