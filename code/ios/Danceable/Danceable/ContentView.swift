@@ -20,62 +20,43 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             Spacer()
-            Button(action: {
-                audioController.recordAndUploadAudio(duration: 3.0) { result in
-                    switch result {
-                    case .success(let predictions):
-                        print("Received predictions: \(predictions)")
-                        viewModel.predictions = predictions
-                        selectedDetent = .fraction(MAX_SHEET_FRACTION)
-                        isSheetPresent = true
-                        hasPredicted = true
-                    case .failure(let error):
-                        print("Error: \(error.localizedDescription)")
-                    }
-                }
-            }) {
+            Button(action: { recordAndPredict() }) {
                 RecordButtonView(isWatch: false, audioController: audioController)
             }
             .disabled(audioController.isRecording)
             .sheet(isPresented: $isSheetPresent) {
-                PredictionsView(viewModel: viewModel)
-                .presentationDetents(
-                    [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
-                    selection: $selectedDetent
-                )
-                .presentationBackgroundInteraction(
-                    .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
-                )
-                .presentationDragIndicator(.visible)
-                .interactiveDismissDisabled(true)
+                PredictionSheetView(viewModel: viewModel, selectedDetent: $selectedDetent)
             }
             Spacer()
             Spacer()
             Spacer()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink(destination: {
-                        Text("Avaliable Dances").font(.headline)
-                        DancesView(viewModel: viewModel)
-                        .onAppear {
-                            isSheetPresent = false
-                        }.onDisappear {
-                            isSheetPresent = hasPredicted
-                        }
-                    }) {
-                        Image(systemName: "list.bullet.circle.fill")
-                            .resizable()
-                            .frame(width: 30, height: 30)
-                    }
+                    DancesNavigationLinkView(viewModel: viewModel, isSheetPresent: $isSheetPresent, hasPredicted: $hasPredicted)
                 }
             }
         }
         .task { loadDancesAsync() }
     }
     
+    private func recordAndPredict() {
+        audioController.recordAndUploadAudio(duration: 3.0) { result in
+            switch result {
+            case .success(let predictions):
+                print("Received predictions: \(predictions)")
+                viewModel.predictions = predictions
+                selectedDetent = .fraction(MAX_SHEET_FRACTION)
+                isSheetPresent = true
+                hasPredicted = true
+            case .failure(let error):
+                print("Error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     private func loadDancesAsync() {
         queue.async(execute: {
-            let dances = loadDances()
+            let dances = fetchDances()
             
             DispatchQueue.main.async(execute: {
                 viewModel.model.dances = dances

@@ -2,7 +2,7 @@ import Foundation
 
 let DANCE_URL = Config.API_URL + "/dances"
 
-func loadDances() -> [Dance] {
+func fetchDances() -> [Dance] {
     var dances: [Dance] = []
     
     if let url = URL(string: DANCE_URL) {
