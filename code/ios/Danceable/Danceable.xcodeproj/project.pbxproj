@@ -32,6 +32,7 @@
 				features/audio/AudioController.swift,
 				features/audio/AudioRecorder.swift,
 				features/audio/AudioUploader.swift,
+				features/audio/ClassifyingAnimationView.swift,
 				features/audio/RecordButtonView.swift,
 				features/audio/RecordingAnimationView.swift,
 				features/audio/SoundBarView.swift,

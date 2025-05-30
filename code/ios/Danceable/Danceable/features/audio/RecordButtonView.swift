@@ -30,14 +30,16 @@ struct RecordButtonView: View {
                     height: isWatch ? 175 : nil
                 )
 
-            if !audioController.isRecording {
+            if audioController.isRecording {
+                RecordingAnimationView(soundLevels: audioController.soundLevels)
+            } else if (audioController.isClassifying) {
+                ClassifyingAnimationView()
+            } else {
                 Image(systemName: "microphone.fill")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 60)
                     .foregroundStyle(Color.white)
-            } else {
-                RecordingAnimationView(soundLevels: audioController.soundLevels)
             }
         }
         .padding(isWatch ? 0 : 75)

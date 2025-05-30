@@ -7,6 +7,7 @@ class AudioController: ObservableObject {
     
     @Published var soundLevels: [CGFloat] = []
     @Published var isRecording = false
+    @Published var isClassifying = false
  
     init() {
         var numberOfSoundLevels = 11
@@ -27,20 +28,21 @@ class AudioController: ObservableObject {
         fileName: String = UUID().uuidString + ".caf"
     ) async throws -> [Prediction] {
         let predictions: [Prediction]
-        
-        await MainActor.run {
-            isRecording = true
-        }
-        
-        defer {
-            Task { @MainActor in
-                isRecording = false
-                recorder.soundLevels = Array(repeating: 0.0, count: recorder.soundLevels.count)
-            }
-        }
 
         let fileURL: URL
+        
         do {
+            defer {
+                Task { @MainActor in
+                    isRecording = false
+                    recorder.soundLevels = Array(repeating: 0.0, count: recorder.soundLevels.count)
+                }
+            }
+            
+            await MainActor.run {
+                isRecording = true
+            }
+            
             fileURL = try await recorder.record(length: duration, outputLocation: fileName)
             print("Recording saved at: \(fileURL)")
         } catch {
@@ -48,10 +50,27 @@ class AudioController: ObservableObject {
             throw error
         }
         
-        if (Config.ON_DEVICE) {
-            predictions = try await uploader.classifyOnDevice(fileURL: fileURL)
-        } else {
-            predictions = try await uploader.classify(fileURL: fileURL)
+        
+        
+        do {
+            defer {
+                Task { @MainActor in
+                    isClassifying = false
+                }
+            }
+            
+            await MainActor.run {
+                isClassifying = true
+            }
+            
+            if (Config.ON_DEVICE) {
+                predictions = try await uploader.classifyOnDevice(fileURL: fileURL)
+            } else {
+                predictions = try await uploader.classify(fileURL: fileURL)
+            }
+        } catch {
+            print("Classifaction failed: \(error.localizedDescription)")
+            throw error
         }
 
         return predictions
