@@ -6,9 +6,13 @@ import Accelerate
 class AudioRecorder: ObservableObject {
     private let engine = AVAudioEngine()
     private var audioFile: AVAudioFile?
-
-    @Published var soundLevels: [CGFloat] = Array(repeating: 0.0, count: 11)
-
+    
+    @Published var soundLevels: [CGFloat]
+    
+    init(numberOfSoundLevels: Int) {
+        soundLevels = Array(repeating: 0.0, count: numberOfSoundLevels)
+    }
+    
     func startRecording(length: Double, outputURLString: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileURL = documentsDirectory.appendingPathComponent(outputURLString)
@@ -51,11 +55,13 @@ class AudioRecorder: ObservableObject {
 
         do {
             let session = AVAudioSession.sharedInstance()
+            
             #if os(iOS)
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
-            #elseif os(watchOS)
+            #else
             try session.setCategory(.playAndRecord, mode: .default)
             #endif
+            
             try session.setActive(true)
             try engine.start()
         } catch {
@@ -73,6 +79,10 @@ class AudioRecorder: ObservableObject {
     func stopRecording() {
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
+    }
+    
+    func resetSoundLevels() {
+        
     }
 
     private func processSoundLevel(from buffer: AVAudioPCMBuffer) {
