@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct Danceable_Watch_AppApp: App {
+struct Danceable_Watch_App: App {
     var model = Model()
 
     var body: some Scene {

@@ -13,7 +13,7 @@ class AudioController: ObservableObject {
         var numberOfSoundLevels = 11
         
         #if os(watchOS)
-            let numberOfSoundLevels = 7
+            numberOfSoundLevels = 7
         #endif
         
         recorder = AudioRecorder(numberOfSoundLevels: numberOfSoundLevels)

@@ -1,15 +1,13 @@
 import SwiftUI
+import AVFoundation
 
 let MIN_SHEET_FRACTION: CGFloat = 0.175
 let MAX_SHEET_FRACTION: CGFloat = 0.7
 
-
 struct ContentView: View {
     var viewModel: ViewModel
     
-    @StateObject private var audioController = AudioController()
-    
-    let queue = DispatchQueue(label: "at.htl.leonding")
+    var audioController = AudioController()
     
     @State private var isSheetPresent = false
     
@@ -18,40 +16,53 @@ struct ContentView: View {
     @State private var hasPredicted = false
     
     var body: some View {
-        Spacer()
-        Button(action: {
-            audioController.recordAndUploadAudio(duration: 3.0) { result in
-                switch result {
-                case .success(let predictions):
-                    print("Received predictions: \(predictions)")
-                    viewModel.predictions = predictions
-                    selectedDetent = .fraction(MAX_SHEET_FRACTION)
-                    isSheetPresent = true
-                    hasPredicted = true
-                case .failure(let error):
-                    print("Error: \(error.localizedDescription)")
+        NavigationStack {
+            Spacer()
+            Button(action: {
+                Task {
+                    await recordAndClassify()
                 }
+            }) {
+                RecordButtonView(audioController: audioController)
             }
-        }) {
-            RecordButtonView(isWatch: true, audioController: audioController)
+            .buttonStyle(PlainButtonStyle())
+            .disabled(audioController.isRecording)
+            .sheet(isPresented: $isSheetPresent) {
+                PredictionSheetView(viewModel: viewModel, selectedDetent: $selectedDetent)
+            }
+            Spacer()
+            Spacer()
+            Spacer()
         }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(audioController.isRecording)
-        .sheet(isPresented: $isSheetPresent) {
-            PredictionsView(viewModel: viewModel)
-            .presentationDetents(
-                [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
-                selection: $selectedDetent
-            )
-            .presentationBackgroundInteraction(
-                .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
-            )
-            .presentationDragIndicator(.visible)
-            .interactiveDismissDisabled(true)
+        .task { await viewModel.updateDances() }
+    }
+    
+    private func recordAndClassify() async {
+        do {
+            let predictions = try await audioController.recordAndClassify(duration: 3.0)
+            
+            await MainActor.run {
+                viewModel.predictions = predictions
+                selectedDetent = .fraction(MAX_SHEET_FRACTION)
+                isSheetPresent = true
+                hasPredicted = true
+            }
+            
+        } catch {
+            print("Failed to record and classify audio: \(error.localizedDescription)")
+            
+            await MainActor.run {
+                isSheetPresent = false
+                hasPredicted = false
+            }
         }
     }
+
 }
 
 #Preview {
+    let model: Model = Model()
+    let viewModel: ViewModel = ViewModel(model: model)
     
+    return ContentView(viewModel: viewModel)
 }
