@@ -31,7 +31,7 @@ class ViewModel {
         self.model = model
     }
     
-    func updateDances() async {
-        self.dances = await fetchDances()
+    func updateDances() async throws {
+        self.dances = try await fetchDances()
     }
 }

@@ -88,7 +88,7 @@ class AudioUploader {
                     
                     let decoder = JSONDecoder()
                     
-                    if (Config.ON_DEVICE) {
+                    if Config.ON_DEVICE {
                         print((try? decoder.decode([Double].self, from:data)) ?? [0.0])
                         
                         DispatchQueue.main.async{

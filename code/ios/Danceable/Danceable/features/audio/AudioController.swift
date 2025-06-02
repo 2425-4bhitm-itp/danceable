@@ -63,7 +63,7 @@ class AudioController: ObservableObject {
                 isClassifying = true
             }
             
-            if (Config.ON_DEVICE) {
+            if Config.ON_DEVICE {
                 predictions = try await uploader.classifyOnDevice(fileURL: fileURL)
             } else {
                 predictions = try await uploader.classify(fileURL: fileURL)

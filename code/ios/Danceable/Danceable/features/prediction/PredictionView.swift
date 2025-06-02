@@ -15,6 +15,7 @@ struct PredictionView: View {
                 Image(systemName: getImageForSpeedCategory(for: prediction.speedCategory))
                     .resizable()
                     .frame(width: 24, height: 24)
+                    .foregroundColor(Color("myAccent"))
             }
             
             HStack {

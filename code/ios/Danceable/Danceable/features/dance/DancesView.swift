@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct DancesView: View {
-    let queue = DispatchQueue(label: "at.htl.leonding")
+    let queue = DispatchQueue(label: "at.leonding.htl.features.dances")
     
     var viewModel: ViewModel
     

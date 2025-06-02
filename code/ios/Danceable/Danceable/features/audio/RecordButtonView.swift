@@ -16,7 +16,7 @@ struct RecordButtonView: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color.main.opacity(0.25))
+                .fill(Color("secondary").opacity(0.5))
                 .scaleEffect(animatePulse ? 1.2 : 1)
                 .frame(
                     width: isWatch ? 175 : nil,
@@ -24,7 +24,7 @@ struct RecordButtonView: View {
                 )
 
             Circle()
-                .fill(Color.main)
+                .fill(Color("primary"))
                 .frame(
                     width: isWatch ? 175 : nil,
                     height: isWatch ? 175 : nil
@@ -32,7 +32,7 @@ struct RecordButtonView: View {
 
             if audioController.isRecording {
                 RecordingAnimationView(soundLevels: audioController.soundLevels)
-            } else if (audioController.isClassifying) {
+            } else if audioController.isClassifying {
                 ClassifyingAnimationView()
             } else {
                 Image(systemName: "microphone.fill")
@@ -51,6 +51,12 @@ struct RecordButtonView: View {
                 stopPulsing()
             }
         }
+        .sensoryFeedback(trigger: audioController.isRecording, { old, new in
+            new ? (isWatch ? .start : .impact(weight: .light, intensity: 0.5)) : .stop
+        })
+        .sensoryFeedback(trigger: audioController.isClassifying, { old, new in
+            new ? .impact(weight: .medium, intensity: 0.75) : .impact(flexibility: .rigid, intensity: 10)
+        })
     }
 
     private func startPulsing() {
