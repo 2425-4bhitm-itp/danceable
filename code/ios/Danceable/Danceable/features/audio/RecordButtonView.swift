@@ -16,7 +16,7 @@ struct RecordButtonView: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color("secondary").opacity(0.5))
+                .fill(Color("mySecondary").opacity(0.5))
                 .scaleEffect(animatePulse ? 1.2 : 1)
                 .frame(
                     width: isWatch ? 175 : nil,
@@ -24,7 +24,7 @@ struct RecordButtonView: View {
                 )
 
             Circle()
-                .fill(Color("primary"))
+                .fill(Color("myPrimary"))
                 .frame(
                     width: isWatch ? 175 : nil,
                     height: isWatch ? 175 : nil
