@@ -9,55 +9,75 @@ struct ContentView: View {
     
     var audioController = AudioController()
     
-    @State private var isSheetPresent = false
-    
-    @State private var selectedDetent: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
-    
+    @State private var showPredictionsSheet = false
+    @State private var sheetSize: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
+
+    @State private var error: Error?
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
+
     @State private var hasPredicted = false
+    @State private var isInDancesView: Bool = false
+    @State private var isServerReachable = false
     
     var body: some View {
         NavigationStack {
             Spacer()
             Button(action: {
-                Task {
-                    await recordAndClassify()
+                if isServerReachable {
+                    Task {
+                        await recordAndClassify()
+                    }
+                } else {
+                    showError("Unable to connect to server. Please try again later.")
                 }
             }) {
                 RecordButtonView(audioController: audioController)
             }
             .buttonStyle(PlainButtonStyle())
-            .disabled(audioController.isRecording)
-            .sheet(isPresented: $isSheetPresent) {
-                PredictionSheetView(viewModel: viewModel, selectedDetent: $selectedDetent)
+            .disabled(audioController.isRecording || audioController.isClassifying)
+            .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView)) {
+                PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize)
             }
-            Spacer()
-            Spacer()
-            Spacer()
         }
-        .task { await viewModel.updateDances() }
+        .task {
+            do {
+                try await viewModel.updateDances()
+                isServerReachable = true
+            } catch {
+                isServerReachable = false
+                
+                showError("Unable to update dances! Please try again later.")
+            }
+        }
     }
     
     private func recordAndClassify() async {
         do {
             let predictions = try await audioController.recordAndClassify(duration: 3.0)
-            
+
             await MainActor.run {
                 viewModel.predictions = predictions
-                selectedDetent = .fraction(MAX_SHEET_FRACTION)
-                isSheetPresent = true
+                sheetSize = .fraction(MAX_SHEET_FRACTION)
+                showPredictionsSheet = true
                 hasPredicted = true
             }
-            
         } catch {
             print("Failed to record and classify audio: \(error.localizedDescription)")
-            
+
             await MainActor.run {
-                isSheetPresent = false
+                showError(error.localizedDescription)
+
+                showPredictionsSheet = false
                 hasPredicted = false
             }
         }
     }
-
+    
+    private func showError(_ message: String) {
+        errorMessage = message
+        showErrorAlert = true
+    }
 }
 
 #Preview {
