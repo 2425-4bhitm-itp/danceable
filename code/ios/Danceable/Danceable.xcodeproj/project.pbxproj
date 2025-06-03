@@ -30,6 +30,7 @@
 			membershipExceptions = (
 				Config.swift,
 				features/audio/AudioController.swift,
+				features/audio/AudioControllerProtocol.swift,
 				features/audio/AudioRecorder.swift,
 				features/audio/AudioUploader.swift,
 				features/audio/ClassifyingAnimationView.swift,
