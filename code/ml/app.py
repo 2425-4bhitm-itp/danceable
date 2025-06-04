@@ -56,8 +56,7 @@ def extract_features():
         return jsonify({"error": "Missing 'file_path' in request query parameters or JSON body"}), 400
 
     features = extractor.extract_features_from_file(file_path)
-    features_serialized = {key: value.tolist() for key, value in features.items()}
-    return jsonify({"features": features_serialized}), 200
+    return jsonify({"features": features}), 200
 
 @app.route("/train", methods=["GET"])
 def train_model():
