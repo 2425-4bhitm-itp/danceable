@@ -75,6 +75,11 @@ jobs:
           name: frontend-artifact
           path: code/frontend/build
 
+      - name: Archive Angular frontend artefacts
+        uses: actions/upload-artifact@v4
+        with:
+            name: angular-frontend-artifact
+            path: code/frontend/dist
 
   test-backend:
     needs: build-frontend-and-backend
