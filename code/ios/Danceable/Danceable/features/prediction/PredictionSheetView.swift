@@ -3,26 +3,48 @@ import SwiftUI
 struct PredictionSheetView: View {
     var viewModel: ViewModel
     @Binding var selectedDetent: PresentationDetent
+    @ObservedObject var orientationObserver = OrientationObserver()
+    @Binding var showPredictionSheetLandscape : Bool
+    
+    var isLandscape: Bool{
+        return orientationObserver.orientation.rawValue != 3
+    }
     
     var body: some View {
-        PredictionsView(viewModel: viewModel)
-        .presentationDetents(
-            [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
-            selection: $selectedDetent
-        )
-        .presentationBackgroundInteraction(
-            .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
-        )
-        .presentationDragIndicator(.visible)
-        .interactiveDismissDisabled(true)
+        VStack(spacing: 0) {
+            if !isLandscape {
+                HStack {
+                    Button("Close") {
+                        showPredictionSheetLandscape = false
+                    }
+                    .padding(.leading)
+                    
+                    Spacer()
+                }
+                .padding(.top, 10)
+            }
+            
+            PredictionsView(viewModel: viewModel)
+                .presentationDetents(
+                    [.fraction(MIN_SHEET_FRACTION), .fraction(MAX_SHEET_FRACTION)],
+                    selection: $selectedDetent
+                )
+                .presentationBackgroundInteraction(
+                    .enabled(upThrough: .fraction(MAX_SHEET_FRACTION))
+                )
+                .presentationDragIndicator(.visible)
+                .interactiveDismissDisabled(true)
+        }
     }
 }
 
 #Preview {
     @Previewable @State var selectedDetent: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
+
+    @Previewable @State var showPredictionSheetLandscape: Bool = false
     
     let model = Model()
     let viewModel = ViewModel(model: model)
     
-    PredictionSheetView(viewModel: viewModel, selectedDetent: $selectedDetent)
+    PredictionSheetView(viewModel: viewModel, selectedDetent: $selectedDetent, showPredictionSheetLandscape: $showPredictionSheetLandscape)
 }

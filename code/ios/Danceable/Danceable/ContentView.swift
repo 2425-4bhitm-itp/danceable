@@ -12,6 +12,7 @@ struct ContentView: View {
     @StateObject private var orientationObserver = OrientationObserver()
     
     @State private var showPredictionsSheet = false
+    @State private var showPredictionsSheetLandscape = false
     @State private var sheetSize: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
 
     @State private var error: Error?
@@ -41,7 +42,7 @@ struct ContentView: View {
                 }
                 .disabled(audioController.isRecording || audioController.isClassifying)
                 .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView)) {
-                    PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize)
+                    PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
                 }
                 Spacer()
                 Spacer()
