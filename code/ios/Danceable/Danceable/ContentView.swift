@@ -9,6 +9,8 @@ struct ContentView: View {
 
     var audioController = AudioController()
 
+    @StateObject private var orientationObserver = OrientationObserver()
+    
     @State private var showPredictionsSheet = false
     @State private var sheetSize: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
 
@@ -65,6 +67,9 @@ struct ContentView: View {
                 
                 showError("Unable to update dances! Please try again later.")
             }
+        }
+        .onChange(of: orientationObserver.orientation, initial:false) { newOrientation,hasChanged  in
+            print("Orientation changed to: \(newOrientation.rawValue)")
         }
     }
 
