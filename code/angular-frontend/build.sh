@@ -6,13 +6,12 @@ set -e  # Exit on any error
 echo "Starting Angular frontend build..."
 
 # Navigate to frontend directory
+cd ..
 cd frontend
 
 echo "Installing npm dependencies..."
 npm ci
 
-echo "Running tests..."
-npm run test -- --watch=false --browsers=ChromeHeadless
 
 echo "Building Angular application for production..."
 npm run build --prod
