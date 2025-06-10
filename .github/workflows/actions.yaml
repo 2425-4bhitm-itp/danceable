@@ -1,5 +1,5 @@
 name: Danceable CI/CD Pipeline
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name:  Full Stack Build Pipeline
 #on: [ push ]
 #jobs:
 #  Explore-GitHub-Actions:
