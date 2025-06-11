@@ -39,14 +39,6 @@ jobs:
     needs: debug-structure
     runs-on: ubuntu-latest
     steps:
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -110,6 +102,13 @@ jobs:
     needs: test-backend
     runs-on: ubuntu-latest
     steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Download backend artefacts
@@ -121,5 +120,9 @@ jobs:
         run: |
           echo "Building Docker image..."
           cd code/backend
-          ./mvnw package -DskipTests -Dquarkus.container-image.build=true
-
+          ./mvnw package -DskipTests
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          cd code/backend
+          docker build --file docker/Dockerfile -t ghcr.io/${{ github.repository_owner }}/danceable-backend:latest .
