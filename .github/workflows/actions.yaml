@@ -34,16 +34,11 @@ jobs:
           ls -la
           echo "Searching for relevant directories:"
           find . -type d -not -path "*/\.*" | sort
-          
-      
 
   build-frontend-and-backend:
     needs: debug-structure
     runs-on: ubuntu-latest
     steps:
-
-
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -119,8 +114,4 @@ jobs:
           echo "Building Docker image..."
           cd code/backend
           ./mvnw package -DskipTests -Dquarkus.container-image.build=true
-          
-      
-
-      - name: Push Docker image
 
