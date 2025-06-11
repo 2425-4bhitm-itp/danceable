@@ -56,11 +56,13 @@ class AudioController: AudioControllerProtocol {
             defer {
                 Task { @MainActor in
                     isClassifying = false
+                    HapticsManager.shared.stopLoopingVibration()
                 }
             }
             
             await MainActor.run {
                 isClassifying = true
+                HapticsManager.shared.startLoopingVibration()
             }
             
             if Config.ON_DEVICE {

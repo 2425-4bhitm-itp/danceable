@@ -6,13 +6,9 @@ struct PredictionSheetView: View {
     @ObservedObject var orientationObserver = OrientationObserver()
     @Binding var showPredictionSheetLandscape : Bool
     
-    var isLandscape: Bool{
-        return orientationObserver.orientation.rawValue != 3
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
-            if !isLandscape {
+            if orientationObserver.orientation.isLandscape {
                 HStack {
                     Button("Close") {
                         showPredictionSheetLandscape = false

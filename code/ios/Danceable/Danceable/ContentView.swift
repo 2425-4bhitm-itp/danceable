@@ -8,6 +8,7 @@ struct ContentView: View {
     var viewModel: ViewModel
 
     var audioController = AudioController()
+    var haptics = HapticsManager.shared
 
     @StateObject private var orientationObserver = OrientationObserver()
     
@@ -33,6 +34,7 @@ struct ContentView: View {
                     if isServerReachable {
                         Task {
                             await recordAndClassify()
+                            haptics.playFadeOutPulse()
                         }
                     } else {
                         showError("Unable to connect to server. Please try again later.")

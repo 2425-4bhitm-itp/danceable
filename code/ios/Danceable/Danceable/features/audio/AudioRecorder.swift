@@ -7,6 +7,8 @@ class AudioRecorder: ObservableObject {
     private let engine = AVAudioEngine()
     private var audioFile: AVAudioFile?
     
+    private var isRecording = false
+    
     var numberOfSoundLevels: Int
     
     @Published var soundLevels: [CGFloat]
@@ -20,6 +22,11 @@ class AudioRecorder: ObservableObject {
         length: Double,
         outputLocation: String
     ) async throws -> URL {
+        if isRecording {
+            throw AVError(_nsError: NSError())
+        }
+        
+        isRecording = true
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileURL = documentsDirectory.appendingPathComponent(outputLocation)
         
@@ -68,6 +75,7 @@ class AudioRecorder: ObservableObject {
     func stopRecording() {
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
+        isRecording = false
     }
 
     private func processSoundLevel(from buffer: AVAudioPCMBuffer) -> [CGFloat] {
