@@ -16,6 +16,7 @@ struct PredictionSheetView: View {
                 HStack {
                     Button("Close") {
                         showPredictionSheetLandscape = false
+                        selectedDetent = .fraction(MIN_SHEET_FRACTION)
                     }
                     .padding(.leading)
                     

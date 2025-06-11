@@ -6,13 +6,11 @@ struct RecordButtonView: View {
     @ObservedObject var orientationObserver = OrientationObserver()
     
     var isLandscape: Bool{
-        //Raw Value 3 is normal portrait, need to compare like this because there is upside down Portrait which would not trigger.isLandscape
-        return orientationObserver.orientation.rawValue != 3
+        return orientationObserver.orientation.isLandscape
     }
     
     var buttonRadius: CGFloat{
-        // in order: watch size, landscape size, portrait size
-        isWatch ? 175 : (isLandscape ? 225 : 200)
+        isWatch ? 175 : 225
     }
     
     init(audioController: AudioController) {

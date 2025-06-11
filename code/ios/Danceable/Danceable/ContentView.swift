@@ -41,7 +41,7 @@ struct ContentView: View {
                     RecordButtonView(audioController: audioController)
                 }
                 .disabled(audioController.isRecording || audioController.isClassifying)
-                .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView)) {
+                .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView && (orientationObserver.orientation.isPortrait || showPredictionsSheetLandscape))) {
                     PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
                 }
                 Spacer()
@@ -80,8 +80,7 @@ struct ContentView: View {
 
             await MainActor.run {
                 viewModel.predictions = predictions
-                sheetSize = .fraction(MAX_SHEET_FRACTION)
-                showPredictionsSheet = true
+                pullPredictionsSheet()
                 hasPredicted = true
             }
         } catch {
@@ -90,7 +89,7 @@ struct ContentView: View {
             await MainActor.run {
                 showError(error.localizedDescription)
 
-                showPredictionsSheet = false
+                closePredictionsSheet()
                 hasPredicted = false
             }
         }
@@ -99,6 +98,17 @@ struct ContentView: View {
     private func showError(_ message: String) {
         errorMessage = message
         showErrorAlert = true
+    }
+    
+    private func pullPredictionsSheet() {
+        sheetSize = .fraction(MAX_SHEET_FRACTION)
+        showPredictionsSheet = true
+        showPredictionsSheetLandscape = true
+    }
+    
+    private func closePredictionsSheet() {
+        showPredictionsSheet = false
+        showPredictionsSheetLandscape = false
     }
 }
 
