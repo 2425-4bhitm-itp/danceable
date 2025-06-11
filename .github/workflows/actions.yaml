@@ -126,3 +126,8 @@ jobs:
           echo "Building Docker image..."
           cd code/backend
           docker build --file docker/Dockerfile -t ghcr.io/${{ github.repository_owner }}/danceable-backend:latest .
+          -
+      - name: Push Docker image
+        run: |
+          echo "Pushing Docker image..."
+          docker push ghcr.io/${{ github.repository_owner }}/danceable-backend:latest
