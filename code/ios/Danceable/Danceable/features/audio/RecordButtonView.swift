@@ -3,6 +3,15 @@ import SwiftUI
 struct RecordButtonView: View {
     var isWatch: Bool = false
     @ObservedObject var audioController: AudioController
+    @ObservedObject var orientationObserver = OrientationObserver()
+    
+    var isLandscape: Bool{
+        return orientationObserver.orientation.isLandscape
+    }
+    
+    var buttonRadius: CGFloat{
+        isWatch ? 175 : 225
+    }
     
     init(audioController: AudioController) {
         #if os(watchOS)
@@ -19,15 +28,15 @@ struct RecordButtonView: View {
                 .fill(Color("mySecondary").opacity(0.5))
                 .scaleEffect(animatePulse ? 1.2 : 1)
                 .frame(
-                    width: isWatch ? 175 : nil,
-                    height: isWatch ? 175 : nil
+                    width: buttonRadius,
+                    height: buttonRadius
                 )
 
             Circle()
                 .fill(Color("myPrimary"))
                 .frame(
-                    width: isWatch ? 175 : nil,
-                    height: isWatch ? 175 : nil
+                    width: buttonRadius,
+                    height: buttonRadius
                 )
 
             if audioController.isRecording {
@@ -52,10 +61,10 @@ struct RecordButtonView: View {
             }
         }
         .sensoryFeedback(trigger: audioController.isRecording, { old, new in
-            new ? (isWatch ? .start : .impact(weight: .light, intensity: 0.5)) : .stop
+            new ? (isWatch ? .start : .impact(weight: .light, intensity: 1 )) : .stop
         })
         .sensoryFeedback(trigger: audioController.isClassifying, { old, new in
-            new ? .impact(weight: .medium, intensity: 0.75) : .impact(flexibility: .rigid, intensity: 10)
+            new ? .impact(weight: .medium, intensity: 2.5) : .impact(flexibility: .rigid, intensity: 20)
         })
     }
 

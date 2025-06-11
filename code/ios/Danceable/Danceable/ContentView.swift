@@ -8,8 +8,12 @@ struct ContentView: View {
     var viewModel: ViewModel
 
     var audioController = AudioController()
+    var haptics = HapticsManager.shared
 
+    @StateObject private var orientationObserver = OrientationObserver()
+    
     @State private var showPredictionsSheet = false
+    @State private var showPredictionsSheetLandscape = false
     @State private var sheetSize: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
 
     @State private var error: Error?
@@ -30,6 +34,7 @@ struct ContentView: View {
                     if isServerReachable {
                         Task {
                             await recordAndClassify()
+                            haptics.playFadeOutPulse()
                         }
                     } else {
                         showError("Unable to connect to server. Please try again later.")
@@ -38,8 +43,8 @@ struct ContentView: View {
                     RecordButtonView(audioController: audioController)
                 }
                 .disabled(audioController.isRecording || audioController.isClassifying)
-                .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView)) {
-                    PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize)
+                .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView && (orientationObserver.orientation.isPortrait || showPredictionsSheetLandscape))) {
+                    PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
                 }
                 Spacer()
                 Spacer()
@@ -66,6 +71,9 @@ struct ContentView: View {
                 showError("Unable to update dances! Please try again later.")
             }
         }
+        .onChange(of: orientationObserver.orientation, initial:false) { newOrientation,hasChanged  in
+            print("Orientation changed to: \(newOrientation.rawValue)")
+        }
     }
 
     private func recordAndClassify() async {
@@ -74,8 +82,7 @@ struct ContentView: View {
 
             await MainActor.run {
                 viewModel.predictions = predictions
-                sheetSize = .fraction(MAX_SHEET_FRACTION)
-                showPredictionsSheet = true
+                pullPredictionsSheet()
                 hasPredicted = true
             }
         } catch {
@@ -84,7 +91,7 @@ struct ContentView: View {
             await MainActor.run {
                 showError(error.localizedDescription)
 
-                showPredictionsSheet = false
+                closePredictionsSheet()
                 hasPredicted = false
             }
         }
@@ -93,6 +100,17 @@ struct ContentView: View {
     private func showError(_ message: String) {
         errorMessage = message
         showErrorAlert = true
+    }
+    
+    private func pullPredictionsSheet() {
+        sheetSize = .fraction(MAX_SHEET_FRACTION)
+        showPredictionsSheet = true
+        showPredictionsSheetLandscape = true
+    }
+    
+    private func closePredictionsSheet() {
+        showPredictionsSheet = false
+        showPredictionsSheetLandscape = false
     }
 }
 

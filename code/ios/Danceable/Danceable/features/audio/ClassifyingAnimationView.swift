@@ -5,7 +5,7 @@ struct ClassifyingAnimationView: View {
         ZStack {
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                .scaleEffect(2.0, anchor: .center)
+                .controlSize(.large)
         }
     }
 }
