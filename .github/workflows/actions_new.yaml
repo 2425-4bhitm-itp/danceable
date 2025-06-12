@@ -44,11 +44,7 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Download backend artefacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-artifact
-          path: code/backend/target
+
       - name: Build Docker image
         run: |
           echo "Building Docker image..."
