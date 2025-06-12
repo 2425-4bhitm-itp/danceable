@@ -9,6 +9,8 @@ on:
 
 jobs:
   build-frontend-and-backend:
+    permissions:
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
