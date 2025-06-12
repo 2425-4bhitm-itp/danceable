@@ -1,5 +1,5 @@
 name: Danceable CI/CD Pipeline
-run-name:  Full Stack Build Pipeline
+run-name: Full Stack Build Pipeline
 #on: [ push ]
 #jobs:
 #  Explore-GitHub-Actions:
@@ -34,6 +34,7 @@ jobs:
           ls -la
           echo "Searching for relevant directories:"
           find . -type d -not -path "*/\.*" | sort
+
 
   build-frontend-and-backend:
     needs: debug-structure
@@ -78,8 +79,8 @@ jobs:
       - name: Archive Angular frontend artefacts
         uses: actions/upload-artifact@v4
         with:
-            name: angular-frontend-artifact
-            path: code/frontend/dist
+          name: angular-frontend-artifact
+          path: code/frontend/dist
 
   test-backend:
     needs: build-frontend-and-backend
@@ -98,7 +99,10 @@ jobs:
           cd code/backend
           mvn test
 
+
   containerize:
+    permissions:
+      packages: write
     needs: test-backend
     runs-on: ubuntu-latest
     steps:
