@@ -16,8 +16,8 @@ run-name: Full Stack Build Pipeline
 #        working-directory: code/backend
 #        run: mvn -B package --file pom.xml
 on:
-  push:
-    branches: [ main ]
+#  push:
+#    branches: [ main ]
   pull_request:
     branches: [ main ]
 
