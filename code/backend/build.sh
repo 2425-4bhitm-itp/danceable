@@ -3,5 +3,6 @@
 # shellcheck disable=SC2164
 cd "$(dirname "$0")"
 
-mvn clean install -DskipTests -Dquarkus.config.locations=./src/main/resources/application.properties
+mvn clean package -Dquarkus.config.locations=./src/main/resources/application.properties
 
+docker build -t "backend" -f docker/Dockerfile .
