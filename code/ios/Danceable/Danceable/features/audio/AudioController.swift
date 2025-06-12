@@ -9,15 +9,9 @@ class AudioController: AudioControllerProtocol {
     @Published var isRecording = false
     @Published var isClassifying = false
  
-    init() {
-        var numberOfSoundLevels = 11
-        
-        #if os(watchOS)
-            numberOfSoundLevels = 7
-        #endif
-        
+    init(numberOfSoundLevels: Int = 11) {
         recorder = AudioRecorder(numberOfSoundLevels: numberOfSoundLevels)
-        
+
         recorder.$soundLevels
             .receive(on: DispatchQueue.main)
             .assign(to: &$soundLevels)

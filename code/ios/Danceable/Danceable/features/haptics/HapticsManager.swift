@@ -10,24 +10,7 @@ final class HapticsManager {
     private init() {
         prepareHapticsEngine()
     }
-
-    func playDuolingoVibe() {
-        do {
-            let pattern = try buildDuolingoPattern()
-            try playPattern(pattern)
-        } catch {
-            print("Error playing Duolingo vibe:", error)
-        }
-    }
-
-    func playPattern(_ pattern: CHHapticPattern) throws {
-        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
-        let player = try engine?.makePlayer(with: pattern)
-        try player?.start(atTime: 0)
-    }
     
-    // MARK: Duolingo
-
     private func prepareHapticsEngine() {
         guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
 
@@ -45,28 +28,52 @@ final class HapticsManager {
             print("Failed to prepare haptic engine:", error)
         }
     }
+    
+    func playPattern(_ pattern: CHHapticPattern) throws {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        let player = try engine?.makePlayer(with: pattern)
+        try player?.start(atTime: 0)
+    }
+    
+    // MARK: Duolingo
 
+    func playDuolingoVibe() {
+        do {
+            let pattern = try buildDuolingoPattern()
+            try playPattern(pattern)
+        } catch {
+            print("Error playing Duolingo vibe:", error)
+        }
+    }
 
     private func buildDuolingoPattern() throws -> CHHapticPattern {
-        let duration: TimeInterval = 1.5
-        let steps = 12
+        let duration: TimeInterval = 1
+        let steps = 7
         var events = [CHHapticEvent]()
 
         for i in 0..<steps {
-            let time = Double(i) / Double(steps) * duration
-            let intensity = sin(Double(i) / Double(steps) * .pi)
+            let t = Double(i) / Double(steps)
+            let time = t * duration
+
+            let sine = sin(t * .pi)
+            let baseLevel = 0.6
+
+            let intensity = baseLevel + (1.0 - baseLevel) * sine
             let sharpness = intensity
+
             let event = createPulse(
                 intensity: Float(intensity),
                 sharpness: Float(sharpness),
                 relativeTime: time,
                 duration: duration / Double(steps)
             )
+
             events.append(event)
         }
 
         return try CHHapticPattern(events: events, parameters: [])
     }
+
 
     private func createPulse(
         intensity: Float,

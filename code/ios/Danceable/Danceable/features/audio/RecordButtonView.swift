@@ -1,26 +1,16 @@
 import SwiftUI
 
 struct RecordButtonView: View {
-    var isWatch: Bool = false
     @ObservedObject var audioController: AudioController
     @ObservedObject var orientationObserver = OrientationObserver()
     
-    var isLandscape: Bool{
-        return orientationObserver.orientation.isLandscape
-    }
-    
-    var buttonRadius: CGFloat{
-        isWatch ? 175 : 225
-    }
-    
-    init(audioController: AudioController) {
-        #if os(watchOS)
-            isWatch = true
-        #endif
-        self.audioController = audioController
-    }
-    
+    private let strategy: RecordButtonStrategy
     @State private var animatePulse = false
+
+    init(audioController: AudioController, strategy: RecordButtonStrategy) {
+        self.audioController = audioController
+        self.strategy = strategy
+    }
 
     var body: some View {
         ZStack {
@@ -28,15 +18,15 @@ struct RecordButtonView: View {
                 .fill(Color("mySecondary").opacity(0.5))
                 .scaleEffect(animatePulse ? 1.2 : 1)
                 .frame(
-                    width: buttonRadius,
-                    height: buttonRadius
+                    width: strategy.buttonRadius,
+                    height: strategy.buttonRadius
                 )
 
             Circle()
                 .fill(Color("myPrimary"))
                 .frame(
-                    width: buttonRadius,
-                    height: buttonRadius
+                    width: strategy.buttonRadius,
+                    height: strategy.buttonRadius
                 )
 
             if audioController.isRecording {
@@ -51,21 +41,17 @@ struct RecordButtonView: View {
                     .foregroundStyle(Color.white)
             }
         }
-        .padding(isWatch ? 0 : 75)
+        .padding(strategy.padding)
         .shadow(radius: 10)
         .onReceive(audioController.$isRecording) { isRecording in
-            if isRecording {
-                startPulsing()
-            } else {
-                stopPulsing()
-            }
+            isRecording ? startPulsing() : stopPulsing()
         }
-        .sensoryFeedback(trigger: audioController.isRecording, { old, new in
-            new ? (isWatch ? .start : .impact(weight: .light, intensity: 1 )) : .stop
-        })
-        .sensoryFeedback(trigger: audioController.isClassifying, { old, new in
-            new ? .impact(weight: .medium, intensity: 2.5) : .impact(flexibility: .rigid, intensity: 20)
-        })
+        .sensoryFeedback(trigger: audioController.isRecording) { _, new in
+            strategy.feedbackForRecording(new)
+        }
+        .sensoryFeedback(trigger: audioController.isClassifying) { _, new in
+            strategy.feedbackForClassifying(new)
+        }
     }
 
     private func startPulsing() {

@@ -6,8 +6,22 @@ let MAX_SHEET_FRACTION: CGFloat = 0.7
 
 struct ContentView: View {
     var viewModel: ViewModel
-
-    var audioController = AudioController()
+    
+    var strategy: RecordButtonStrategy
+    
+    var audioController: AudioController
+    
+    init(viewModel: ViewModel) {
+        self.viewModel = viewModel
+        
+        #if os(watchOS)
+        self.audioController = AudioController(numberOfSoundLevels: 7)
+            self.strategy = WatchRecordButtonStrategy()
+        #else
+            self.audioController = AudioController()
+            self.strategy = iOSRecordButtonStrategy()
+        #endif
+    }
     var haptics = HapticsManager.shared
 
     @StateObject private var orientationObserver = OrientationObserver()
@@ -34,13 +48,13 @@ struct ContentView: View {
                     if isServerReachable {
                         Task {
                             await recordAndClassify()
-                            haptics.playFadeOutPulse()
+                            haptics.playDuolingoVibe()
                         }
                     } else {
                         showError("Unable to connect to server. Please try again later.")
                     }
                 }) {
-                    RecordButtonView(audioController: audioController)
+                    RecordButtonView(audioController: audioController, strategy: strategy)
                 }
                 .disabled(audioController.isRecording || audioController.isClassifying)
                 .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView && (orientationObserver.orientation.isPortrait || showPredictionsSheetLandscape))) {
