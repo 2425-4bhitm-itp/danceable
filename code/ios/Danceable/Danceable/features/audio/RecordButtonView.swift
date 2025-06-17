@@ -2,13 +2,11 @@ import SwiftUI
 
 struct RecordButtonView: View {
     @ObservedObject var audioController: AudioController
-    @ObservedObject var orientationObserver: OrientationObserver
     
     private let strategy: RecordButtonStrategy
     @State private var animatePulse = false
 
-    init(audioController: AudioController, strategy: RecordButtonStrategy, orientationObserver: OrientationObserver) {
-        self.orientationObserver = orientationObserver
+    init(audioController: AudioController, strategy: RecordButtonStrategy) {
         self.audioController = audioController
         self.strategy = strategy
     }

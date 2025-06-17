@@ -16,15 +16,10 @@ struct ContentView: View {
     init(viewModel: ViewModel) {
         self.viewModel = viewModel
         
-        #if os(watchOS)
-            self.haptics = WatchOSHapticsStrategy()
-            self.audioController = AudioController(numberOfSoundLevels: 7)
-            self.strategy = WatchRecordButtonStrategy()
-        #else
-            self.haptics = iOSHapticsStrategy()
-            self.audioController = AudioController(hapticsStrategy: haptics)
-            self.strategy = iOSRecordButtonStrategy()
-        #endif
+        self.haptics = iOSHapticsStrategy()
+        self.audioController = AudioController(hapticsStrategy: haptics)
+        self.strategy = iOSRecordButtonStrategy()
+    var supportedInterfaceOrientations: UIInterfaceOrientationMask {.allButUpsideDown}
     }
 
     @StateObject private var orientationObserver = OrientationObserver()
@@ -57,7 +52,7 @@ struct ContentView: View {
                         showError("Unable to connect to server. Please try again later.")
                     }
                 }) {
-                    RecordButtonView(audioController: audioController, strategy: strategy, orientationObserver:  orientationObserver)
+                    RecordButtonView(audioController: audioController, strategy: strategy)
                 }
                 .disabled(audioController.isRecording || audioController.isClassifying)
                 .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView && (orientationObserver.orientation.isPortrait || showPredictionsSheetLandscape))) {
