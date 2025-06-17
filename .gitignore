@@ -33,7 +33,6 @@ hs_err_pid*
 replay_pid*
 
 # Ignore all .png, .wav, and .mp3 files
-*.png
 *.wav
 *.mp3
 
