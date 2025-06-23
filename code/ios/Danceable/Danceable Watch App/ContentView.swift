@@ -13,16 +13,16 @@ struct ContentView: View {
     
     var haptics: HapticsStrategy
     
+    var orientation: OrientationStrategy
+    
     init(viewModel: ViewModel) {
         self.viewModel = viewModel
         
         self.haptics = WatchHapticsStrategy()
         self.audioController = AudioController(numberOfSoundLevels: 7, hapticsStrategy: self.haptics)
         self.strategy = WatchRecordButtonStrategy()
-
+        self.orientation = WatchOSOrientationStrategy()
     }
-
-    @StateObject private var orientationObserver = OrientationObserver()
     
     @State private var showPredictionsSheet = false
     @State private var showPredictionsSheetLandscape = false
@@ -53,7 +53,7 @@ struct ContentView: View {
             .buttonStyle(PlainButtonStyle())
             .disabled(audioController.isRecording || audioController.isClassifying)
             .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView)) {
-                PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, orientationObserver: self.orientationObserver, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
+                PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, orientationObserver: self.orientation, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
             }
         }
         .task {
