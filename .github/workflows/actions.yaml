@@ -104,6 +104,12 @@ jobs:
         with:
           name: backend-artifact
           path: code/backend/target
+      - name: Log in to the Container registry
+        uses: docker/login-action@3
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Docker image
         run: |
           echo "Building Docker image..."
@@ -111,3 +117,5 @@ jobs:
           mvn package -DskipTests 
           docker build -t backend:latest -f docker/Dockerfile .
           docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
+          docker push ghcr.io/2425-4bhitm-itp/backend:latest
+
