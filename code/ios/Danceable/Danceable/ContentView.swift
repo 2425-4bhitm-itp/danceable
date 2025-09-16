@@ -11,20 +11,19 @@ struct ContentView: View {
     
     var audioController: AudioController
     
+    var haptics: HapticsStrategy
+    
+    
     init(viewModel: ViewModel) {
         self.viewModel = viewModel
         
-        #if os(watchOS)
-        self.audioController = AudioController(numberOfSoundLevels: 7)
-            self.strategy = WatchRecordButtonStrategy()
-        #else
-            self.audioController = AudioController()
-            self.strategy = iOSRecordButtonStrategy()
-        #endif
+        self.haptics = iOSHapticsStrategy()
+        self.audioController = AudioController(hapticsStrategy: haptics)
+        self.strategy = iOSRecordButtonStrategy()
+    var supportedInterfaceOrientations: UIInterfaceOrientationMask {.allButUpsideDown}
     }
-    var haptics = HapticsManager.shared
 
-    @StateObject private var orientationObserver = OrientationObserver()
+    @StateObject private var orientationObserver = iOSOrientationStrategy()
     
     @State private var showPredictionsSheet = false
     @State private var showPredictionsSheetLandscape = false
@@ -57,8 +56,8 @@ struct ContentView: View {
                     RecordButtonView(audioController: audioController, strategy: strategy)
                 }
                 .disabled(audioController.isRecording || audioController.isClassifying)
-                .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView && (orientationObserver.orientation.isPortrait || showPredictionsSheetLandscape))) {
-                    PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
+                .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView && (orientationObserver.orientation == .portrait || showPredictionsSheetLandscape))) {
+                    PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, orientationObserver: orientationObserver, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
                 }
                 Spacer()
                 Spacer()
@@ -85,9 +84,10 @@ struct ContentView: View {
                 showError("Unable to update dances! Please try again later.")
             }
         }
-        .onChange(of: orientationObserver.orientation, initial:false) { newOrientation,hasChanged  in
-            print("Orientation changed to: \(newOrientation.rawValue)")
+        .onChange(of: orientationObserver.orientation, initial: false) { newOrientation, _ in
+            print("Orientation changed to: \(newOrientation)")
         }
+
     }
 
     private func recordAndClassify() async {

@@ -5,16 +5,21 @@ class AudioController: AudioControllerProtocol {
     private let recorder: AudioRecorder
     private let uploader = AudioUploader()
     
+    private let haptics: HapticsStrategy
+    
     @Published var soundLevels: [CGFloat] = []
     @Published var isRecording = false
     @Published var isClassifying = false
  
-    init(numberOfSoundLevels: Int = 11) {
+    init(numberOfSoundLevels: Int = 11, hapticsStrategy: HapticsStrategy) {
         recorder = AudioRecorder(numberOfSoundLevels: numberOfSoundLevels)
-
+        
+        haptics = hapticsStrategy
+        
         recorder.$soundLevels
             .receive(on: DispatchQueue.main)
             .assign(to: &$soundLevels)
+        
     }
     
     func recordAndClassify(
@@ -50,13 +55,13 @@ class AudioController: AudioControllerProtocol {
             defer {
                 Task { @MainActor in
                     isClassifying = false
-                    HapticsManager.shared.stopLoopingVibration()
+                    haptics.stopLoopingVibration()
                 }
             }
             
             await MainActor.run {
                 isClassifying = true
-                HapticsManager.shared.startLoopingVibration()
+                haptics.startLoopingVibration()
             }
             
             if Config.ON_DEVICE {

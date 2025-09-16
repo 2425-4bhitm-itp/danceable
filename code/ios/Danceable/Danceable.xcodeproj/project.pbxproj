@@ -25,6 +25,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A10842732E01B91C004EEAD3 /* Exceptions for "Danceable" folder in "Danceable" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				features/audio/strategy/WatchOSRecordButtonStrategy.swift,
+				features/haptics/strategy/WatchOSHapticsStrategy.swift,
+			);
+			target = A195F26C2DE89B8C0088B5B9 /* Danceable */;
+		};
 		A195F2D92DE8A84F0088B5B9 /* Exceptions for "Danceable" folder in "Danceable Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -38,9 +46,12 @@
 				features/audio/RecordingAnimationView.swift,
 				features/audio/SoundBarView.swift,
 				features/audio/strategy/RecordButtonStrategy.swift,
+				features/audio/strategy/WatchOSRecordButtonStrategy.swift,
 				features/dance/Dance.swift,
 				features/dance/DanceService.swift,
-				features/haptics/HapticsManager.swift,
+				features/haptics/strategy/HapticsStrategy.swift,
+				features/haptics/strategy/WatchOSHapticsStrategy.swift,
+				features/orientation/OrientationObserver.swift,
 				features/prediction/danceAi.mlmodel,
 				features/prediction/Prediction.swift,
 				features/prediction/PredictionService.swift,
@@ -59,6 +70,7 @@
 		A195F26F2DE89B8C0088B5B9 /* Danceable */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				A10842732E01B91C004EEAD3 /* Exceptions for "Danceable" folder in "Danceable" target */,
 				A195F2D92DE8A84F0088B5B9 /* Exceptions for "Danceable" folder in "Danceable Watch App" target */,
 			);
 			path = Danceable;

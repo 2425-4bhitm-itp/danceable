@@ -7,9 +7,25 @@ let MAX_SHEET_FRACTION: CGFloat = 0.7
 struct ContentView: View {
     var viewModel: ViewModel
     
-    var audioController = AudioController()
+    var strategy: RecordButtonStrategy
+    
+    var audioController: AudioController
+    
+    var haptics: HapticsStrategy
+    
+    var orientation: OrientationStrategy
+    
+    init(viewModel: ViewModel) {
+        self.viewModel = viewModel
+        
+        self.haptics = WatchHapticsStrategy()
+        self.audioController = AudioController(numberOfSoundLevels: 7, hapticsStrategy: self.haptics)
+        self.strategy = WatchRecordButtonStrategy()
+        self.orientation = WatchOSOrientationStrategy()
+    }
     
     @State private var showPredictionsSheet = false
+    @State private var showPredictionsSheetLandscape = false
     @State private var sheetSize: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
 
     @State private var error: Error?
@@ -32,12 +48,12 @@ struct ContentView: View {
                     showError("Unable to connect to server. Please try again later.")
                 }
             }) {
-                RecordButtonView(audioController: audioController)
+                RecordButtonView(audioController: audioController,  strategy: self.strategy)
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(audioController.isRecording || audioController.isClassifying)
             .sheet(isPresented: .constant(showPredictionsSheet && !isInDancesView)) {
-                PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize)
+                PredictionSheetView(viewModel: viewModel, selectedDetent: $sheetSize, orientationObserver: self.orientation, showPredictionSheetLandscape: $showPredictionsSheetLandscape)
             }
         }
         .task {
@@ -84,5 +100,5 @@ struct ContentView: View {
     let model: Model = Model()
     let viewModel: ViewModel = ViewModel(model: model)
     
-    return ContentView(viewModel: viewModel)
+    ContentView(viewModel: viewModel)
 }
