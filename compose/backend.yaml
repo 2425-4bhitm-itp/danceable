@@ -1,6 +1,6 @@
 services:
   backend:
-    image: backend
+    image: ghcr.io/2425-4bhitm-itp/backend:latest
     depends_on:
       postgres:
         condition: service_healthy
