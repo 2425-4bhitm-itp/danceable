@@ -1,0 +1,42 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.47843,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "4.app-icon-shape.png",
+          "name" : "4.app-icon-shape"
+        },
+        {
+          "image-name" : "3.2-–-layer.png",
+          "name" : "3.2-–-layer"
+        },
+        {
+          "image-name" : "2.1-–-layer.png",
+          "name" : "2.1-–-layer"
+        },
+        {
+          "image-name" : "1.background.png",
+          "name" : "1.background"
+        }
+      ],
+      "name" : "App Icon Template 2025-06-17 21.22.36",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

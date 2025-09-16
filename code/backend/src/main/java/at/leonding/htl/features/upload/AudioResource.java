@@ -12,6 +12,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.io.IOException;
@@ -23,6 +24,9 @@ import java.util.stream.Collectors;
 
 @Path("/audio")
 public class AudioResource {
+    @ConfigProperty(name = "song-storage.path")
+    String songStoragePath;
+
     @Inject
     DanceRepository danceRepository;
 
@@ -74,7 +78,7 @@ public class AudioResource {
     }
 
     private String saveAudioFile(InputStream inputStream) throws IOException {
-        String audioFileLocation = "/app/song-storage/uploadedAudio_" + System.currentTimeMillis() + ".wav";
+        String audioFileLocation = songStoragePath + "/uploadedAudio_" + System.currentTimeMillis() + ".wav";
         java.nio.file.Path audioFilePath = java.nio.file.Path.of(
                 audioFileLocation);
 

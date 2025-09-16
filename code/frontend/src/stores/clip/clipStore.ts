@@ -98,6 +98,7 @@ export const useClipStore = create<ClipStore>((set) => ({
     return response.ok
   },
   uploadAddClips: async (clipFiles, onError) => {
+    console.log(clipFiles, onError)
     return true
   },
   isAddingClip: false,
@@ -105,6 +106,7 @@ export const useClipStore = create<ClipStore>((set) => ({
     set({ isAddingClip: isAddingClip })
   },
   uploadClipFiles: async (clipFiles, onError) => {
+    console.log(clipFiles, onError)
     // TODO: implement sending to server and adding clips
     return true
   },

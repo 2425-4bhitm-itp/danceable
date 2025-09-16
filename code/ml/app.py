@@ -56,8 +56,7 @@ def extract_features():
         return jsonify({"error": "Missing 'file_path' in request query parameters or JSON body"}), 400
 
     features = extractor.extract_features_from_file(file_path)
-    features_serialized = {key: value.tolist() for key, value in features.items()}
-    return jsonify({"features": features_serialized}), 200
+    return jsonify(features.tolist()), 200
 
 @app.route("/train", methods=["GET"])
 def train_model():
@@ -78,7 +77,7 @@ def classify_audio_api():
 
     print(file_path)
     predictions = classify_audio(file_path, extractor)
-    return jsonify({"predictions": predictions}), 200
+    return jsonify(predictions), 200
 
 
 @app.route("/classify_webm_audio", methods=["POST"])
@@ -90,7 +89,7 @@ def upload_webm_file():
     wav_file_path = file_converter.convert_webm_to_wav(file_path, wav_file)
 
     prediction = classify_audio(wav_file_path, extractor)
-    return jsonify({"prediction": prediction}), 200
+    return jsonify(prediction), 200
 
 @app.route("/classify_caf_audio", methods=["POST"])
 def upload_caf_file():
@@ -103,7 +102,7 @@ def upload_caf_file():
     wav_file_path = file_converter.convert_caf_to_wav(file_path, wav_file)
 
     prediction = classify_audio(wav_file_path, extractor)
-    return jsonify({"prediction": prediction}), 200
+    return jsonify(prediction), 200
 
 @app.route('/health', methods=['GET'])
 def health_check():

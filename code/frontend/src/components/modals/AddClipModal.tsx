@@ -6,7 +6,7 @@ import { useClipStore } from '../../stores/clip/clipStore'
 import { useSongStore } from '../../stores/song/songStore'
 
 function AddClipModal() {
-  const { addClip, isAddingClip, setIsAddingClip } = useClipStore()
+  const { isAddingClip, setIsAddingClip } = useClipStore()
   const { createToast } = useToastStore()
   const [songId, setSongId] = useState<number | null>(null)
   const { songs } = useSongStore()
@@ -31,7 +31,7 @@ function AddClipModal() {
     e.preventDefault()
 
     if (songId && clipFiles.length > 0) {
-      clipFiles.forEach((clipFile) => addClip(clipFile))
+      // clipFiles.forEach((clipFile) => addClip({} as Clip, (message) => console.log(message)))
     }
 
     close()
