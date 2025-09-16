@@ -3,5 +3,5 @@
 # shellcheck disable=SC2164
 cd "$(dirname "$0")"
 
-mvn clean package -DskipTests
+mvn -B clean package -DskipTests
 
