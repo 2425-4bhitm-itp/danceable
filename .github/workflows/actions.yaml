@@ -17,7 +17,7 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 #        run: mvn -B package --file pom.xml
 on:
   push:
-    branches: [ ci-cd-pipeline-new-branch ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
