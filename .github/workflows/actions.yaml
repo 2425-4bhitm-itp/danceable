@@ -108,5 +108,6 @@ jobs:
         run: |
           echo "Building Docker image..."
           cd code/backend
-          ./mvnw package -DskipTests -Dquarkus.container-image.build=true
-
+          mvn package -DskipTests 
+          docker build -t backend:latest -f docker/Dockerfile .
+          docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
