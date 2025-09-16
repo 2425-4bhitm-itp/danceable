@@ -1,121 +1,121 @@
-name: Danceable CI/CD Pipeline
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-#on: [ push ]
+#name: Danceable CI/CD Pipeline
+#run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+##on: [ push ]
+##jobs:
+##  Explore-GitHub-Actions:
+##    runs-on: ubuntu-latest
+##    steps:
+##      - uses: actions/checkout@v4
+##      - uses: actions/setup-java@v4
+##        with:
+##          distribution: 'temurin'
+##          java-version: '21'
+##          cache: 'maven'
+##          cache-dependency-path: 'code/backend/pom.xml'
+##      - name: Build with Maven
+##        working-directory: code/backend
+##        run: mvn -B package --file pom.xml
+#on:
+#  push:
+#    branches: [ main ]
+#  pull_request:
+#    branches: [ main ]
+#
 #jobs:
-#  Explore-GitHub-Actions:
+#  debug-structure:
 #    runs-on: ubuntu-latest
 #    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-java@v4
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: List directory structure
+#        run: |
+#          echo "Repository structure:"
+#          ls -la
+#          echo "Searching for relevant directories:"
+#          find . -type d -not -path "*/\.*" | sort
+#
+#  build-frontend-and-backend:
+#    needs: debug-structure
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 21
+#        uses: actions/setup-java@v4
 #        with:
-#          distribution: 'temurin'
 #          java-version: '21'
+#          distribution: 'temurin'
 #          cache: 'maven'
 #          cache-dependency-path: 'code/backend/pom.xml'
-#      - name: Build with Maven
-#        working-directory: code/backend
-#        run: mvn -B package --file pom.xml
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  debug-structure:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: List directory structure
-        run: |
-          echo "Repository structure:"
-          ls -la
-          echo "Searching for relevant directories:"
-          find . -type d -not -path "*/\.*" | sort
-
-  build-frontend-and-backend:
-    needs: debug-structure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
-          cache-dependency-path: 'code/backend/pom.xml'
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: 'code/frontend/package.json'
-
-      - name: Build Project
-        run: |
-          chmod +x build.sh
-          ./build.sh
-        working-directory: code
-
-      - name: Archive backend artefacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-artifact
-          path: code/backend/target
-
-      - name: Archive frontend Artefacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-artifact
-          path: code/frontend/build
-
-
-  test-backend:
-    needs: build-frontend-and-backend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-artifact
-          path: code/backend/target
-      - name: Run Backend Tests
-        run: |
-          echo "Running backend tests..."
-          cd code/backend
-          mvn test
-
-  containerize:
-    needs: test-backend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download backend artefacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-artifact
-          path: code/backend/target
-      - name: Log in to the Container registry
-        uses: docker/login-action@3
-        with:
-          registry: https://ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build Docker image
-        run: |
-          echo "Building Docker image..."
-          cd code/backend
-          mvn package -DskipTests 
-          docker build -t backend:latest -f docker/Dockerfile .
-          docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
-          docker push ghcr.io/2425-4bhitm-itp/backend:latest
-
+#
+#      - name: Install Node.js
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: 20
+#          cache: 'npm'
+#          cache-dependency-path: 'code/frontend/package.json'
+#
+#      - name: Build Project
+#        run: |
+#          chmod +x build.sh
+#          ./build.sh
+#        working-directory: code
+#
+#      - name: Archive backend artefacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: backend-artifact
+#          path: code/backend/target
+#
+#      - name: Archive frontend Artefacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: frontend-artifact
+#          path: code/frontend/build
+#
+#
+#  test-backend:
+#    needs: build-frontend-and-backend
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#      - name: Download artifacts
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: backend-artifact
+#          path: code/backend/target
+#      - name: Run Backend Tests
+#        run: |
+#          echo "Running backend tests..."
+#          cd code/backend
+#          mvn test
+#
+#  containerize:
+#    needs: test-backend
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#      - name: Download backend artefacts
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: backend-artifact
+#          path: code/backend/target
+#      - name: Log in to the Container registry
+#        uses: docker/login-action@3
+#        with:
+#          registry: https://ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Build Docker image
+#        run: |
+#          echo "Building Docker image..."
+#          cd code/backend
+#          mvn package -DskipTests
+#          docker build -t backend:latest -f docker/Dockerfile .
+#          docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
+#          docker push ghcr.io/2425-4bhitm-itp/backend:latest
+#
