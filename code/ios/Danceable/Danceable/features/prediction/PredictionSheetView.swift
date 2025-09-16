@@ -3,14 +3,14 @@ import SwiftUI
 struct PredictionSheetView: View {
     var viewModel: ViewModel
     @Binding var selectedDetent: PresentationDetent
-    @ObservedObject var orientationObserver: OrientationStrategy
+    @ObservedObject var orientationObserver: OrientationObserver
     @Binding var showPredictionSheetLandscape : Bool
     
     
     
     var body: some View {
         VStack(spacing: 0) {
-            if orientationObserver.orientation == .landscape {
+            if orientationObserver.orientation.isLandscape {
                 HStack {
                     Button("Close") {
                         showPredictionSheetLandscape = false
@@ -41,7 +41,7 @@ struct PredictionSheetView: View {
     @Previewable @State var selectedDetent: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
 
     @Previewable @State var showPredictionSheetLandscape: Bool = false
-    @Previewable @State var orientationObserver: OrientationStrategy = OrientationStrategy()
+    @Previewable @State var orientationObserver: OrientationObserver = .init()
     
     let model = Model()
     let viewModel = ViewModel(model: model)

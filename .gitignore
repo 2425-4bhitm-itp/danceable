@@ -48,3 +48,6 @@ features.csv
 
 node_modules/
 dist/
+
+# jupyter notebook checkpoints
+.ipynb_checkpoints/
