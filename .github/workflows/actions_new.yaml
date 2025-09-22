@@ -44,7 +44,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Pus Docker image
+      - name: Build and Push Docker image
         run: |
           echo "Building Docker image..."
           cd code/backend
@@ -52,7 +52,7 @@ jobs:
           docker build -t backend:latest -f docker/Dockerfile .
           echo "Pushing Docker image..."
           docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
-          docker push push ghcr.io/2425-4bhitm-itp/backend:latest
+          docker push ghcr.io/2425-4bhitm-itp/backend:latest
 
 #  containerize:
 #    permissions:
