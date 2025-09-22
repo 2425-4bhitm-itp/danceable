@@ -10,6 +10,7 @@ class AudioFeatureExtractor:
 
     def load_audio(self, file_path):
         y, sr = librosa.load(file_path, sr=self.sr)
+        y = librosa.util.normalize(y)
         return y, sr
 
     def extract_features(self, y):
