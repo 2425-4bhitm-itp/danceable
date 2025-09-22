@@ -1,6 +1,6 @@
 services:
   ml:
-    image: ml
+    image: ghcr.io/2425-4bhitm-itp/ml:latest
     ports:
       - "5001:5001"
     volumes:
@@ -10,3 +10,7 @@ services:
       start_period: 30s
       interval: 60s
       retries: 10
+
+
+
+
