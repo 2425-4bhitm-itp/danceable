@@ -38,7 +38,7 @@ jobs:
         working-directory: code
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
