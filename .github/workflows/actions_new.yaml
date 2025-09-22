@@ -47,6 +47,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download backend artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifact
+          path: code/backend/target
+      - name: Log in to the Container registry
+        uses: docker/login-action@3
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          cd code/backend
+          mvn package -DskipTests
+          docker build -t backend:latest -f docker/Dockerfile .
+          docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
+          docker push ghcr.io/2425-4bhitm-itp/backend:latest
+
 #      - name: Build Docker image
 #        run: |
 #          echo "Building Docker image..."
@@ -63,28 +85,8 @@ jobs:
 #          echo "Pushing Docker image..."
 #          docker push ghcr.io/${{ github.repository_owner }}/backend:latest
 
-    containerize:
-      needs: test-backend
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
-        - name: Download backend artefacts
-          uses: actions/download-artifact@v4
-          with:
-            name: backend-artifact
-            path: code/backend/target
-        - name: Log in to the Container registry
-          uses: docker/login-action@3
-          with:
-            registry: https://ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
-        - name: Build Docker image
-          run: |
-            echo "Building Docker image..."
-            cd code/backend
-            mvn package -DskipTests
-            docker build -t backend:latest -f docker/Dockerfile .
-            docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
-            docker push ghcr.io/2425-4bhitm-itp/backend:latest
+#    containerize:
+#      needs: test-backend
+#      runs-on: ubuntu-latest
+#      steps:
+
