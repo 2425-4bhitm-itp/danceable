@@ -10,7 +10,6 @@ import coremltools as ct
 import pandas as pd
 import joblib
 import json
-import os
 
 model = None
 scaler = None
@@ -21,18 +20,26 @@ LABELS_PATH = "/app/song-storage/label_order.json"
 COREML_PATH = "/app/song-storage/model.mlmodel"
 FEATURES_CSV = "/app/song-storage/features.csv"
 
-def train():
+def train(feature_ranges=None):
     print('Training...')
 
     df = pd.read_csv(FEATURES_CSV)
-
     feature_columns = [col for col in df.columns if col not in ["filename", "label"]]
-    X = df[feature_columns].values
+
+    if feature_ranges is None:
+        selected_indices = list(range(len(feature_columns)))
+    else:
+        selected_indices = []
+        for start, end in feature_ranges:
+            selected_indices.extend(range(start, end + 1))
+
+    selected_columns = [feature_columns[i] for i in selected_indices]
+    X = df[selected_columns].values
     y = df["label"].values
 
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
-    joblib.dump(scaler, SCALER_PATH)
+    #joblib.dump(scaler, SCALER_PATH)
     print("Scaler saved.")
 
     unique_labels = sorted(df["label"].unique())
