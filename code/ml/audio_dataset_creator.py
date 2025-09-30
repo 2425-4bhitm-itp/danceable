@@ -33,7 +33,6 @@ def degrade_audio(input_path, output_path):
     except Exception as e:
         print(f"Error degrading audio {input_path}: {e}")
 
-
 class AudioDatasetCreator:
     def __init__(self, extractor, output_csv="/app/song-storage/features.csv"):
         self.extractor = extractor
@@ -53,9 +52,9 @@ class AudioDatasetCreator:
                 temp_filename = f"degraded_{uuid.uuid4().hex}.wav"
                 degraded_file_path = os.path.join(self.temp_dir, temp_filename)
 
-                degrade_audio(file_path, degraded_file_path)
+                #degrade_audio(file_path, degraded_file_path)
 
-                features_array = self.extractor.extract_features_from_file(degraded_file_path)
+                features_array = self.extractor.extract_features_from_file(file_path)
                 features = {f"feature_{i}": value for i, value in enumerate(features_array)}
                 features["filename"] = file
                 features["label"] = label
