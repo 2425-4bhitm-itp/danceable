@@ -503,3 +503,31 @@ rumba richard-marx-endless-summer-nights 0
 rumba clockclock-sorry
 rumba over-clockclock
 rumba bruno-mars-just-the-way-you-are 1
+samba samba-music-mix 1
+samba samba-music-mix 2
+samba samba-music-mix 3
+samba samba-music-mix 4
+samba samba-music-mix 5
+samba samba-music-mix 6
+samba samba-music-mix 7
+samba samba-music-mix 8
+samba samba-music-mix 9
+samba samba-music-mix 10
+samba samba-music-mix 11
+samba samba-music-mix 12
+samba samba-music-mix 13
+samba samba-music-mix 14
+samba samba-music-mix 15
+samba samba-music-mix 16
+samba samba-music-mix 17
+samba samba-music-mix 18
+samba samba-music-mix 19
+samba samba-music-mix 20
+samba samba-music-mix 21
+samba samba-music-mix 22
+samba samba-music-mix 23
+samba samba-music-mix 24
+samba samba-music-mix 25
+samba samba-music-mix 26
+samba samba-music-mix 27
+samba samba-music-mix 28
