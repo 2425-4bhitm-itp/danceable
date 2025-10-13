@@ -611,3 +611,37 @@ viennawaltz viennawaltz-music-mix-9
 viennawaltz you-were-main-tami-nellson-1
 viennawaltz you-were-main-tami-nellson-2
 viennawaltz you-were-main-tami-nellson-3
+XXbpm_samba_samba-music-mix-2_1
+XXbpm_samba_samba-music-mix-2_2
+XXbpm_samba_samba-music-mix-2_3
+XXbpm_samba_samba-music-mix-2_4
+XXbpm_samba_samba-music-mix-2_5
+XXbpm_samba_samba-music-mix-2_6
+XXbpm_samba_samba-music-mix-2_7
+XXbpm_samba_samba-music-mix-2_8
+XXbpm_samba_samba-music-mix-2_9
+XXbpm_samba_samba-music-mix-2_10
+XXbpm_samba_samba-music-mix-2_11
+XXbpm_samba_samba-music-mix-2_12
+XXbpm_samba_samba-music-mix-2_13
+XXbpm_samba_samba-music-mix-2_14
+XXbpm_samba_samba-music-mix-2_15
+XXbpm_samba_samba-music-mix-2_16
+XXbpm_samba_samba-music-mix-2_17
+XXbpm_samba_samba-music-mix-2_18
+XXbpm_samba_samba-music-mix-2_19
+XXbpm_samba_samba-music-mix-2_20
+XXbpm_samba_samba-music-mix-2_21
+XXbpm_samba_samba-music-mix-2_22
+XXbpm_samba_samba-music-mix-2_23
+XXbpm_samba_samba-music-mix-2_24
+XXbpm_samba_samba-music-mix-2_25
+XXbpm_samba_samba-music-mix-2_26
+XXbpm_samba_samba-music-mix-2_27
+XXbpm_samba_samba-music-mix-2_28
+XXbpm_samba_samba-music-mix-2_29
+XXbpm_samba_samba-music-mix-2_30
+XXbpm_samba_samba-music-mix-2_31
+XXbpm_samba_samba-music-mix-2_32
+XXbpm_samba_samba-music-mix-2_33
+XXbpm_samba_samba-music-mix-2_34
