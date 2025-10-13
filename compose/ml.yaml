@@ -10,7 +10,3 @@ services:
       start_period: 30s
       interval: 60s
       retries: 10
-
-
-
-

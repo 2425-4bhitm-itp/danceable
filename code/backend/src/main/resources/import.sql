@@ -45,8 +45,8 @@ VALUES
     (6, 'life_is_a_rollercoaster_2.mp3');
 
 -- Insert predictions
-INSERT INTO Prediction (confidence, dance_id, speedCategory)
-VALUES
-    (0.95, 1, 'slow'),
-    (0.85, 2, 'medium'),
-    (0.90, 3, 'fast');
+-- INSERT INTO Prediction (confidence, dance_id, speedCategory)
+-- VALUES
+--     (0.95, 1, 'slow'),
+--     (0.85, 2, 'medium'),
+--     (0.90, 3, 'fast');

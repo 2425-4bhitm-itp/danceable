@@ -1,22 +1,3 @@
-#services:
-#  backend:
-#    image: ghcr.io/2425-4bhitm-itp/backend:latest
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-##      ml:
-##        condition: service_healthy
-#    ports:
-#      - "8080:8080"
-#    volumes:
-#      - ./song-storage:/app/song-storage
-#    healthcheck:
-#      test: curl -f http://backend:8080/q/health/live
-#      start_period: 30s
-#      interval: 60s
-#      retries: 10
-
-
 services:
   backend:
     image: ghcr.io/2425-4bhitm-itp/backend:latest

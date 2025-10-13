@@ -1,0 +1,127 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-setup
+data:
+  setup.sql: |
+    DROP database if exists demo;
+    DROP user if exists demo;
+    CREATE USER demo WITH
+      LOGIN
+      NOSUPERUSER
+      NOCREATEDB
+      NOCREATEROLE
+      INHERIT
+      NOREPLICATION
+      CONNECTION LIMIT -1
+      PASSWORD 'demo';
+    CREATE DATABASE demo
+        WITH 
+        OWNER = demo
+        ENCODING = 'UTF8'
+        CONNECTION LIMIT = -1;
+  allow-all.sh: |
+    echo "allow all hosts..."
+    echo "host all  all    0.0.0.0/0  md5" >> /var/lib/postgresql/data/pg_hba.conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-data
+  annotations:
+    nfs.io/storage-path: "postgresql-data"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-admin
+type: kubernetes.io/basic-auth
+stringData:
+  username: demo
+  password: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    component: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: postgres
+  template:
+    metadata:
+      labels:
+        component: postgres
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+              name: postgres
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready"]
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: setup-scripts
+              mountPath: /docker-entrypoint-initdb.d/setup.sql
+              subPath: setup.sql
+              readOnly: true
+            - name: allowall
+              mountPath: /docker-entrypoint-initdb.d/allow-all.sh
+              subPath: allow-all.sh
+              readOnly: true
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-admin
+                  key: password
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgresql-data
+        - name: setup-scripts
+          configMap:
+            name: postgres-setup
+            items:
+              - key: setup.sql
+                path: setup.sql
+        - name: allowall
+          configMap:
+            name: postgres-setup
+            items:
+              - key: allow-all.sh
+                path: allow-all.sh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    component: postgres
