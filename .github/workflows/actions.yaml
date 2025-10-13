@@ -51,8 +51,6 @@ jobs:
           mvn package -DskipTests
           docker buildx build --push --platform linux/amd64,linux/arm64 -t ghcr.io/2425-4bhitm-itp/backend:latest -f docker/Dockerfile .
           echo "Pushing Backend Docker image..."
-#          docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
-#          docker push ghcr.io/2425-4bhitm-itp/backend:latest
 
   build-ml:
     permissions:
