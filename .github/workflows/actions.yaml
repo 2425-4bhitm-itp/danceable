@@ -3,9 +3,9 @@ run-name: Full Stack Build Pipeline
 
 on:
   push:
-    branches: [ feature/remove-frontends ]
+    branches: [ main ]
   pull_request:
-    branches: [ feature/remove-frontends ]
+    branches: [ main ]
 
 jobs:
   build-backend:
