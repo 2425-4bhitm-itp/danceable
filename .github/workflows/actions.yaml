@@ -49,10 +49,10 @@ jobs:
           echo "Building Backend Docker image..."
           cd code/backend
           mvn package -DskipTests
-          docker buildx build --platform linux/amd64,linux/arm64 -t backend:latest -f docker/Dockerfile .
+          docker buildx build --push --platform linux/amd64,linux/arm64 -t ghcr.io/2425-4bhitm-itp/backend:latest -f docker/Dockerfile .
           echo "Pushing Backend Docker image..."
-          docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
-          docker push ghcr.io/2425-4bhitm-itp/backend:latest
+#          docker tag backend:latest ghcr.io/2425-4bhitm-itp/backend:latest
+#          docker push ghcr.io/2425-4bhitm-itp/backend:latest
 
   build-ml:
     permissions:
