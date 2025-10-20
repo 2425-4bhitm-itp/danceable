@@ -654,3 +654,23 @@ salsa Marc-Anthony-Mix-Existo-Sala-Romatica-Lo-Mas-Nuevo-2024-1_6
 salsa Marc-Anthony-Mix-Existo-Sala-Romatica-Lo-Mas-Nuevo-2024-1_7
 salsa Marc-Anthony-Mix-Existo-Sala-Romatica-Lo-Mas-Nuevo-2024-1_8
 salsa Marc-Anthony-Mix-Existo-Sala-Romatica-Lo-Mas-Nuevo-2024-1_9
+124bpm_discofox_asdis-release-3.wav
+124bpm_discofox_asdis-release-2.wav
+124bpm_discofox_asdis-release-1.wav
+128bpm_chacha_borderline-tove-lo-3.wav
+128bpm_chacha_borderline-tove-lo-2.wav
+128bpm_chacha_borderline-tove-lo-1.wav
+184bpm_quickstep_the-pointer-sisters-im-so-excited-2.wav
+184bpm_quickstep_the-pointer-sisters-im-so-excited-1.wav
+218bpm_quickstep_amy-macdonald-poision-prince-2.wav
+218bpm_quickstep_amy-macdonald-poision-prince-1.wav
+220bpm_quickstep_amy-macdonald-pride-2.wav
+220bpm_quickstep_amy-macdonald-pride-1.wav
+144bpm_jive_amy-macdonald-is-this-what-youve-been-waiting-for-2.wav
+144bpm_jive_amy-macdonald-is-this-what-youve-been-waiting-for-1.wav
+102bpm_foxtrott_sean-paul-dua-lipa-no-lie-1.wav
+250bpm_quickstep_leony-simple-life-3.wav
+250bpm_quickstep_leony-simple-life-2.wav
+250bpm_quickstep_leony-simple-life-1.wav
+117bpm_chacha_s-club-dont-stop-moving-2.wav
+117bpm_chacha_s-club-dont-stop-moving-1.wav
