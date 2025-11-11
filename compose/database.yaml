@@ -6,11 +6,11 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=admin
-      - POSTGRES_USER=admin
-      - POSTGRES_DB=admin
+      - POSTGRES_PASSWORD=demo
+      - POSTGRES_USER=demo
+      - POSTGRES_DB=demo
     healthcheck:
-      test: pg_isready --dbname=admin --username=admin
+      test: pg_isready --dbname=demo --username=demo
       interval: 60s
       timeout: 10s
       retries: 3
