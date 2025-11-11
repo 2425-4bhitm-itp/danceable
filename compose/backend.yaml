@@ -14,9 +14,9 @@ services:
       - SONG_STORAGE_DIRECTORY=/app/song-storage
       - SONG_STORAGE_PATH=/app/song-storage
       - QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres:5432/admin
-      - QUARKUS_DATASOURCE_USERNAME=admin
-      - QUARKUS_DATASOURCE_PASSWORD=admin
-      - QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION=drop-and-create
+      - QUARKUS_DATASOURCE_USERNAME=demo
+      - QUARKUS_DATASOURCE_PASSWORD=demo
+      - QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION=none
     healthcheck:
       test: curl -f http://backend:8080/q/health/live
       start_period: 30s
