@@ -8,9 +8,9 @@ services:
     environment:
       - POSTGRES_PASSWORD=demo
       - POSTGRES_USER=demo
-      - POSTGRES_DB=demo
+      - POSTGRES_DB=postgres
     healthcheck:
-      test: pg_isready --dbname=demo --username=demo
+      test: pg_isready --dbname=postgres --username=demo
       interval: 60s
       timeout: 10s
       retries: 3
