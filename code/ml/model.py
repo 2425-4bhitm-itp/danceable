@@ -20,34 +20,48 @@ LABELS_PATH = "/app/song-storage/label_order.json"
 COREML_PATH = "/app/song-storage/model.mlmodel"
 FEATURES_CSV = "/app/song-storage/features.csv"
 
-def train(feature_ranges=None):
+
+def train():
+    global model, scaler
     print('Training...')
 
     df = pd.read_csv(FEATURES_CSV)
     feature_columns = [col for col in df.columns if col not in ["filename", "label"]]
 
-    if feature_ranges is None:
-        selected_indices = list(range(len(feature_columns)))
-    else:
-        selected_indices = []
-        for start, end in feature_ranges:
-            selected_indices.extend(range(start, end + 1))
+    # Group definitions
+    groups = {
+        "mfcc": [col for col in feature_columns if col.startswith("mfcc_")],
+        "chroma": [col for col in feature_columns if col.startswith("chroma_")],
+        "mel": [col for col in feature_columns if col.startswith("mel_")],
+        "contrast": [col for col in feature_columns if col.startswith("contrast_")],
+        "tonnetz": [col for col in feature_columns if col.startswith("tonnetz_")],
+    }
 
-    selected_columns = [feature_columns[i] for i in selected_indices]
-    X = df[selected_columns].values
+    # Group-wise scaling
+    for group, cols in groups.items():
+        scaler = StandardScaler()
+        df[cols] = scaler.fit_transform(df[cols])
+        print(f"Scaled group: {group} ({len(cols)} features)")
+
+    # Combine all features
+    X = df[feature_columns].values
     y = df["label"].values
 
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
-    #joblib.dump(scaler, SCALER_PATH)
-    print("Scaler saved.")
+    # Final overall scaling (important)
+    scaler_global = StandardScaler()
+    X = scaler_global.fit_transform(X)
+    joblib.dump(scaler_global, SCALER_PATH)
+    print("Global scaler saved.")
 
+    # Label encoding
     unique_labels = sorted(df["label"].unique())
     label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
     y = to_categorical([label_to_index[label] for label in y], num_classes=len(unique_labels))
 
+    # Split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+    # Model
     model = Sequential([
         Input(shape=(X_train.shape[1],)),
         Dense(128, activation='relu', kernel_regularizer=l2(0.01)),
@@ -58,9 +72,7 @@ def train(feature_ranges=None):
     ])
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
     early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-
     model.fit(X_train, y_train, validation_split=0.2, epochs=100, batch_size=32, callbacks=[early_stopping])
 
     model.save(MODEL_PATH)
@@ -70,17 +82,17 @@ def train(feature_ranges=None):
         json.dump(unique_labels, f)
     print("Label order saved.")
 
-    coreml_model = ct.convert(
-        model,
-        source="tensorflow",
-        inputs=[ct.TensorType(shape=(ct.RangeDim(), X_train.shape[1]))],
-        minimum_deployment_target=ct.target.iOS14
-    )
-    coreml_model.save(COREML_PATH)
-    print("CoreML model saved.")
-
     loss, acc = model.evaluate(X_test, y_test, verbose=0)
     print(f"Evaluation - Loss: {loss:.4f}, Accuracy: {acc:.4f}")
+
+    # Optional CoreML conversion
+    # coreml_model = ct.convert(
+    #     model,
+    #     source="tensorflow",
+    #     inputs=[ct.TensorType(shape=(1, X_train.shape[1]))]
+    # )
+    # coreml_model.save(COREML_PATH)
+
     return loss, acc
 
 def classify_audio(file_path, extractor):

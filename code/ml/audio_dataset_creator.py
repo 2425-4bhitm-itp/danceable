@@ -6,7 +6,7 @@ import numpy as np
 from pydub import AudioSegment
 from scipy.signal import butter, lfilter
 import soundfile as sf
-
+import concurrent.futures
 
 def bandpass_filter(data, sr, low=300, high=3400):
     nyquist = 0.5 * sr
@@ -43,27 +43,29 @@ class AudioDatasetCreator:
 
     def process_folder(self, folder_path, label):
         data = []
+        files = [f for f in os.listdir(folder_path) if f.endswith(".wav")]
 
-        for file in os.listdir(folder_path):
-            if file.endswith(".wav"):
-                file_path = os.path.join(folder_path, file)
+        def process_file(file):
+            file_path = os.path.join(folder_path, file)
 
-                # Create unique filename to avoid collisions
-                temp_filename = f"degraded_{uuid.uuid4().hex}.wav"
-                degraded_file_path = os.path.join(self.temp_dir, temp_filename)
+            # temp_filename = f"degraded_{uuid.uuid4().hex}.wav"
+            # degraded_file_path = os.path.join(self.temp_dir, temp_filename)
+            # degrade_audio(file_path, degraded_file_path)
 
-                #degrade_audio(file_path, degraded_file_path)
+            features_array = self.extractor.extract_features_from_file(file_path)
+            features = {f"feature_{i}": value for i, value in enumerate(features_array)}
+            features["filename"] = file
+            features["label"] = label
 
-                features_array = self.extractor.extract_features_from_file(file_path)
-                features = {f"feature_{i}": value for i, value in enumerate(features_array)}
-                features["filename"] = file
-                features["label"] = label
-                data.append(features)
+            # try:
+            #     os.remove(degraded_file_path)
+            # except FileNotFoundError:
+            #     pass
+            return features
 
-                try:
-                    os.remove(degraded_file_path)
-                except FileNotFoundError:
-                    pass
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(executor.map(process_file, files))
+            data.extend(results)
 
         self.save_to_csv(data)
 
