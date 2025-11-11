@@ -26,13 +26,13 @@ spec:
             - name: SONG_STORAGE_PATH
               value: "/app/song-storage"
             - name: QUARKUS_DATASOURCE_JDBC_URL
-              value: "jdbc:postgresql://postgres:5432/demo"
+              value: "jdbc:postgresql://postgres:5432/admin"
             - name: QUARKUS_DATASOURCE_USERNAME
-              value: "demo"
+              value: "admin"
             - name: QUARKUS_DATASOURCE_PASSWORD
-              value: "demo"
+              value: "admin"
             - name: QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION
-              value: "none"
+              value: "admin"
           volumeMounts:
             - name: song-volume
               mountPath: /app/song-storage

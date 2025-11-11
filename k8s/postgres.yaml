@@ -4,8 +4,8 @@ metadata:
   name: postgres-setup
 data:
   setup.sql: |
-    DROP database if exists demo;
-    DROP user if exists demo;
+    DROP database if exists admin;
+    DROP user if exists admin;
     CREATE USER demo WITH
       LOGIN
       NOSUPERUSER
@@ -14,10 +14,10 @@ data:
       INHERIT
       NOREPLICATION
       CONNECTION LIMIT -1
-      PASSWORD 'demo';
-    CREATE DATABASE demo
+      PASSWORD 'admin';
+    CREATE DATABASE "admin"
         WITH 
-        OWNER = demo
+        OWNER = "admin"
         ENCODING = 'UTF8'
         CONNECTION LIMIT = -1;
   allow-all.sh: |
@@ -43,8 +43,8 @@ metadata:
   name: postgres-admin
 type: kubernetes.io/basic-auth
 stringData:
-  username: demo
-  password: demo
+  username: admin
+  password: admin
 ---
 apiVersion: apps/v1
 kind: Deployment
