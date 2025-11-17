@@ -8,9 +8,9 @@ services:
     environment:
       - POSTGRES_PASSWORD=admin
       - POSTGRES_USER=admin
-      - POSTGRES_DB=postgres  # Geändert von 'admin' auf 'postgres'
+      - POSTGRES_DB=admin  # Geändert von 'admin' auf 'postgres'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d admin"]
       start_period: 10s
       interval: 30s
       retries: 5

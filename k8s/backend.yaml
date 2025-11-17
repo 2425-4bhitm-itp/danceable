@@ -1,0 +1,90 @@
+# Quarkus Application Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/2425-4bhitm-itp/backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SONG_STORAGE_DIRECTORY
+              value: "/app/song-storage"
+            - name: SONG_STORAGE_PATH
+              value: "/app/song-storage"
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: "jdbc:postgresql://postgres:5432/postgres"
+            - name: QUARKUS_DATASOURCE_USERNAME
+              value: "demo"
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              value: "demo"
+            - name: QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION
+              value: "none"
+          volumeMounts:
+            - name: song-volume
+              mountPath: /app/song-storage
+#          startupProbe:
+#            httpGet:
+#              path: /api/q/health/live
+#              port: 8080
+#            timeoutSeconds: 5
+#            initialDelaySeconds: 30
+#          readinessProbe:
+#            tcpSocket:
+#              port: 8080
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#          livenessProbe:
+#            httpGet:
+#              path: /api/q/health
+#              port: 8080
+#            timeoutSeconds: 5
+#            initialDelaySeconds: 30
+#            periodSeconds: 120
+      volumes:
+        - name: song-volume
+          persistentVolumeClaim:
+            claimName: song-volume-claim
+
+
+
+      # initContainers:
+      #   - name: wait
+      #     image: {{ .Values.postgres.image }}
+      #     command: ["/bin/bash", "-c", 'until pg_isready -h postgres; do;echo "waiting for database...";sleep 2;done']
+      #     env:
+      #       - name: POSTGRES_PASSWORD
+      #         valueFrom:
+      #           secretKeyRef:
+      #             name: postgres-admin
+      #             key: password
+      #       - name: POSTGRES_USERNAME
+      #         valueFrom:
+      #           secretKeyRef:
+      #             name: postgres-admin
+      #             key: username
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: backend
