@@ -11,14 +11,8 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from paths import BASE_DIR, MODEL_PATH, SCALER_PATH, LABELS_PATH, FEATURES_CSV, COREML_PATH
 import coremltools as ct
-
-BASE_DIR = Path("/home/luca/danceable/compose/song-storage")
-MODEL_PATH = BASE_DIR / "model.keras"
-SCALER_PATH = BASE_DIR / "scaler.pkl"
-LABELS_PATH = BASE_DIR / "label_order.json"
-FEATURES_CSV = BASE_DIR / "features.csv"
-COREML_PATH = BASE_DIR / "model.mlmodel"
 
 model = None
 scaler = None

@@ -2,8 +2,10 @@ import os
 import csv
 import concurrent.futures
 import pandas as pd
+from paths import BASE_DIR, FEATURES_CSV
+
 class AudioDatasetCreator:
-    def __init__(self, extractor, output_csv="/app/song-storage/features.csv"):
+    def __init__(self, extractor, output_csv=BASE_DIR / FEATURES_CSV):
         self.extractor = extractor
         self.output_csv = output_csv
         self.header_written = False

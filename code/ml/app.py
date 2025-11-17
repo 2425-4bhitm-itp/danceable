@@ -6,13 +6,12 @@ import os
 from flask import Flask, request, jsonify
 import shorten
 import sort
+from paths import SNIPPETS_DIR, SONGS_DIR
 
 app = Flask(__name__)
 
 extractor = AudioFeatureExtractor()
 dataset_creator = AudioDatasetCreator(extractor)
-folder_path = "/app/song-storage/songs"
-snippets_path = "/app/song-storage/songs/snippets"
 
 is_processing = False
 
@@ -22,13 +21,13 @@ def process_all_audio():
     is_processing = True
 
     count = 0
-    label_count = len(os.listdir(snippets_path))
+    label_count = len(os.listdir(SNIPPETS_DIR))
 
-    for label in os.listdir(snippets_path):
-        single_folder_path = os.path.join(snippets_path, label)
+    for label in os.listdir(SNIPPETS_DIR):
+        single_SONGS_DIR = os.path.join(SNIPPETS_DIR, label)
 
-        print(f"Processing folder {single_folder_path} ({count+1}/{label_count}):")
-        dataset_creator.process_folder(single_folder_path, label)
+        print(f"Processing folder {single_SONGS_DIR} ({count+1}/{label_count}):")
+        dataset_creator.process_folder(single_SONGS_DIR, label)
         count += 1
 
     is_processing = False
@@ -111,13 +110,13 @@ def health_check():
 def split_and_sort():
     segment_length = request.get_json()["segment_length"]
     split_files()
-    sort.sort_and_delete_wav_files(snippets_path)
+    sort.sort_and_delete_wav_files(SNIPPETS_DIR)
     return jsonify({"message": "Shortening and sorting completed"}), 200
 
 @app.route('/split_files', methods=['POST'])
 def split_files():
     segment_length = request.get_json()["segment_length"]
-    shorten.split_wav_files(folder_path, snippets_path, segment_length)
+    shorten.split_wav_files(SONGS_DIR, SNIPPETS_DIR, segment_length)
     return jsonify({"message": "Shortening completed"}), 200
 
 if __name__ == '__main__':

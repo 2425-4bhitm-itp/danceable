@@ -13,12 +13,6 @@ from tensorflow.keras.models import load_model
 
 
 class DanceModelEvaluator:
-    """
-    Evaluation pipeline for a trained dance classification model.
-    Ensures strict feature alignment between training and evaluation
-    to avoid dimension mismatches with StandardScaler.
-    """
-
     def __init__(self,
                  model_path,
                  scaler_path,
