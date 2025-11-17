@@ -1,214 +1,216 @@
+import json
+import joblib
+import pandas as pd
+import numpy as np
 import tensorflow as tf
+from pathlib import Path
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Input
-from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import StandardScaler
-import pandas as pd
-import joblib
-import json
-import os
-import numpy as np
+from sklearn.model_selection import train_test_split
 import coremltools as ct
+
+BASE_DIR = Path("/home/luca/danceable/compose/song-storage")
+MODEL_PATH = BASE_DIR / "model.keras"
+SCALER_PATH = BASE_DIR / "scaler.pkl"
+LABELS_PATH = BASE_DIR / "label_order.json"
+FEATURES_CSV = BASE_DIR / "features.csv"
+COREML_PATH = BASE_DIR / "model.mlmodel"
 
 model = None
 scaler = None
 
-MODEL_PATH = "/app/song-storage/model.keras"
-SCALER_PATH = "/app/song-storage/scaler.pkl"
-LABELS_PATH = "/app/song-storage/label_order.json"
-COREML_PATH = "/app/song-storage/model.mlmodel"
-FEATURES_CSV = "/app/song-storage/features.csv"
-COREML_PATH = "/app/song-storage/model.mlmodel"
 
-def train(selected_features=None, disabled_labels=None):
-    global model, scaler
-    print("Training...")
+# ---------------------------------------------------------------------------
+# Data Loading
+# ---------------------------------------------------------------------------
 
-    if not os.path.exists(FEATURES_CSV):
-        raise FileNotFoundError(f"Feature CSV not found at {FEATURES_CSV}")
-
-    df = pd.read_csv(FEATURES_CSV)
+def load_dataset(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Feature CSV not found at {path}")
+    df = pd.read_csv(path)
     if "label" not in df.columns:
         raise ValueError("CSV missing 'label' column")
+    return df
 
-    if disabled_labels:
-        print(f"Disabled labels: {disabled_labels}")
-        before_count = len(df)
 
-        df = df[~df["label"].isin(disabled_labels)]
+# ---------------------------------------------------------------------------
+# Feature Handling
+# ---------------------------------------------------------------------------
 
-        after_count = len(df)
-        if len(df) == 0:
-            raise ValueError("All rows removed. Disabled labels removed the whole dataset.")
-
-        print(f"Removed {before_count - after_count} rows containing disabled labels")
-
-    feature_columns = [col for col in df.columns if col not in ["filename", "label"]]
-
-    groups = {
-        "mfcc": [c for c in feature_columns if c.startswith("mfcc_")],
-        "chroma": [c for c in feature_columns if c.startswith("chroma_")],
-        "mel": [c for c in feature_columns if c.startswith("mel_")],
-        "contrast": [c for c in feature_columns if c.startswith("contrast_")],
-        "tonnetz": [c for c in feature_columns if c.startswith("tonnetz_")],
-        "tempogram": [c for c in feature_columns if c.startswith("tempogram_")],
-        "rms": [col for col in feature_columns if col.startswith("rms_")],
-        "spectral_flux": [col for col in feature_columns if col.startswith("spectral_flux_")],
-        "onset": [col for col in feature_columns if col.startswith("onset_strength_")],
-        "tempo": [col for col in feature_columns if col == "tempo_bpm"]
+def build_feature_groups(df: pd.DataFrame) -> dict:
+    feature_cols = [c for c in df.columns if c not in ["filename", "label"]]
+    return {
+        "mfcc": [c for c in feature_cols if c.startswith("mfcc_")],
+        "chroma": [c for c in feature_cols if c.startswith("chroma_")],
+        "mel": [c for c in feature_cols if c.startswith("mel_")],
+        "contrast": [c for c in feature_cols if c.startswith("contrast_")],
+        "tonnetz": [c for c in feature_cols if c.startswith("tonnetz_")],
+        "tempogram": [c for c in feature_cols if c.startswith("tempogram_")],
+        "rms": [c for c in feature_cols if c.startswith("rms_")],
+        "spectral_flux": [c for c in feature_cols if c.startswith("spectral_flux_")],
+        "onset": [c for c in feature_cols if c.startswith("onset_strength_")],
+        "tempo": [c for c in feature_cols if c == "tempo_bpm"],
     }
 
-    # Select feature groups
-    if selected_features is None:
-        selected_features = [g for g in groups if len(groups[g]) > 0]
-    else:
-        invalid = [g for g in selected_features if g not in groups]
-        if invalid:
-            raise ValueError(f"Invalid feature group(s): {invalid}")
 
-    selected_cols = []
-    for feat in selected_features:
-        if not groups[feat]:
-            print(f"Warning: no columns found for group '{feat}'")
-        selected_cols.extend(groups[feat])
+def select_columns(groups: dict, selected: list | None) -> list:
+    if selected is None:
+        selected = [g for g in groups if groups[g]]
+    invalid = [g for g in selected if g not in groups]
+    if invalid:
+        raise ValueError(f"Invalid feature groups: {invalid}")
+    cols = []
+    for name in selected:
+        cols.extend(groups[name])
+    if not cols:
+        raise ValueError("No feature columns available for training")
+    return cols
 
-    if not selected_cols:
-        raise ValueError("No valid feature columns selected for training")
 
-    print(f"Using feature groups: {', '.join(selected_features)}")
-    print(f"Total features: {len(selected_cols)}")
+# ---------------------------------------------------------------------------
+# Scaling
+# ---------------------------------------------------------------------------
 
-    # Group-wise scaling
-    for group in selected_features:
+def scale_groups(df: pd.DataFrame, groups: dict, selected: list) -> pd.DataFrame:
+    for group in selected:
         cols = groups[group]
-        if len(cols) > 0:
+        if cols:
             scaler_group = StandardScaler()
             df[cols] = scaler_group.fit_transform(df[cols])
-            print(f"Scaled group: {group} ({len(cols)} features)")
+    return df
 
-    # Prepare final X, y
+
+def apply_global_scaling(X: np.ndarray, cols: list) -> tuple:
+    global_scaler = StandardScaler()
+    X_scaled = global_scaler.fit_transform(X)
+    joblib.dump({"scaler": global_scaler, "features": cols}, SCALER_PATH)
+    return X_scaled, global_scaler
+
+
+# ---------------------------------------------------------------------------
+# Label Encoding
+# ---------------------------------------------------------------------------
+
+def encode_labels(labels: np.ndarray) -> tuple:
+    unique = sorted(np.unique(labels))
+    mapping = {label: idx for idx, label in enumerate(unique)}
+    encoded = to_categorical([mapping[l] for l in labels], num_classes=len(unique))
+    with open(LABELS_PATH, "w") as f:
+        json.dump(unique, f)
+    return encoded, unique
+
+
+# ---------------------------------------------------------------------------
+# Model Construction
+# ---------------------------------------------------------------------------
+
+def build_model(input_dim: int, output_dim: int) -> Sequential:
+    m = Sequential()
+    m.add(Input(shape=(input_dim,)))
+    m.add(Dense(128, activation="relu", kernel_regularizer=l2(0.01)))
+    m.add(Dropout(0.5))
+    m.add(Dense(64, activation="relu", kernel_regularizer=l2(0.01)))
+    m.add(Dropout(0.5))
+    m.add(Dense(output_dim, activation="softmax"))
+    m.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+    return m
+
+
+# ---------------------------------------------------------------------------
+# Training Pipeline
+# ---------------------------------------------------------------------------
+
+def train(selected_features=None, disabled_labels=None):
+    df = load_dataset(FEATURES_CSV)
+
+    if disabled_labels:
+        df = df[~df["label"].isin(disabled_labels)]
+        if df.empty:
+            raise ValueError("Disabled labels removed the whole dataset")
+
+    groups = build_feature_groups(df)
+    selected_cols = select_columns(groups, selected_features)
+    df = scale_groups(df, groups, selected_features or list(groups.keys()))
+
     X = df[selected_cols].values
     y = df["label"].values
+    X, global_scaler = apply_global_scaling(X, selected_cols)
 
-    # Global scaler
-    scaler_global = StandardScaler()
-    X = scaler_global.fit_transform(X)
-
-    # Save scaler in new format
-    joblib.dump(
-        {
-            "scaler": scaler_global,
-            "features": selected_cols
-        },
-        SCALER_PATH
+    y_encoded, unique_labels = encode_labels(y)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y_encoded, test_size=0.2, random_state=42
     )
-    print("Global scaler saved (with feature list).")
 
-    # Encode labels
-    unique_labels = sorted(df["label"].unique())
-    label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
-    y_encoded = to_categorical([label_to_index[label] for label in y], num_classes=len(unique_labels))
+    m = build_model(X_train.shape[1], len(unique_labels))
+    stopper = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
 
-    # Split
-    from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
-
-    # Model
-    model = Sequential([
-        Input(shape=(X_train.shape[1],)),
-        Dense(128, activation='relu', kernel_regularizer=l2(0.01)),
-        Dropout(0.5),
-        Dense(64, activation='relu', kernel_regularizer=l2(0.01)),
-        Dropout(0.5),
-        Dense(len(unique_labels), activation='softmax')
-    ])
-
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-
-    print("Starting model training...")
-    model.fit(X_train, y_train, validation_split=0.2, epochs=100, batch_size=32, callbacks=[early_stopping], verbose=1)
-
-    model.save(MODEL_PATH)
-    print(f"Model saved at {MODEL_PATH}")
-
-    with open(LABELS_PATH, "w") as f:
-        json.dump(unique_labels, f)
-    print(f"Label order saved at {LABELS_PATH}")
-
-    # Evaluate
-    loss, acc = model.evaluate(X_test, y_test, verbose=0)
-    print(f"Evaluation — Loss: {loss:.4f}, Accuracy: {acc:.4f}")
-
-    # Optional CoreML conversion
-    coreml_model = ct.convert(
-        model,
-        source="tensorflow",
-        inputs=[ct.TensorType(shape=(1, X_train.shape[1]))]
+    m.fit(
+        X_train,
+        y_train,
+        validation_split=0.2,
+        epochs=100,
+        batch_size=32,
+        callbacks=[stopper],
+        verbose=1,
     )
-    coreml_model.save(COREML_PATH)
+
+    m.save(MODEL_PATH)
+
+    loss, acc = m.evaluate(X_test, y_test, verbose=0)
+
+    cm = ct.convert(m, source="tensorflow", inputs=[ct.TensorType(shape=(1, X_train.shape[1]))])
+    cm.save(COREML_PATH)
 
     return {
         "loss": loss,
         "accuracy": acc,
-        "used_features": selected_features,
+        "used_features": selected_cols,
         "used_labels": unique_labels,
         "X_test": X_test,
         "y_test": y_test,
         "X_train": X_train,
-        "y_train": y_train
+        "y_train": y_train,
     }
 
 
+# ---------------------------------------------------------------------------
+# Classification
+# ---------------------------------------------------------------------------
+
 def classify_audio(file_path, extractor):
-    """
-    Classify a single audio file using the trained model.
-    """
     global model, scaler
 
-    try:
-        if model is None or not isinstance(model, tf.keras.Model):
-            model = tf.keras.models.load_model(MODEL_PATH)
-            print("Model loaded from file.")
+    if model is None:
+        model = tf.keras.models.load_model(MODEL_PATH)
+    if scaler is None:
+        scaler = joblib.load(SCALER_PATH)
 
-        if scaler is None:
-            scaler = joblib.load(SCALER_PATH)
-            print("Scaler loaded from file.")
+    features = extractor.extract_features_from_file(file_path)
+    vector = np.array(list(features.values()), dtype=np.float32).reshape(1, -1)
+    vector = scaler["scaler"].transform(vector)
 
-        # Extract and preprocess features
-        features = extractor.extract_features_from_file(file_path)
-        features_vector = np.array(list(features.values()), dtype=np.float32).reshape(1, -1)
+    with open(LABELS_PATH) as f:
+        labels = json.load(f)
 
-        features_vector = scaler.transform(features_vector)
+    probs = model.predict(vector, verbose=0)[0]
+    pairs = sorted(zip(labels, probs), key=lambda x: x[1], reverse=True)
 
-        with open(LABELS_PATH, "r") as f:
-            labels = json.load(f)
+    return {
+        "predictions": [
+            {"danceName": label, "confidence": float(f"{conf:.6f}")} for label, conf in pairs
+        ]
+    }
 
-        probabilities = model.predict(features_vector, verbose=0)[0]
-        predictions = sorted(zip(labels, probabilities), key=lambda x: x[1], reverse=True)
 
-        return {
-            "predictions": [
-                {
-                    "danceName": label,
-                    "confidence": float(f"{conf:.6f}")
-                }
-                for label, conf in predictions
-            ]
-        }
-
-    except Exception as e:
-        print("Error during classification:", e)
-        return {"error": str(e)}
-
+# ---------------------------------------------------------------------------
+# Loader
+# ---------------------------------------------------------------------------
 
 def load_model():
     global model, scaler
-    try:
-        model = tf.keras.models.load_model(MODEL_PATH)
-        scaler = joblib.load(SCALER_PATH)
-        print("Model and scaler loaded successfully.")
-    except Exception as e:
-        print(f"Failed to load model or scaler: {e}")
+    model = tf.keras.models.load_model(MODEL_PATH)
+    scaler = joblib.load(SCALER_PATH)
