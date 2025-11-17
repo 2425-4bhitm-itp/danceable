@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # Base directory for all storage
-BASE_DIR = Path("/app/song-storage")
+BASE_DIR = Path("/home/luca/danceable/compose/song-storage")
 
 # Model files
 MODEL_PATH = BASE_DIR / "model.keras"

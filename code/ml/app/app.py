@@ -1,12 +1,10 @@
-from audio_feature_extractor import AudioFeatureExtractor
-from audio_dataset_creator import AudioDatasetCreator
-from model import train, classify_audio, load_model
-import file_converter
+from features.audio_feature_extractor import AudioFeatureExtractor
+from features.audio_dataset_creator import AudioDatasetCreator
+from training.model import train, classify_audio, load_model
 import os
 from flask import Flask, request, jsonify
-import shorten
-import sort
-from paths import SNIPPETS_DIR, SONGS_DIR
+from utilities import shorten, file_converter, sort
+from config.paths import SNIPPETS_DIR, SONGS_DIR
 
 app = Flask(__name__)
 

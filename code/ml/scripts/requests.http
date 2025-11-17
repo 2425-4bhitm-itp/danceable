@@ -1,0 +1,45 @@
+### shorten
+
+POST http://localhost:5001/split_files
+
+### aufbereiten
+
+POST http://localhost:5001/split_and_sort
+content-type: application/json
+
+{
+  "segment_length": 3000
+}
+
+### process all audio
+
+POST http://localhost:5001/process_all_audio
+
+### train
+
+GET http://localhost:5001/train
+
+### classify
+
+POST http://localhost:5001/classify_audio?file_path=/app/song-storage/songs/snippets/rumba/99bpm_rumba_backstreet-boys-i-want-it-that-way-3_part1.wav
+
+### classify other
+
+POST http://localhost:5001/classify_audio?file_path=/app/song-storage/songs/perfect_sheeran.wav
+
+### classify another
+
+POST http://localhost:5001/classify_audio?file_path=/app/song-storage/songs/we_are_young.wav
+
+### classify last
+
+POST http://localhost:5001/classify_audio?file_path=/app/song-storage/songs/uploadedAudio_1748328972865.wav
+
+### is proccessing
+
+GET http://localhost:5001/processing
+
+### get features
+
+POST http://localhost:5001/features?file_path=/app/song-storage/songs/Sway_Michael_Buble.wav
+#POST http://localhost:5001/features?file_path=/app/song-storage/songs/Sway_Michael_Buble_Handy.wav

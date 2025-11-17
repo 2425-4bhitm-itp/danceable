@@ -2,7 +2,7 @@ import os
 import csv
 import concurrent.futures
 import pandas as pd
-from paths import BASE_DIR, FEATURES_CSV
+from config.paths import BASE_DIR, FEATURES_CSV
 
 class AudioDatasetCreator:
     def __init__(self, extractor, output_csv=BASE_DIR / FEATURES_CSV):

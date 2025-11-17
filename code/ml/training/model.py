@@ -1,18 +1,20 @@
 import json
-import joblib
-import pandas as pd
-import numpy as np
-import tensorflow as tf
 from pathlib import Path
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Input
+
+import coremltools as ct
+import joblib
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Dense, Dropout, Input
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.utils import to_categorical
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from paths import BASE_DIR, MODEL_PATH, SCALER_PATH, LABELS_PATH, FEATURES_CSV, COREML_PATH
-import coremltools as ct
+
+from config.paths import MODEL_PATH, SCALER_PATH, LABELS_PATH, FEATURES_CSV, COREML_PATH
 
 model = None
 scaler = None
