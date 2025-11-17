@@ -1,89 +1,69 @@
 import os
 import csv
-import uuid
-import librosa
-import numpy as np
-from pydub import AudioSegment
-from scipy.signal import butter, lfilter
-import soundfile as sf
 import concurrent.futures
-
-def bandpass_filter(data, sr, low=300, high=3400):
-    nyquist = 0.5 * sr
-    b, a = butter(4, [low / nyquist, high / nyquist], btype='band')
-    return lfilter(b, a, data)
-
-
-def degrade_audio(input_path, output_path):
-    try:
-        audio, sr = sf.read(input_path)
-        if len(audio.shape) > 1:
-            audio = np.mean(audio, axis=1)  # Convert to mono
-
-        filtered = bandpass_filter(audio, sr)
-
-        if sr > 16000:
-            audio = librosa.resample(filtered, orig_sr=sr, target_sr=16000)
-            sr = 16000
-        else:
-            audio = filtered
-
-        sf.write(output_path, audio, sr, subtype='PCM_16')
-
-    except Exception as e:
-        print(f"Error degrading audio {input_path}: {e}")
-
+import pandas as pd
 class AudioDatasetCreator:
     def __init__(self, extractor, output_csv="/app/song-storage/features.csv"):
         self.extractor = extractor
         self.output_csv = output_csv
         self.header_written = False
-        self.temp_dir = "app/song-storage/tmp/audio_degrade"
-        os.makedirs(self.temp_dir, exist_ok=True)
 
     def process_folder(self, folder_path, label):
-        data = []
-        files = [f for f in os.listdir(folder_path) if f.endswith(".wav")]
+        # Load already processed filenames
+        if os.path.exists(self.output_csv) and os.path.getsize(self.output_csv) > 0:
+            try:
+                existing = pd.read_csv(self.output_csv)
+                processed_files = set(existing["filename"].astype(str))
+            except Exception:
+                processed_files = set()
+        else:
+            processed_files = set()
+
+        # Find files in folder that are not yet processed
+        all_files = [f for f in os.listdir(folder_path) if f.lower().endswith(".wav")]
+        files = [f for f in all_files if f not in processed_files]
+
+        if not files:
+            print(f"All WAV files in folder already processed: {folder_path}")
+            return
+
+        print(f"Processing {len(files)} new files in {folder_path}")
 
         def process_file(file):
-            file_path = os.path.join(folder_path, file)
-
-            # temp_filename = f"degraded_{uuid.uuid4().hex}.wav"
-            # degraded_file_path = os.path.join(self.temp_dir, temp_filename)
-            # degrade_audio(file_path, degraded_file_path)
-
-            features_array = self.extractor.extract_features_from_file(file_path)
-            features = {f"feature_{i}": value for i, value in enumerate(features_array)}
-            features["filename"] = file
-            features["label"] = label
-
-            # try:
-            #     os.remove(degraded_file_path)
-            # except FileNotFoundError:
-            #     pass
-            return features
+            path = os.path.join(folder_path, file)
+            features_dict = self.extractor.extract_features_from_file(path)
+            features_dict["filename"] = file
+            features_dict["label"] = label
+            return features_dict
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = list(executor.map(process_file, files))
-            data.extend(results)
 
-        self.save_to_csv(data)
+        self.save_to_csv(results)
 
     def save_to_csv(self, data):
-        """Save extracted features to a CSV file."""
         if not data:
             return
 
+        # Ensure consistent field order: feature keys first, then metadata
+        fieldnames = list(data[0].keys())
+        # Optionally, move filename and label to the end for better readability
+        if "filename" in fieldnames:
+            fieldnames.remove("filename")
+            fieldnames.append("filename")
+        if "label" in fieldnames:
+            fieldnames.remove("label")
+            fieldnames.append("label")
+
         with open(self.output_csv, "a", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=data[0].keys())
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             if not self.header_written:
                 writer.writeheader()
                 self.header_written = True
             writer.writerows(data)
 
     def upload_single_file(self, file_path, label):
-        """Extract features from a single WAV file and save them with a label."""
-        features = self.extractor.extract_features_from_file(file_path)
-        features["filename"] = os.path.basename(file_path)
-        features["label"] = label
-        self.save_to_csv([features])
+        features_dict = self.extractor.extract_features_from_file(file_path)
+        features_dict["filename"] = os.path.basename(file_path)
+        features_dict["label"] = label
+        self.save_to_csv([features_dict])
