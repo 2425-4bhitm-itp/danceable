@@ -21,7 +21,6 @@ def process_all_audio():
     global is_processing
     is_processing = True
 
-    open("/app/song-storage/features.csv", "w").close()
     count = 0
     label_count = len(os.listdir(snippets_path))
 
