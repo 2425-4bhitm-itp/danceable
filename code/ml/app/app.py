@@ -2,18 +2,28 @@ from features.audio_feature_extractor import AudioFeatureExtractor
 from features.audio_dataset_creator import AudioDatasetCreator
 from training.model import train, classify_audio, load_model
 import os
+import joblib
 from flask import Flask, request, jsonify
 from utilities import shorten, file_converter, sort
 from config.paths import SNIPPETS_DIR, SONGS_DIR
-
-app = Flask(__name__)
+from config.paths import SCALER_PATH
+import numpy as np
+flask_app = Flask(__name__)
 
 extractor = AudioFeatureExtractor()
 dataset_creator = AudioDatasetCreator(extractor)
 
 is_processing = False
 
-@app.route("/process_all_audio", methods=["POST"])
+scaler = None
+
+def get_scaler():
+    global scaler
+    if scaler is None:
+        scaler = joblib.load(SCALER_PATH)
+    return scaler
+
+@flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
     global is_processing
     is_processing = True
@@ -31,11 +41,11 @@ def process_all_audio():
     is_processing = False
     return jsonify({"message": "Processing completed."}), 200
 
-@app.route("/processing", methods=["GET"])
+@flask_app.route("/processing", methods=["GET"])
 def is_processing():
     return jsonify({"processing": is_processing}), 200
 
-@app.route("/upload_wav_file", methods=["POST"])
+@flask_app.route("/upload_wav_file", methods=["POST"])
 def upload_wav_file():
     data = request.get_json()
     file_path = data["file_path"]
@@ -43,7 +53,7 @@ def upload_wav_file():
     dataset_creator.upload_single_file(file_path, label)
     return jsonify({"message": "File uploaded."}), 200
 
-@app.route("/features", methods=["POST"])
+@flask_app.route("/features", methods=["POST"])
 def extract_features():
     data = request.get_json(silent=True)
     file_path = request.args.get("file_path") or (data and data.get("file_path"))
@@ -52,9 +62,14 @@ def extract_features():
         return jsonify({"error": "Missing 'file_path' in request query parameters or JSON body"}), 400
 
     features = extractor.extract_features_from_file(file_path)
-    return jsonify(features.tolist()), 200
 
-@app.route("/train", methods=["GET"])
+    features_2d = np.array(features).reshape(1, -1)
+    scaler = get_scaler()
+    scaled = scaler.transform(features_2d)
+
+    return jsonify(scaled[0].tolist()), 200
+
+@flask_app.route("/train", methods=["GET"])
 def train_model():
     accuracy, val_accuracy = train()
 
@@ -64,7 +79,7 @@ def train_model():
         "val_accuracy": val_accuracy
     }), 200
 
-@app.route("/classify_audio", methods=["POST"])
+@flask_app.route("/classify_audio", methods=["POST"])
 def classify_audio_api():
     file_path = request.args.get('file_path')
 
@@ -76,7 +91,7 @@ def classify_audio_api():
     return jsonify(predictions), 200
 
 
-@app.route("/classify_webm_audio", methods=["POST"])
+@flask_app.route("/classify_webm_audio", methods=["POST"])
 def upload_webm_file():
     data = request.get_json()
     file_path = data["file_path"]
@@ -87,7 +102,7 @@ def upload_webm_file():
     prediction = classify_audio(wav_file_path, extractor)
     return jsonify(prediction), 200
 
-@app.route("/classify_caf_audio", methods=["POST"])
+@flask_app.route("/classify_caf_audio", methods=["POST"])
 def upload_caf_file():
     data = request.get_json(silent=True)
     if not data or "file_path" not in data:
@@ -100,18 +115,18 @@ def upload_caf_file():
     prediction = classify_audio(wav_file_path, extractor)
     return jsonify(prediction), 200
 
-@app.route('/health', methods=['GET'])
+@flask_app.route('/health', methods=['GET'])
 def health_check():
     return jsonify(status="healthy", message="Service is running"), 200
 
-@app.route('/split_and_sort', methods=['POST'])
+@flask_app.route('/split_and_sort', methods=['POST'])
 def split_and_sort():
     segment_length = request.get_json()["segment_length"]
     split_files()
     sort.sort_and_delete_wav_files(SNIPPETS_DIR)
     return jsonify({"message": "Shortening and sorting completed"}), 200
 
-@app.route('/split_files', methods=['POST'])
+@flask_app.route('/split_files', methods=['POST'])
 def split_files():
     segment_length = request.get_json()["segment_length"]
     shorten.split_wav_files(SONGS_DIR, SNIPPETS_DIR, segment_length)
@@ -119,4 +134,4 @@ def split_files():
 
 if __name__ == '__main__':
     load_model()
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    flask_app.run(host='0.0.0.0', port=5001, debug=True)

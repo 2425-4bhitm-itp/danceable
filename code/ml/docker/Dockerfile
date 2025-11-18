@@ -19,4 +19,4 @@ ENV PYTHONUNBUFFERED=1
 
 RUN pytest --exitfirst --disable-warnings
 
-CMD ["python", "app.py"]
+CMD ["python", "-m", "app.app"]
