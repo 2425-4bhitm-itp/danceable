@@ -21,7 +21,7 @@ def get_scaler():
     global scaler
     if scaler is None:
         scaler = joblib.load(SCALER_PATH)
-    return scaler
+    return scaler["scaler"]
 
 @flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
@@ -62,12 +62,11 @@ def extract_features():
         return jsonify({"error": "Missing 'file_path' in request query parameters or JSON body"}), 400
 
     features = extractor.extract_features_from_file(file_path)
-
-    features_2d = np.array(features).reshape(1, -1)
+    vector = np.array(list(features.values()), dtype=np.float32).reshape(1, -1)
     scaler = get_scaler()
-    scaled = scaler.transform(features_2d)
+    vector = scaler.transform(vector)
 
-    return jsonify(scaled[0].tolist()), 200
+    return jsonify(vector.tolist()), 200
 
 @flask_app.route("/train", methods=["GET"])
 def train_model():
