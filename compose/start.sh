@@ -21,7 +21,7 @@ done
 if [ "$BUILD" = true ]
 then
   echo "Building backend..."
-  ../code/backend/build.sh || { echo "Backend build failed!"; exit 1; }
+#  ../code/backend/build.sh || { echo "Backend build failed!"; exit 1; }
 
   echo "Building machine learning service..."
   ../code/ml/build.sh || { echo "ML build failed!"; exit 1; }

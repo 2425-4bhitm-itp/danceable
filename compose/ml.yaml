@@ -1,6 +1,6 @@
 services:
   ml:
-    image: ghcr.io/2425-4bhitm-itp/ml:latest
+    image: ml:latest
     ports:
       - "5001:5001"
     volumes:
