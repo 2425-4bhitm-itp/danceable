@@ -120,7 +120,12 @@ def build_model(input_dim: int, output_dim: int) -> Sequential:
 # Training Pipeline
 # ---------------------------------------------------------------------------
 
-def train(selected_features=None, disabled_labels=None):
+def train(
+        selected_features=None,
+        disabled_labels=None,
+        test_size=0.2,
+        val_from_test=0.5
+):
     df = load_dataset(FEATURES_CSV)
 
     if disabled_labels:
@@ -137,8 +142,23 @@ def train(selected_features=None, disabled_labels=None):
     X, global_scaler = apply_global_scaling(X, selected_cols)
 
     y_encoded, unique_labels = encode_labels(y)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y_encoded, test_size=0.2, random_state=42
+
+    X_train, X_temp, y_train, y_temp, y_labels_train, y_labels_temp = train_test_split(
+        X,
+        y_encoded,
+        y,
+        test_size=test_size,
+        random_state=42,
+        stratify=y
+    )
+
+    X_test, X_val, y_test, y_val, y_labels_test, y_labels_val = train_test_split(
+        X_temp,
+        y_temp,
+        y_labels_temp,
+        test_size=val_from_test,
+        random_state=42,
+        stratify=y_labels_temp
     )
 
     m = build_model(X_train.shape[1], len(unique_labels))
@@ -147,7 +167,7 @@ def train(selected_features=None, disabled_labels=None):
     m.fit(
         X_train,
         y_train,
-        validation_split=0.2,
+        validation_data=(X_val, y_val),
         epochs=100,
         batch_size=32,
         callbacks=[stopper],
@@ -166,10 +186,12 @@ def train(selected_features=None, disabled_labels=None):
         "accuracy": acc,
         "used_features": selected_cols,
         "used_labels": unique_labels,
-        "X_test": X_test,
-        "y_test": y_test,
         "X_train": X_train,
         "y_train": y_train,
+        "X_val": X_val,
+        "y_val": y_val,
+        "X_test": X_test,
+        "y_test": y_test,
     }
 
 
