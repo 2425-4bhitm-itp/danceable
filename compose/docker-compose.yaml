@@ -1,4 +1,4 @@
 include:
-#  - database.yaml
-#  - backend.yaml
+  - database.yaml
+  - backend.yaml
   - ml.yaml

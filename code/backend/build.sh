@@ -5,3 +5,4 @@ cd "$(dirname "$0")"
 
 mvn -B clean package -DskipTests
 
+docker build -t "backend" -f docker/Dockerfile .
