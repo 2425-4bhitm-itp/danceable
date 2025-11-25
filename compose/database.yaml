@@ -6,11 +6,11 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=demo
-      - POSTGRES_USER=demo
-      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=danceable
+      - POSTGRES_USER=danceable
+      - POSTGRES_DB=danceable
     healthcheck:
-      test: pg_isready --dbname=postgres --username=demo
+      test: pg_isready --dbname=danceable --username=danceable
       interval: 60s
       timeout: 10s
       retries: 3

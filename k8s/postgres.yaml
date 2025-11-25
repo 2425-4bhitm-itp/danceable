@@ -4,9 +4,9 @@ metadata:
   name: postgres-setup
 data:
   setup.sql: |
-    DROP database if exists demo;
-    DROP user if exists demo;
-    CREATE USER demo WITH
+    DROP database if exists danceable;
+    DROP user if exists danceable;
+    CREATE USER danceable WITH
       LOGIN
       NOSUPERUSER
       NOCREATEDB
@@ -14,28 +14,15 @@ data:
       INHERIT
       NOREPLICATION
       CONNECTION LIMIT -1
-      PASSWORD 'demo';
-    CREATE DATABASE demo
+      PASSWORD 'danceable';
+    CREATE DATABASE danceable
         WITH 
-        OWNER = demo
+        OWNER = danceable
         ENCODING = 'UTF8'
         CONNECTION LIMIT = -1;
   allow-all.sh: |
     echo "allow all hosts..."
     echo "host all  all    0.0.0.0/0  md5" >> /var/lib/postgresql/data/pg_hba.conf
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgresql-data
-  annotations:
-    nfs.io/storage-path: "postgresql-data"
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
 ---
 apiVersion: v1
 kind: Secret
@@ -78,7 +65,7 @@ spec:
             periodSeconds: 5
           livenessProbe:
             exec:
-              command: ["pg_isready"]
+              command: ["pg_isready --dbname=postgres --username=demo"]
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
