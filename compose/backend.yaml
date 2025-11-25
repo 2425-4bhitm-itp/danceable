@@ -17,6 +17,8 @@ services:
       - QUARKUS_DATASOURCE_USERNAME=danceable
       - QUARKUS_DATASOURCE_PASSWORD=danceable
       - QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION=none
+      - AT_LEONDING_HTL_FEATURES_UPLOAD_TMPCLIENT_MP_REST_URL=http://ml:5001
+      - QUARKUS_REST_CLIENT_ML_SERVICE_URL=http://ml:5001/
     healthcheck:
       test: curl -f http://backend:8080/q/health/live
       start_period: 30s

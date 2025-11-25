@@ -7,9 +7,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import java.util.Map;
-
-@RegisterRestClient
+@RegisterRestClient(configKey = "ml-service")
 public interface AudioFeatureClient {
     @POST
     @Path("features")
