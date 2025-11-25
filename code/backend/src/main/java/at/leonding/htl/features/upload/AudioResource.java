@@ -51,20 +51,26 @@ public class AudioResource {
         Log.info(absolutePath);
         Log.info(classifyResponseDto);
 
+        Log.info("");
+
         List<Dance> dances = danceRepository.findAll().list();
 
-        Set<PredictionDto> predictions = classifyResponseDto.predictions.stream()
-                .map(p -> new PredictionDto(dances.stream()
-                        .filter(d -> d.getName().equalsIgnoreCase(p.danceName()))
-                        .map(Dance::getId)
-                        .findFirst()
-                        .orElse(null),
-                        p.confidence(),
-                        p.speedCategory())
-                ).filter(p -> p.danceId() != null)
-                .collect(Collectors.toSet());
+        if (classifyResponseDto.predictions != null) {
+            Set<PredictionDto> predictions = classifyResponseDto.predictions.stream()
+                    .map(p -> new PredictionDto(dances.stream()
+                            .filter(d -> d.getName().equalsIgnoreCase(p.danceName()))
+                            .map(Dance::getId)
+                            .findFirst()
+                            .orElse(null),
+                            p.confidence(),
+                            p.speedCategory())
+                    ).filter(p -> p.danceId() != null)
+                    .collect(Collectors.toSet());
 
-        return Response.ok().entity(predictions).build();
+            return Response.ok().entity(predictions).build();
+        }
+
+        return Response.ok().build();
     }
 
     @POST

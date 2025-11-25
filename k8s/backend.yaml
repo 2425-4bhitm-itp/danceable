@@ -33,6 +33,8 @@ spec:
               value: "danceable"
             - name: QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION
               value: "none"
+            - name: QUARKUS_REST_CLIENT_ML_SERVICE_URL
+              value: "http://ml:5001/"
           volumeMounts:
             - name: song-volume
               mountPath: /app/song-storage
