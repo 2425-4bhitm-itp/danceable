@@ -8,9 +8,9 @@ services:
     environment:
       - POSTGRES_PASSWORD=danceable
       - POSTGRES_USER=danceable
-      - POSTGRES_DB=danceable
+      - POSTGRES_DB=postgres
     healthcheck:
-      test: pg_isready --dbname=danceable --username=danceable
+      test: pg_isready --dbname=postgres --username=danceable
       interval: 60s
       timeout: 10s
       retries: 3
