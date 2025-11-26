@@ -8,6 +8,7 @@ import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GroupShuffleSplit
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Dense, Dropout, Input
 from tensorflow.keras.models import Sequential
@@ -66,6 +67,27 @@ def select_columns(groups: dict, selected: list | None) -> list:
         raise ValueError("No feature columns available for training")
     return cols
 
+def song_wise_split(df: pd.DataFrame, test_size, val_from_test, filename_col):
+    df["song_id"] = df[filename_col].apply(lambda x: x.split("_part")[0])
+
+    X = df.drop(columns=["label", filename_col, "song_id"]).values
+    y = df["label"].values
+    groups = df["song_id"].values
+
+    gss1 = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=42)
+    train_idx, temp_idx = next(gss1.split(X, y, groups=groups))
+
+    X_train, X_temp = X[train_idx], X[temp_idx]
+    y_train, y_temp = y[train_idx], y[temp_idx]
+    groups_temp = groups[temp_idx]
+
+    gss2 = GroupShuffleSplit(n_splits=1, test_size=val_from_test, random_state=42)
+    val_idx, test_idx = next(gss2.split(X_temp, y_temp, groups=groups_temp))
+
+    X_val, X_test = X_temp[val_idx], X_temp[test_idx]
+    y_val, y_test = y_temp[val_idx], y_temp[test_idx]
+
+    return X_train, X_val, X_test, y_train, y_val, y_test
 
 # ---------------------------------------------------------------------------
 # Scaling
@@ -99,6 +121,8 @@ def encode_labels(labels: np.ndarray) -> tuple:
         json.dump(unique, f)
     return encoded, unique
 
+def encode_split(y_split, label_mapping, unique_labels):
+    return to_categorical([label_mapping[l] for l in y_split], num_classes=len(unique_labels))
 
 # ---------------------------------------------------------------------------
 # Model Construction
@@ -137,29 +161,14 @@ def train(
     selected_cols = select_columns(groups, selected_features)
     df = scale_groups(df, groups, selected_features or list(groups.keys()))
 
-    X = df[selected_cols].values
-    y = df["label"].values
-    X, global_scaler = apply_global_scaling(X, selected_cols)
+    X_train, X_val, X_test, y_train_raw, y_val_raw, y_test_raw = song_wise_split(df, test_size, val_from_test, "filename")
 
-    y_encoded, unique_labels = encode_labels(y)
+    y_all_encoded, unique_labels = encode_labels(df["label"].values)
+    label_mapping = {label: idx for idx, label in enumerate(unique_labels)}
 
-    X_train, X_temp, y_train, y_temp, y_labels_train, y_labels_temp = train_test_split(
-        X,
-        y_encoded,
-        y,
-        test_size=test_size,
-        random_state=42,
-        stratify=y
-    )
-
-    X_test, X_val, y_test, y_val, y_labels_test, y_labels_val = train_test_split(
-        X_temp,
-        y_temp,
-        y_labels_temp,
-        test_size=val_from_test,
-        random_state=42,
-        stratify=y_labels_temp
-    )
+    y_train = encode_split(y_train_raw, label_mapping, unique_labels)
+    y_val = encode_split(y_val_raw, label_mapping, unique_labels)
+    y_test = encode_split(y_test_raw, label_mapping, unique_labels)
 
     m = build_model(X_train.shape[1], len(unique_labels))
     stopper = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
@@ -193,7 +202,6 @@ def train(
         "X_test": X_test,
         "y_test": y_test,
     }
-
 
 # ---------------------------------------------------------------------------
 # Classification
