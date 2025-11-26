@@ -17,7 +17,7 @@ spec:
       containers:
         - name: ml
           image: ghcr.io/2425-4bhitm-itp/ml:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 5001
           volumeMounts:
