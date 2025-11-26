@@ -11,9 +11,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY model.keras /app/song-storage/model.keras
+COPY model /opt/model
 
-COPY . .
+COPY --exclude=model . .
 
 EXPOSE 5001
 
