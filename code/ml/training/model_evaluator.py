@@ -1,14 +1,15 @@
-import os
 import json
+import os
+
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
-
 from matplotlib.colors import LinearSegmentedColormap
-from sklearn.metrics import confusion_matrix
+from scipy.interpolate import griddata
 from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
 from tensorflow.keras.models import load_model
 
 
@@ -143,7 +144,6 @@ class DanceModelEvaluator:
 
 
     def _plot_confusion_matrix(self, cm_df, is_test_set, set_name=""):
-        # Define a custom purple colormap
         base_colors = ["#f3e8f7", "#d2b5e0", "#a06bb8", "#763491"]
         purple_map = LinearSegmentedColormap.from_list("brand_purple", base_colors)
 
@@ -169,42 +169,50 @@ class DanceModelEvaluator:
         plt.close()
 
     def _plot_3d_landscape(self, cm_df, is_test_set, set_name=""):
-        from mpl_toolkits.mplot3d import Axes3D
-        from matplotlib import cm
-
         z = cm_df.values
+        z = -z
+
         x_labels = cm_df.columns
         y_labels = cm_df.index
 
-        # Create grid
         x = np.arange(z.shape[1])
         y = np.arange(z.shape[0])
         X, Y = np.meshgrid(x, y)
+
+        xi = np.linspace(x.min(), x.max(), 200)
+        yi = np.linspace(y.min(), y.max(), 200)
+        XI, YI = np.meshgrid(xi, yi)
+        ZI = griddata((X.ravel(), Y.ravel()), z.ravel(), (XI, YI), method='cubic')
 
         fig = plt.figure(figsize=(12, 10))
         ax = fig.add_subplot(111, projection="3d")
 
         surf = ax.plot_surface(
-            X,
-            Y,
-            z,
-            cmap=cm.viridis,
-            edgecolor="k",
-            linewidth=0.5,
+            XI,
+            YI,
+            ZI,
+            cmap='inferno',
+            edgecolor='none',
+            linewidth=0,
             antialiased=True
         )
 
+        ax.contourf(XI, YI, ZI, zdir='z', offset=ZI.min(), cmap='inferno', alpha=0.7)
+
         ax.set_xticks(x)
         ax.set_xticklabels(x_labels, rotation=45, ha="right")
-
         ax.set_yticks(y)
         ax.set_yticklabels(y_labels)
 
         ax.set_xlabel("Predicted")
         ax.set_ylabel("True")
         ax.set_zlabel("Value")
+        ax.set_title("Confusion Matrix Landscape (Inverted)")
 
-        ax.set_title("Confusion Matrix Landscape")
+        z_ticks = np.linspace(ZI.min(), ZI.max(), 5)
+        ax.set_zticks(z_ticks)
+        ax.set_zticklabels([f"{-t:.2f}" for t in z_ticks])
+
         fig.colorbar(surf, shrink=0.5, aspect=10)
 
         if is_test_set:
