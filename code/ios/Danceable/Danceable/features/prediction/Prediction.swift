@@ -14,7 +14,7 @@ struct Prediction: Identifiable, Decodable {
     var id:Int {danceId}
     var danceId: Int
     var confidence: Double
-    var speedCategory: SpeedCategory
+    var speedCategory: SpeedCategory?
 }
 
 func getImageForSpeedCategory(for speedCategory: SpeedCategory) -> String {
