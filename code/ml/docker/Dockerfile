@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 COPY model /opt/model
 
-COPY --exclude=model . .
+COPY . .
 
 EXPOSE 5001
 
