@@ -33,6 +33,15 @@ def load_dataset(path: Path) -> pd.DataFrame:
         raise ValueError("CSV missing 'label' column")
     return df
 
+def balanced_downsample(df: pd.DataFrame) -> pd.DataFrame:
+    counts = df["label"].value_counts()
+    min_count = counts.min()
+    frames = []
+    for label in counts.index:
+        subset = df[df["label"] == label]
+        frames.append(subset.sample(n=min_count, random_state=42))
+    return pd.concat(frames).sample(frac=1.0, random_state=42).reset_index(drop=True)
+
 
 # ---------------------------------------------------------------------------
 # Feature Handling
@@ -157,6 +166,8 @@ def train(
         if df.empty:
             raise ValueError("Disabled labels removed the whole dataset")
 
+    df = balanced_downsample(df)
+    print(df["label"].value_counts())
     groups = build_feature_groups(df)
     selected_cols = select_columns(groups, selected_features)
     df = scale_groups(df, groups, selected_features or list(groups.keys()))
