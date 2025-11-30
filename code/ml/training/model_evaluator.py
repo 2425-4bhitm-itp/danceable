@@ -11,6 +11,7 @@ from scipy.interpolate import griddata
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from tensorflow.keras.models import load_model
+import plotly.graph_objects as go
 
 
 class DanceModelEvaluator:
@@ -257,6 +258,87 @@ class DanceModelEvaluator:
         plt.savefig(out_path, dpi=200, bbox_inches="tight")
         plt.close()
 
+    def _plot_3d_landscape_interactive(self, cm_df, is_test_set, set_name=""):
+        # original data
+        z = cm_df.values.astype(float)
+
+        # invert for gravitational well effect
+        z_inv = -z
+
+        x_labels = cm_df.columns
+        y_labels = cm_df.index
+
+        x = np.arange(z.shape[1])
+        y = np.arange(z.shape[0])
+        X, Y = np.meshgrid(x, y)
+
+        # Smooth interpolation on the inverted values
+        xi = np.linspace(x.min(), x.max(), 200)
+        yi = np.linspace(y.min(), y.max(), 200)
+        XI, YI = np.meshgrid(xi, yi)
+
+        # cubic interpolation will only be valid INSIDE convex hull
+        ZI_inv = griddata(
+            (X.ravel(), Y.ravel()),
+            z_inv.ravel(),
+            (XI, YI),
+            method="cubic"
+        )
+
+        # Any invalid corner values become NaN. Replace with linear interpolation.
+        nan_mask = np.isnan(ZI_inv)
+        if nan_mask.any():
+            ZI_inv_linear = griddata(
+                (X.ravel(), Y.ravel()),
+                z_inv.ravel(),
+                (XI, YI),
+                method="linear"
+            )
+            ZI_inv[nan_mask] = ZI_inv_linear[nan_mask]
+
+        fig = go.Figure(data=[
+            go.Surface(
+                x=XI,
+                y=YI,
+                z=ZI_inv,
+                colorscale="Inferno",
+                showscale=True
+            )
+        ])
+
+        # Correct axis labels showing original positive values
+        fig.update_layout(
+            title="Interactive Confusion Matrix Landscape (Inverted)",
+            scene=dict(
+                xaxis=dict(
+                    tickmode="array",
+                    tickvals=x,
+                    ticktext=list(x_labels),
+                    title="Predicted"
+                ),
+                yaxis=dict(
+                    tickmode="array",
+                    tickvals=y,
+                    ticktext=list(y_labels),
+                    title="True"
+                ),
+                zaxis=dict(
+                    title="Value",
+                    tickmode="auto",
+                    tickformat=".2f"
+                )
+            ),
+            width=1000,
+            height=900
+        )
+
+        if is_test_set:
+            out_path = os.path.join(self.output_dir, f"confusion_matrix_3d_{set_name}.html")
+        else:
+            out_path = os.path.join(self.output_dir, "confusion_matrix_3d.html")
+
+        fig.write_html(out_path, include_plotlyjs="cdn")
+
     def evaluate_from_arrays(self, X, y, set_name=""):
         """
         Evaluate the model using already-prepared arrays (X_test, y_test).
@@ -308,6 +390,7 @@ class DanceModelEvaluator:
 
         self._plot_confusion_matrix(cm_df, True, set_name)
         self._plot_3d_landscape(cm_df, True, set_name)
+        self._plot_3d_landscape_interactive(cm_df, True, set_name)
         self._plot_class_f1(report_df)
         self._plot_precision_recall(report_df)
 
