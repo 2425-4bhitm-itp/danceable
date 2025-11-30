@@ -7,8 +7,8 @@ from flask import Flask, request, jsonify
 
 from config.paths import SCALER_PATH
 from config.paths import SNIPPETS_DIR, SONGS_DIR, LABELS_PATH
-from features.audio_dataset_creator import AudioDatasetCreator
-from features.audio_feature_extractor import AudioFeatureExtractor
+from features.dataset_creator import AudioDatasetCreator
+from features.feature_extractor import AudioFeatureExtractor
 from training.model import train, classify_audio, load_model
 from utilities import shorten, file_converter, sort
 
