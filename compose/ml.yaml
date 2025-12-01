@@ -2,7 +2,7 @@ services:
   ml:
     image: ml:latest
     ports:
-      - "5001:5001"
+      - "5002:5002"
     volumes:
       - ./song-storage:/app/song-storage
     healthcheck:
