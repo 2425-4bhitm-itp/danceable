@@ -395,3 +395,50 @@ class DanceModelEvaluator:
         self._plot_precision_recall(report_df)
 
         print("Evaluation completed using test arrays")
+
+    def evaluate_from_arrays_cnn(self, X, y, set_name=""):
+        """
+        Evaluate the CNN model using prepared arrays (X, y).
+        Works directly with .npy/tensor inputs.
+        """
+
+        print(f"Running predictions on {set_name} set")
+        y_prob = self.model.predict(X, verbose=0)
+        y_pred = np.argmax(y_prob, axis=1)
+
+        # Convert y to integer indices
+        if isinstance(y[0], str):
+            label_to_index = {label: i for i, label in enumerate(self.labels)}
+            y_true = np.array([label_to_index[label] for label in y])
+        elif y.ndim == 2 and y.shape[1] > 1:
+            y_true = np.argmax(y, axis=1)
+        else:
+            y_true = y.reshape(-1)
+
+        # Confusion matrix
+        from sklearn.metrics import confusion_matrix, classification_report
+        import os
+        import pandas as pd
+
+        cm = confusion_matrix(y_true, y_pred)
+        cm_normalized = cm / cm.sum(axis=1, keepdims=True)
+        cm_df = pd.DataFrame(cm_normalized, index=self.labels, columns=self.labels)
+        cm_csv = os.path.join(self.output_dir, f"confusion_matrix_{set_name}.csv")
+        cm_df.to_csv(cm_csv)
+        print(f"Confusion matrix saved to {cm_csv}")
+
+        # Classification report
+        report = classification_report(y_true, y_pred, target_names=self.labels, output_dict=True, zero_division=0)
+        report_df = pd.DataFrame(report).transpose()
+        report_csv = os.path.join(self.output_dir, f"class_metrics_{set_name}.csv")
+        report_df.to_csv(report_csv)
+        print(f"Class metrics saved to {report_csv}")
+
+        # Optional: plotting (keep if you have plotting methods)
+        self._plot_confusion_matrix(cm_df, True, set_name)
+        self._plot_3d_landscape(cm_df, True, set_name)
+        self._plot_3d_landscape_interactive(cm_df, True, set_name)
+        self._plot_class_f1(report_df)
+        self._plot_precision_recall(report_df)
+
+        print(f"Evaluation completed for {set_name} set")
