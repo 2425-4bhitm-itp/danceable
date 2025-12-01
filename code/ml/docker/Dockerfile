@@ -21,4 +21,4 @@ ENV PYTHONUNBUFFERED=1
 
 RUN pytest --exitfirst --disable-warnings
 
-CMD ["python", "-m", "app.app"]
+CMD ["python", "-m", "app.app_cnn"]
