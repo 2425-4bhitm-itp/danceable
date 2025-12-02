@@ -41,6 +41,7 @@ class AudioRecorder: ObservableObject {
         
         let inputNode = engine.inputNode
             let format = inputNode.outputFormat(forBus: 0)
+        print(format.sampleRate)
 
             audioFile = try AVAudioFile(forWriting: fileURL, settings: format.settings)
 
@@ -56,6 +57,8 @@ class AudioRecorder: ObservableObject {
             }
 
             let session = AVAudioSession.sharedInstance()
+            try session.setPreferredSampleRate(44100)
+
 
             #if os(iOS)
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
