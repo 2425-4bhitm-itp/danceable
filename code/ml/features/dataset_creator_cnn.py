@@ -45,7 +45,7 @@ class AudioDatasetCreatorCNN:
         self.save_csv(rows)
 
     def save_csv(self, new_rows):
-        csv_file = self.output_dir / "index.csv"
+        csv_file = output_csv
         fieldnames = ["window_id", "filename", "label", "npy_path"]
 
         file_exists = csv_file.exists()
