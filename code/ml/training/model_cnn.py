@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import joblib
 import numpy as np
@@ -10,6 +11,11 @@ from tensorflow.keras.callbacks import EarlyStopping
 import coremltools as ct
 
 from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH
+
+tf.config.threading.set_intra_op_parallelism_threads(35)
+tf.config.threading.set_inter_op_parallelism_threads(35)
+os.environ["OMP_NUM_THREADS"] = "64"
+os.environ["MKL_NUM_THREADS"] = "64"
 
 _model = None
 _scaler = None
@@ -174,9 +180,6 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
     train_ds = make_dataset(train_idx, shuffle=True)
     val_ds = make_dataset(val_idx, shuffle=False)
     test_ds = make_dataset(test_idx, shuffle=False)
-
-    tf.config.threading.set_intra_op_parallelism_threads(35)
-    tf.config.threading.set_inter_op_parallelism_threads(35)
 
     with strategy.scope():
         model = build_cnn(input_shape, num_classes)
