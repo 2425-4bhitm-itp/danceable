@@ -14,6 +14,33 @@ from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPU
 _model = None
 _scaler = None
 
+strategy = tf.distribute.experimental.CentralStorageStrategy()
+
+def make_tf_dataset_cpu(df, indices, label_to_idx, scaler, batch_size=256, shuffle=True):
+    arrays, labels = [], []
+
+    for i in indices:
+        arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
+        while arr.ndim > 3:
+            arr = arr.squeeze(0)
+        if arr.ndim == 2:
+            arr = arr[..., np.newaxis]
+        arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
+        arrays.append(arr)
+        labels.append(label_to_idx[df.iloc[i]["label"]])
+
+    arrays = np.stack(arrays, axis=0)
+    labels = tf.one_hot(np.array(labels, dtype=np.int32), depth=len(label_to_idx))
+
+    ds = tf.data.Dataset.from_tensor_slices((arrays, labels))
+    if shuffle:
+        ds = ds.shuffle(buffer_size=len(arrays), seed=42)
+    # Parallelize preprocessing and prefetch
+    ds = ds.map(lambda x, y: (tf.identity(x), tf.identity(y)), num_parallel_calls=tf.data.AUTOTUNE)
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(tf.data.AUTOTUNE)
+    return ds
+
 
 # ----------------------- Dataset Utilities -----------------------
 
@@ -163,12 +190,19 @@ def train_model(csv_path=CNN_OUTPUT_CSV, test_size=0.2, val_from_test=0.5,
         sample_arr = sample_arr[..., np.newaxis]
     input_shape = sample_arr.shape
 
-    train_ds = make_tf_dataset(df, train_idx, label_to_idx, scaler, batch_size, shuffle=True)
-    val_ds = make_tf_dataset(df, val_idx, label_to_idx, scaler, batch_size, shuffle=False)
-    test_ds = make_tf_dataset(df, test_idx, label_to_idx, scaler, batch_size, shuffle=False)
+    train_ds = make_tf_dataset_cpu(df, train_idx, label_to_idx, scaler, batch_size=256, shuffle=True)
+    val_ds = make_tf_dataset_cpu(df, val_idx, label_to_idx, scaler, batch_size=256, shuffle=False)
+    test_ds = make_tf_dataset_cpu(df, test_idx, label_to_idx, scaler, batch_size=256, shuffle=False)
 
-    model = build_cnn(input_shape, len(labels))
-    stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
+    with strategy.scope():
+        model = build_cnn(input_shape, num_classes=len(labels))
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(1e-4),
+            loss="categorical_crossentropy",
+            metrics=["accuracy"]
+        )
+
+    stopper = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
     history = model.fit(train_ds, validation_data=val_ds, epochs=epochs, callbacks=[stopper], verbose=1)
 
     model.save(CNN_MODEL_PATH)
