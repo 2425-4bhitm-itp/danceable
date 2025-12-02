@@ -44,16 +44,20 @@ class AudioDatasetCreatorCNN:
 
         self.save_csv(rows)
 
-    def save_csv(self, rows):
-        if not rows:
-            return
+    def save_csv(self, new_rows):
+        csv_file = self.output_dir / "index.csv"
         fieldnames = ["window_id", "filename", "label", "npy_path"]
-        write_header = not self.output_csv.exists() or self.output_csv.stat().st_size == 0
-        with open(self.output_csv, "a", newline="") as f:
+
+        file_exists = csv_file.exists()
+
+        with open(csv_file, "a", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if write_header:
+
+            if not file_exists:
                 writer.writeheader()
-            writer.writerows(rows)
+
+            for row in new_rows:
+                writer.writerow(row)
 
     def upload_single_file(self, file_path, label):
         patches = self.extractor.extract_features_from_file(file_path)
