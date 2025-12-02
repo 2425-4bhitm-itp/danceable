@@ -150,7 +150,7 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
     input_shape = sample_arr.shape
     num_classes = len(labels)
 
-    def generator(indices):
+    def dataset_generator(indices):
         for i in indices:
             arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
             while arr.ndim > 3:
@@ -163,7 +163,7 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
 
     def make_dataset(indices, shuffle=True):
         ds = tf.data.Dataset.from_generator(
-            lambda: generator(indices),
+            lambda: dataset_generator(indices),
             output_signature=(
                 tf.TensorSpec(shape=input_shape, dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.int32)
@@ -171,8 +171,10 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
         )
         ds = ds.map(lambda x, y: (x, tf.one_hot(y, depth=num_classes)),
                     num_parallel_calls=tf.data.AUTOTUNE)
+
         if shuffle:
-            ds = ds.shuffle(buffer_size=len(indices), seed=42)
+            ds = ds.shuffle(buffer_size=min(2048, len(indices)), seed=42)
+
         ds = ds.batch(batch_size)
         ds = ds.prefetch(tf.data.AUTOTUNE)
         return ds
@@ -194,6 +196,7 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
 
     model.save(CNN_MODEL_PATH)
     loss, acc = model.evaluate(test_ds, verbose=0)
+
     cm = ct.convert(model, source="tensorflow", inputs=[ct.TensorType(shape=(1,) + input_shape)])
     cm.save(COREML_PATH)
 
