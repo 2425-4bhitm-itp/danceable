@@ -14,33 +14,7 @@ from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPU
 _model = None
 _scaler = None
 
-strategy = tf.distribute.experimental.CentralStorageStrategy()
-
-def make_tf_dataset_cpu(df, indices, label_to_idx, scaler, batch_size=256, shuffle=True):
-    arrays, labels = [], []
-
-    for i in indices:
-        arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
-        while arr.ndim > 3:
-            arr = arr.squeeze(0)
-        if arr.ndim == 2:
-            arr = arr[..., np.newaxis]
-        arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
-        arrays.append(arr)
-        labels.append(label_to_idx[df.iloc[i]["label"]])
-
-    arrays = np.stack(arrays, axis=0)
-    labels = tf.one_hot(np.array(labels, dtype=np.int32), depth=len(label_to_idx))
-
-    ds = tf.data.Dataset.from_tensor_slices((arrays, labels))
-    if shuffle:
-        ds = ds.shuffle(buffer_size=len(arrays), seed=42)
-    # Parallelize preprocessing and prefetch
-    ds = ds.map(lambda x, y: (tf.identity(x), tf.identity(y)), num_parallel_calls=tf.data.AUTOTUNE)
-    ds = ds.batch(batch_size)
-    ds = ds.prefetch(tf.data.AUTOTUNE)
-    return ds
-
+strategy = tf.distribute.MirroredStrategy()
 
 # ----------------------- Dataset Utilities -----------------------
 
@@ -106,31 +80,6 @@ def compute_global_mean_std(npy_paths: list, sample_limit=5000) -> dict:
     std = float(np.sqrt(var) if var > 0 else 1.0)
     return {"mean": mean, "std": std}
 
-
-# ----------------------- TensorFlow Dataset -----------------------
-
-def make_tf_dataset(df, indices, label_to_idx, scaler, batch_size=256, shuffle=True):
-    arrays, labels = [], []
-
-    for i in indices:
-        arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
-        while arr.ndim > 3:
-            arr = arr.squeeze(0)
-        if arr.ndim == 2:
-            arr = arr[..., np.newaxis]
-        arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
-        arrays.append(arr)
-        labels.append(label_to_idx[df.iloc[i]["label"]])
-
-    arrays = np.stack(arrays, axis=0)
-    labels = tf.one_hot(np.array(labels, dtype=np.int32), depth=len(label_to_idx))
-
-    ds = tf.data.Dataset.from_tensor_slices((arrays, labels))
-    if shuffle:
-        ds = ds.shuffle(buffer_size=len(arrays), seed=42)
-    return ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
-
-
 # ----------------------- Model -----------------------
 
 def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
@@ -164,8 +113,12 @@ def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
 
 # ----------------------- Training Pipeline -----------------------
 
-def train_model(csv_path=CNN_OUTPUT_CSV, test_size=0.2, val_from_test=0.5,
-                batch_size=32, epochs=100, disabled_labels=None) -> dict:
+def train_model(csv_path=CNN_OUTPUT_CSV,
+                test_size=0.2,
+                val_from_test=0.5,
+                batch_size=512,
+                epochs=100,
+                disabled_labels=None) -> dict:
     df = load_dataset(Path(csv_path))
     if disabled_labels:
         df = df[~df["label"].isin(disabled_labels)]
@@ -189,13 +142,44 @@ def train_model(csv_path=CNN_OUTPUT_CSV, test_size=0.2, val_from_test=0.5,
     if sample_arr.ndim == 2:
         sample_arr = sample_arr[..., np.newaxis]
     input_shape = sample_arr.shape
+    num_classes = len(labels)
 
-    train_ds = make_tf_dataset_cpu(df, train_idx, label_to_idx, scaler, batch_size=256, shuffle=True)
-    val_ds = make_tf_dataset_cpu(df, val_idx, label_to_idx, scaler, batch_size=256, shuffle=False)
-    test_ds = make_tf_dataset_cpu(df, test_idx, label_to_idx, scaler, batch_size=256, shuffle=False)
+    def generator(indices):
+        for i in indices:
+            arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
+            while arr.ndim > 3:
+                arr = arr.squeeze(0)
+            if arr.ndim == 2:
+                arr = arr[..., np.newaxis]
+            arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
+            label = label_to_idx[df.iloc[i]["label"]]
+            yield arr, label
+
+    def make_dataset(indices, shuffle=True):
+        ds = tf.data.Dataset.from_generator(
+            lambda: generator(indices),
+            output_signature=(
+                tf.TensorSpec(shape=input_shape, dtype=tf.float32),
+                tf.TensorSpec(shape=(), dtype=tf.int32)
+            )
+        )
+        ds = ds.map(lambda x, y: (x, tf.one_hot(y, depth=num_classes)),
+                    num_parallel_calls=tf.data.AUTOTUNE)
+        if shuffle:
+            ds = ds.shuffle(buffer_size=len(indices), seed=42)
+        ds = ds.batch(batch_size)
+        ds = ds.prefetch(tf.data.AUTOTUNE)
+        return ds
+
+    train_ds = make_dataset(train_idx, shuffle=True)
+    val_ds = make_dataset(val_idx, shuffle=False)
+    test_ds = make_dataset(test_idx, shuffle=False)
+
+    tf.config.threading.set_intra_op_parallelism_threads(35)
+    tf.config.threading.set_inter_op_parallelism_threads(35)
 
     with strategy.scope():
-        model = build_cnn(input_shape, num_classes=len(labels))
+        model = build_cnn(input_shape, num_classes)
         model.compile(
             optimizer=tf.keras.optimizers.Adam(1e-4),
             loss="categorical_crossentropy",
@@ -207,7 +191,6 @@ def train_model(csv_path=CNN_OUTPUT_CSV, test_size=0.2, val_from_test=0.5,
 
     model.save(CNN_MODEL_PATH)
     loss, acc = model.evaluate(test_ds, verbose=0)
-
     cm = ct.convert(model, source="tensorflow", inputs=[ct.TensorType(shape=(1,) + input_shape)])
     cm.save(COREML_PATH)
 
