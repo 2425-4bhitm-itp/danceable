@@ -17,90 +17,28 @@ import plotly.graph_objects as go
 class DanceModelEvaluator:
     def __init__(self,
                  model_path,
-                 scaler_path,
                  labels_path,
-                 features_csv,
                  output_dir="evaluation_results"):
 
         self.model_path = model_path
-        self.scaler_path = scaler_path
         self.labels_path = labels_path
-        self.features_csv = features_csv
         self.output_dir = output_dir
 
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.model = None
-        self.scaler = None
-        self.scaler_features = None
         self.labels = None
-        self.df = None
-        self.X = None
-        self.y = None
 
     def load_resources(self):
-        """
-        Loads model, scaler and label ordering.
-        Scaler must contain both the fitted scaler and the feature list.
-        """
-        print("Loading model and scaler")
-
+        """Loads the CNN model and label ordering"""
+        print("Loading model and labels")
         self.model = load_model(self.model_path)
-
-        data = joblib.load(self.scaler_path)
-        if isinstance(data, dict) and "scaler" in data and "features" in data:
-            self.scaler = data["scaler"]
-            self.scaler_features = data["features"]
-        else:
-            raise RuntimeError("Scaler file must contain {'scaler': ..., 'features': [...]}.")
 
         with open(self.labels_path, "r") as f:
             self.labels = json.load(f)
 
-        print("Resources loaded successfully")
+        print(f"Loaded model and {len(self.labels)} labels")
 
-    def load_data(self):
-        """
-        Loads the feature CSV, extracts X and y,
-        verifies feature alignment with the scaler,
-        and applies scaling. Removes unknown labels.
-        """
-        print("Loading feature data")
-
-        self.df = pd.read_csv(self.features_csv)
-
-        # Remove non-feature columns
-        original_features = [c for c in self.df.columns if c not in ["filename", "label"]]
-
-        # Check feature consistency
-        missing = [f for f in self.scaler_features if f not in original_features]
-        extra = [f for f in original_features if f not in self.scaler_features]
-
-        if missing:
-            raise ValueError(f"The CSV is missing required features: {missing}")
-
-        if extra:
-            print(f"Warning: CSV contains extra features that will be ignored: {extra}")
-
-        # Keep only features the scaler expects
-        self.X = self.df[self.scaler_features].values
-        self.y = self.df["label"].values
-
-        # Remove rows with labels the model was not trained on
-        label_to_index = {label: i for i, label in enumerate(self.labels)}
-        valid_mask = np.array([label in label_to_index for label in self.y])
-
-        if not valid_mask.all():
-            unknown_labels = sorted(set(self.y[~valid_mask]))
-            print(f"Warning: ignoring {len(unknown_labels)} unknown label(s) not in model: {unknown_labels}")
-
-        self.X = self.X[valid_mask]
-        self.y = self.y[valid_mask]
-
-        # Scale
-        self.X = self.scaler.transform(self.X)
-
-        print(f"Data loaded and scaled successfully ({len(self.y)} samples after filtering unknown labels)")
 
     def evaluate(self):
         """

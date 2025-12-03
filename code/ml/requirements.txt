@@ -9,3 +9,6 @@ pydub~=0.25.1
 pytest~=8.3.5
 coremltools~=6.0
 tensorflow~=2.11.0
+matplotlib
+seaborn
+plotly

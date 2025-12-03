@@ -116,7 +116,7 @@ def train():
     data = request.get_json()
     disabled_labels = data.get("disabled_labels", [])
     test_size = data.get("test_size", 0.2)
-    batch_size = data.get("batch_size", 1028)
+    batch_size = data.get("batch_size", 512)
     epochs = data.get("epochs", 100)
 
     result = train_model(
@@ -147,9 +147,7 @@ def evaluate():
 
     evaluator = DanceModelEvaluator(
         model_path=CNN_MODEL_PATH,
-        scaler_path=SCALER_PATH,
-        labels_path=CNN_LABELS_PATH,
-        features_csv=CNN_OUTPUT_CSV
+        labels_path=CNN_LABELS_PATH
     )
     evaluator.load_resources()
 
