@@ -206,7 +206,7 @@ def health():
 
 @flask_app.route("/evaluation_results")
 def show_evaluation_results():
-    results_dir = "/home/luca/danceable/code/ml/evaluation_results"
+    results_dir = "/opt/application/evaluation_results"
     files = os.listdir(results_dir)
 
     # Filter out CSVs
@@ -226,7 +226,7 @@ def show_evaluation_results():
 
 @flask_app.route("/evaluation_results/file/<filename>")
 def serve_result_file(filename):
-    results_dir = "/home/luca/danceable/code/ml/evaluation_results"
+    results_dir = "/opt/application/evaluation_results"
     path = os.path.join(results_dir, filename)
     if not os.path.exists(path):
         return "File not found", 404
