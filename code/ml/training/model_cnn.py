@@ -12,15 +12,14 @@ import coremltools as ct
 
 from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH
 
-tf.config.threading.set_intra_op_parallelism_threads(35)
-tf.config.threading.set_inter_op_parallelism_threads(35)
-os.environ["OMP_NUM_THREADS"] = "64"
-os.environ["MKL_NUM_THREADS"] = "64"
+# ----------------------- Threading / CPU Optimization -----------------------
+tf.config.threading.set_intra_op_parallelism_threads(os.cpu_count())
+tf.config.threading.set_inter_op_parallelism_threads(os.cpu_count())
+os.environ["OMP_NUM_THREADS"] = str(os.cpu_count())
+os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
 
 _model = None
 _scaler = None
-
-strategy = tf.distribute.MirroredStrategy()
 
 # ----------------------- Dataset Utilities -----------------------
 
@@ -34,7 +33,6 @@ def load_dataset(csv_path: Path) -> pd.DataFrame:
         raise ValueError(f"CSV missing columns: {missing}")
     return df
 
-
 def balanced_downsample(df: pd.DataFrame) -> pd.DataFrame:
     counts = df["label"].value_counts()
     min_count = counts.min()
@@ -45,8 +43,7 @@ def balanced_downsample(df: pd.DataFrame) -> pd.DataFrame:
         .reset_index(drop=True)
     )
 
-
-def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5) -> tuple:
+def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5):
     df = df.copy()
     df["song_id"] = df["filename"].apply(lambda x: str(x).split("_part")[0])
     X_idx = np.arange(len(df))
@@ -65,28 +62,22 @@ def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5) -> tuple
     test_idx = temp_idx[test_rel_idx]
     return train_idx, val_idx, test_idx
 
-
 def compute_global_mean_std(npy_paths: list, sample_limit=5000) -> dict:
-    if not npy_paths:
-        raise ValueError("No npy paths provided")
-
     if len(npy_paths) > sample_limit:
         rng = np.random.default_rng(42)
         npy_paths = [npy_paths[i] for i in rng.choice(len(npy_paths), sample_limit, replace=False)]
-
     s_sum, s_sq_sum, count = 0.0, 0.0, 0
     for p in npy_paths:
         arr = np.load(p)["input"].astype(np.float32).ravel()
         s_sum += arr.sum()
         s_sq_sum += (arr ** 2).sum()
         count += arr.size
-
     mean = float(s_sum / count)
     var = float(s_sq_sum / count - mean ** 2)
     std = float(np.sqrt(var) if var > 0 else 1.0)
     return {"mean": mean, "std": std}
 
-# ----------------------- Model -----------------------
+# ----------------------- CNN Model -----------------------
 
 def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
     inp = layers.Input(shape=input_shape)
@@ -116,20 +107,42 @@ def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
                   metrics=["accuracy"])
     return model
 
+# ----------------------- Dataset Generator -----------------------
+
+def dataset_generator(indices, df, scaler, label_to_idx):
+    for i in indices:
+        arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
+        while arr.ndim > 3:
+            arr = arr.squeeze(0)
+        if arr.ndim == 2:
+            arr = arr[..., np.newaxis]
+        arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
+        label = label_to_idx[df.iloc[i]["label"]]
+        yield arr, label
+
+def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes, batch_size=512, shuffle=True):
+    ds = tf.data.Dataset.from_generator(
+        lambda: dataset_generator(indices, df, scaler, label_to_idx),
+        output_signature=(
+            tf.TensorSpec(shape=input_shape, dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.int32)
+        )
+    )
+    ds = ds.map(lambda x, y: (x, tf.one_hot(y, depth=num_classes)), num_parallel_calls=tf.data.AUTOTUNE)
+    if shuffle:
+        ds = ds.shuffle(buffer_size=min(2048, len(indices)), seed=42)
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(tf.data.AUTOTUNE)
+    return ds
 
 # ----------------------- Training Pipeline -----------------------
 
-def train_model(csv_path=CNN_OUTPUT_CSV,
-                test_size=0.2,
-                val_from_test=0.5,
-                batch_size=512,
-                epochs=100,
-                disabled_labels=None) -> dict:
+def train_model(csv_path=CNN_OUTPUT_CSV, batch_size=512, epochs=100, test_size=0.2, val_from_test=0.5, disabled_labels=None):
     df = load_dataset(Path(csv_path))
     if disabled_labels:
         df = df[~df["label"].isin(disabled_labels)]
         if df.empty:
-            raise ValueError("All labels disabled removed the dataset")
+            raise ValueError("All labels removed due to disabled_labels")
     df = balanced_downsample(df)
 
     labels = sorted(df["label"].unique())
@@ -138,11 +151,10 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
         json.dump(labels, f)
 
     train_idx, val_idx, test_idx = song_wise_split(df, test_size, val_from_test)
-    train_paths = df.iloc[train_idx]["npy_path"].tolist()
-    scaler = compute_global_mean_std(train_paths, sample_limit=4000)
+    scaler = compute_global_mean_std(df.iloc[train_idx]["npy_path"].tolist(), sample_limit=4000)
     joblib.dump(scaler, SCALER_PATH)
 
-    sample_arr = np.load(train_paths[0])["input"].astype(np.float32)
+    sample_arr = np.load(df.iloc[train_idx[0]]["npy_path"])["input"].astype(np.float32)
     while sample_arr.ndim > 3:
         sample_arr = sample_arr.squeeze(0)
     if sample_arr.ndim == 2:
@@ -150,64 +162,28 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
     input_shape = sample_arr.shape
     num_classes = len(labels)
 
-    def dataset_generator(indices):
-        for i in indices:
-            arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
-            while arr.ndim > 3:
-                arr = arr.squeeze(0)
-            if arr.ndim == 2:
-                arr = arr[..., np.newaxis]
-            arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
-            label = label_to_idx[df.iloc[i]["label"]]
-            yield arr, label
+    train_ds = make_tf_dataset(train_idx, df, scaler, label_to_idx, input_shape, num_classes, batch_size=batch_size, shuffle=True)
+    val_ds = make_tf_dataset(val_idx, df, scaler, label_to_idx, input_shape, num_classes, batch_size=batch_size, shuffle=False)
+    test_ds = make_tf_dataset(test_idx, df, scaler, label_to_idx, input_shape, num_classes, batch_size=batch_size, shuffle=False)
 
-    def make_dataset(indices, shuffle=True):
-        ds = tf.data.Dataset.from_generator(
-            lambda: dataset_generator(indices),
-            output_signature=(
-                tf.TensorSpec(shape=input_shape, dtype=tf.float32),
-                tf.TensorSpec(shape=(), dtype=tf.int32)
-            )
-        )
-        ds = ds.map(lambda x, y: (x, tf.one_hot(y, depth=num_classes)),
-                    num_parallel_calls=tf.data.AUTOTUNE)
-
-        if shuffle:
-            ds = ds.shuffle(buffer_size=min(2048, len(indices)), seed=42)
-
-        ds = ds.batch(batch_size)
-        ds = ds.prefetch(tf.data.AUTOTUNE)
-        return ds
-
-    train_ds = make_dataset(train_idx, shuffle=True)
-    val_ds = make_dataset(val_idx, shuffle=False)
-    test_ds = make_dataset(test_idx, shuffle=False)
-
-    with strategy.scope():
-        model = build_cnn(input_shape, num_classes)
-        model.compile(
-            optimizer=tf.keras.optimizers.Adam(1e-4),
-            loss="categorical_crossentropy",
-            metrics=["accuracy"]
-        )
-
-    stopper = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
+    model = build_cnn(input_shape, num_classes)
+    stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
     history = model.fit(train_ds, validation_data=val_ds, epochs=epochs, callbacks=[stopper], verbose=1)
-
     model.save(CNN_MODEL_PATH)
-    loss, acc = model.evaluate(test_ds, verbose=0)
 
+    loss, acc = model.evaluate(test_ds, verbose=0)
     cm = ct.convert(model, source="tensorflow", inputs=[ct.TensorType(shape=(1,) + input_shape)])
     cm.save(COREML_PATH)
 
-    print(f"Test Loss: {loss:.4f}, Test Accuracy: {acc:.4f}")
-
     return {
-        "loss": loss,
-        "accuracy": acc,
+        "loss": float(loss),
+        "accuracy": float(acc),
         "labels": labels,
         "input_shape": input_shape,
         "history": history.history,
+        "train_ds": train_ds,
+        "val_ds": val_ds,
+        "test_ds": test_ds,
         "X_train": df.iloc[train_idx],
         "y_train": [label_to_idx[l] for l in df.iloc[train_idx]["label"]],
         "X_val": df.iloc[val_idx],
@@ -215,7 +191,6 @@ def train_model(csv_path=CNN_OUTPUT_CSV,
         "X_test": df.iloc[test_idx],
         "y_test": [label_to_idx[l] for l in df.iloc[test_idx]["label"]]
     }
-
 
 # ----------------------- Inference -----------------------
 
@@ -237,6 +212,7 @@ def classify_audio(file_path: str, extractor, top_k=5) -> dict:
             a = a[0]
         a = (a - _scaler["mean"]) / (_scaler["std"] + 1e-8)
         arrs.append(a)
+
     batch = np.stack(arrs, axis=0)
     probs = _model.predict(batch, verbose=0)
     avg = probs.mean(axis=0)
@@ -249,7 +225,6 @@ def classify_audio(file_path: str, extractor, top_k=5) -> dict:
         "predictions": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs[:top_k]],
         "all": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs]
     }
-
 
 def load_model():
     global _model, _scaler

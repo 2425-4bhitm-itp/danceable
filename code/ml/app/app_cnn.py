@@ -14,7 +14,7 @@ from config.paths import (
     SONGS_DIR,
     LABELS_PATH,
     CNN_MODEL_PATH,
-    CNN_TRAIN_DATA_DIR, CNN_OUTPUT_CSV
+    CNN_TRAIN_DATA_DIR, CNN_OUTPUT_CSV, SCALER_PATH, CNN_LABELS_PATH
 )
 
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
@@ -119,64 +119,52 @@ def train():
     batch_size = data.get("batch_size", 1028)
     epochs = data.get("epochs", 100)
 
-    train_result = train_model(
+    result = train_model(
         disabled_labels=disabled_labels,
-        csv_path=CNN_OUTPUT_CSV,
         batch_size=batch_size,
         epochs=epochs,
         test_size=test_size
     )
-    accuracy = train_result["accuracy"]
-    val_accuracy = max(train_result["history"]["val_accuracy"])
+    accuracy = result["accuracy"]
+    val_accuracy = max(result["history"]["val_accuracy"])
 
-    return jsonify({"message": "Training completed", "accuracy": accuracy, "val_accuracy": val_accuracy}), 200
+    return jsonify({
+        "message": "Training completed",
+        "accuracy": accuracy,
+        "val_accuracy": val_accuracy
+    }), 200
 
-@flask_app.route("/train_for_split", methods=["POST"])
-def train_for_split():
-    results = []
-    for i in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]:
-        print(f"Training with test size: {i}")
-        r = train(
-            disabled_labels=["foxtrott"],
-            test_size=i,
-            input_shape=None,
-            num_classes=None
-        )
-        results.append({
-            "test_size": i,
-            "loss": r["loss"],
-            "accuracy": r["accuracy"]
-        })
-    df_results = pd.DataFrame(results)
-    return jsonify({"result": df_results.to_string(index=False)}), 200
-
-@flask_app.route("/evaluate", methods=["GET"])
+@flask_app.route("/evaluate", methods=["POST"])
 def evaluate():
     from training.model_evaluator import DanceModelEvaluator
-    from config.paths import MODEL_PATH, SCALER_PATH, LABELS_PATH, FEATURES_CSV
 
     data = request.get_json()
-    disabled_labels = data["disabled_labels"]
-    test_size = data["test_size"]
+    disabled_labels = data.get("disabled_labels", [])
+    test_size = data.get("test_size", 0.2)
 
-    result = train_model(
-        disabled_labels=disabled_labels,
-        test_size=test_size
-    )
+    # Train or reload model
+    result = train_model(disabled_labels=disabled_labels, test_size=test_size)
 
     evaluator = DanceModelEvaluator(
-        model_path=MODEL_PATH,
+        model_path=CNN_MODEL_PATH,
         scaler_path=SCALER_PATH,
-        labels_path=LABELS_PATH,
-        features_csv=FEATURES_CSV
+        labels_path=CNN_LABELS_PATH,
+        features_csv=CNN_OUTPUT_CSV
     )
-
     evaluator.load_resources()
 
     for set_name in ["train", "val", "test"]:
-        evaluator.evaluate_from_arrays(result["X_"+set_name], result["y_"+set_name], set_name=set_name)
+        evaluator.evaluate_from_arrays(result["X_" + set_name], result["y_" + set_name], set_name=set_name)
 
-    return jsonify(), 200
+    accuracy = result["accuracy"]
+    val_accuracy = max(result["history"]["val_accuracy"])
+
+    return jsonify({
+        "message": "Evaluation completed",
+        "accuracy": accuracy,
+        "val_accuracy": val_accuracy
+    }), 200
+
 
 
 @flask_app.route("/classify_audio", methods=["POST"])
