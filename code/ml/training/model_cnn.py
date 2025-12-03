@@ -5,11 +5,12 @@ import joblib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
 from tensorflow.keras import layers, models, regularizers
 from tensorflow.keras.callbacks import EarlyStopping
 import coremltools as ct
-
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH
 
 # ----------------------- Threading / CPU Optimization -----------------------
@@ -46,20 +47,24 @@ def balanced_downsample(df: pd.DataFrame) -> pd.DataFrame:
 def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5):
     df = df.copy()
     df["song_id"] = df["filename"].apply(lambda x: str(x).split("_part")[0])
+
     X_idx = np.arange(len(df))
     y = df["label"].values
     groups = df["song_id"].values
 
-    gss1 = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=42)
-    train_idx, temp_idx = next(gss1.split(X_idx, y, groups=groups))
+    # First split: train vs temp (val+test)
+    gss = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=42)
+    train_idx, temp_idx = next(gss.split(X_idx, y, groups=groups))
 
-    temp_groups = groups[temp_idx]
+    # Second split: val vs test, maintain stratification
     temp_y = y[temp_idx]
-    gss2 = GroupShuffleSplit(n_splits=1, test_size=val_from_test, random_state=42)
-    val_rel_idx, test_rel_idx = next(gss2.split(temp_idx, temp_y, groups=temp_groups))
+    temp_groups = groups[temp_idx]
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=val_from_test, random_state=42)
+    val_rel_idx, test_rel_idx = next(sss.split(temp_idx.reshape(-1, 1), temp_y))
 
     val_idx = temp_idx[val_rel_idx]
     test_idx = temp_idx[test_rel_idx]
+
     return train_idx, val_idx, test_idx
 
 def compute_global_mean_std(npy_paths: list, sample_limit=5000) -> dict:
@@ -80,31 +85,25 @@ def compute_global_mean_std(npy_paths: list, sample_limit=5000) -> dict:
 # ----------------------- CNN Model -----------------------
 
 def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
-    inp = layers.Input(shape=input_shape)
-    x = layers.Conv2D(32, 3, padding="same", activation="relu")(inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.MaxPool2D()(x)
-    x = layers.Dropout(0.15)(x)
+    model = Sequential([
+        Conv2D(32, (3,3), activation='relu', padding='same', input_shape=input_shape),
+        BatchNormalization(),
+        MaxPooling2D((2,2)),
 
-    x = layers.Conv2D(64, 3, padding="same", activation="relu")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.MaxPool2D()(x)
-    x = layers.Dropout(0.2)(x)
+        Conv2D(64, (3,3), activation='relu', padding='same'),
+        BatchNormalization(),
+        MaxPooling2D((2,2)),
 
-    x = layers.Conv2D(128, 3, padding="same", activation="relu")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.MaxPool2D()(x)
-    x = layers.Dropout(0.25)(x)
+        Conv2D(128, (3,3), activation='relu', padding='same'),
+        BatchNormalization(),
+        MaxPooling2D((2,2)),
 
-    x = layers.GlobalAveragePooling2D()(x)
-    x = layers.Dense(128, activation="relu", kernel_regularizer=regularizers.l2(1e-4))(x)
-    x = layers.Dropout(0.4)(x)
-    out = layers.Dense(num_classes, activation="softmax")(x)
-
-    model = models.Model(inp, out)
-    model.compile(optimizer=tf.keras.optimizers.Adam(1e-4),
-                  loss="categorical_crossentropy",
-                  metrics=["accuracy"])
+        Flatten(),
+        Dense(256, activation='relu'),
+        Dropout(0.5),
+        Dense(num_classes, activation='softmax')
+    ])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
 # ----------------------- Dataset Generator -----------------------
@@ -120,7 +119,7 @@ def dataset_generator(indices, df, scaler, label_to_idx):
         label = label_to_idx[df.iloc[i]["label"]]
         yield arr, label
 
-def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes, batch_size=512, shuffle=True):
+def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes, batch_size=64, shuffle=True):
     ds = tf.data.Dataset.from_generator(
         lambda: dataset_generator(indices, df, scaler, label_to_idx),
         output_signature=(
@@ -137,7 +136,7 @@ def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes,
 
 # ----------------------- Training Pipeline -----------------------
 
-def train_model(csv_path=CNN_OUTPUT_CSV, batch_size=512, epochs=100, test_size=0.2, val_from_test=0.5, disabled_labels=None):
+def train_model(csv_path=CNN_OUTPUT_CSV, batch_size=64, epochs=100, test_size=0.2, val_from_test=0.5, disabled_labels=None):
     df = load_dataset(Path(csv_path))
     if disabled_labels:
         df = df[~df["label"].isin(disabled_labels)]
@@ -174,6 +173,8 @@ def train_model(csv_path=CNN_OUTPUT_CSV, batch_size=512, epochs=100, test_size=0
     loss, acc = model.evaluate(test_ds, verbose=0)
     cm = ct.convert(model, source="tensorflow", inputs=[ct.TensorType(shape=(1,) + input_shape)])
     cm.save(COREML_PATH)
+
+    print(f"Test Loss: {loss:.4f}, Test Accuracy: {acc:.4f}")
 
     return {
         "loss": float(loss),
