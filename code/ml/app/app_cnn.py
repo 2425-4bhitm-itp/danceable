@@ -149,8 +149,11 @@ def evaluate():
         model_path=CNN_MODEL_PATH,
         labels_path=CNN_LABELS_PATH
     )
+    print("Loading evaluation resources...")
+
     evaluator.load_resources()
 
+    print("Starting evaluation...")
     for set_name in ["train", "val", "test"]:
         evaluator.evaluate_from_arrays(result["X_" + set_name], result["y_" + set_name], set_name=set_name)
 
