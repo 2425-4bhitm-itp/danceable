@@ -15,7 +15,8 @@ class AudioDatasetCreatorCNN:
 
     def load_existing(self):
         if self.output_csv.exists() and self.output_csv.stat().st_size > 0:
-            return set(pd.read_csv(self.output_csv)["window_id"].astype(str))
+            df = pd.read_csv(self.output_csv)
+            return set(df.loc[df["npy_path"].map(os.path.exists), "window_id"].astype(str))
         return set()
 
     def process_folder(self, folder_path, label):
