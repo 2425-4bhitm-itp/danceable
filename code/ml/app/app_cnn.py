@@ -113,10 +113,18 @@ def upload_audio():
 
 @flask_app.route("/train", methods=["POST"])
 def train():
+    data = request.get_json()
+    disabled_labels = data.get("disabled_labels", [])
+    test_size = data.get("test_size", 0.2)
+    batch_size = data.get("batch_size", 1028)
+    epochs = data.get("epochs", 100)
+
     train_result = train_model(
+        disabled_labels=disabled_labels,
         csv_path=CNN_OUTPUT_CSV,
-        batch_size=256,
-        epochs=100
+        batch_size=batch_size,
+        epochs=epochs,
+        test_size=test_size
     )
     accuracy = train_result["accuracy"]
     val_accuracy = max(train_result["history"]["val_accuracy"])
