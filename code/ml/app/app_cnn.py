@@ -7,7 +7,7 @@ import numpy as np
 import concurrent.futures
 
 import pandas as pd
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 
 from config.paths import (
     SNIPPETS_DIR,
@@ -202,6 +202,43 @@ def split_and_sort():
 @flask_app.route("/health", methods=["GET"])
 def health():
     return jsonify(status="healthy", message="CNN service running"), 200
+
+
+@flask_app.route("/evaluation_results")
+def show_evaluation_results():
+    results_dir = "/home/luca/danceable/code/ml/evaluation_results"
+    files = os.listdir(results_dir)
+
+    # Filter out CSVs
+    files = [f for f in files if not f.lower().endswith(".csv")]
+
+    # Build HTML
+    html = "<html><head><title>Evaluation Results</title></head><body>"
+    html += f"<h2>Files in {results_dir}</h2><ul>"
+
+    for f in sorted(files):
+        path = os.path.join(results_dir, f)
+        html += f'<li><a href="/evaluation_results/file/{f}">{f}</a></li>'
+
+    html += "</ul></body></html>"
+    return Response(html, mimetype="text/html")
+
+
+@flask_app.route("/evaluation_results/file/<filename>")
+def serve_result_file(filename):
+    results_dir = "/home/luca/danceable/code/ml/evaluation_results"
+    path = os.path.join(results_dir, filename)
+    if not os.path.exists(path):
+        return "File not found", 404
+    with open(path, "rb") as f:
+        data = f.read()
+    # Set MIME type based on extension
+    ext = filename.lower().split(".")[-1]
+    if ext == "png":
+        mimetype = "image/png"
+    else:
+        mimetype = "text/html"
+    return Response(data, mimetype=mimetype)
 
 
 if __name__ == "__main__":
