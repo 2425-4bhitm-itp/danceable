@@ -1,16 +1,18 @@
 import json
 import os
 from pathlib import Path
+
+import coremltools as ct
 import joblib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
-from tensorflow.keras import layers, models, regularizers
+from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
-import coremltools as ct
-from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
+from tensorflow.keras.models import Sequential
+
 from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH
 
 # ----------------------- Threading / CPU Optimization -----------------------
@@ -21,6 +23,7 @@ os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
 
 _model = None
 _scaler = None
+
 
 # ----------------------- Dataset Utilities -----------------------
 
@@ -34,6 +37,7 @@ def load_dataset(csv_path: Path) -> pd.DataFrame:
         raise ValueError(f"CSV missing columns: {missing}")
     return df
 
+
 def balanced_downsample(df: pd.DataFrame) -> pd.DataFrame:
     counts = df["label"].value_counts()
     min_count = counts.min()
@@ -43,6 +47,7 @@ def balanced_downsample(df: pd.DataFrame) -> pd.DataFrame:
         .sample(frac=1.0, random_state=42)
         .reset_index(drop=True)
     )
+
 
 def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5):
     df = df.copy()
@@ -67,6 +72,7 @@ def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5):
 
     return train_idx, val_idx, test_idx
 
+
 def compute_global_mean_std(npy_paths: list, sample_limit=5000) -> dict:
     if len(npy_paths) > sample_limit:
         rng = np.random.default_rng(42)
@@ -82,21 +88,22 @@ def compute_global_mean_std(npy_paths: list, sample_limit=5000) -> dict:
     std = float(np.sqrt(var) if var > 0 else 1.0)
     return {"mean": mean, "std": std}
 
+
 # ----------------------- CNN Model -----------------------
 
 def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
     model = Sequential([
-        Conv2D(32, (3,3), activation='relu', padding='same', input_shape=input_shape),
+        Conv2D(32, (3, 3), activation='relu', padding='same', input_shape=input_shape),
         BatchNormalization(),
-        MaxPooling2D((2,2)),
+        MaxPooling2D((2, 2)),
 
-        Conv2D(64, (3,3), activation='relu', padding='same'),
+        Conv2D(64, (3, 3), activation='relu', padding='same'),
         BatchNormalization(),
-        MaxPooling2D((2,2)),
+        MaxPooling2D((2, 2)),
 
-        Conv2D(128, (3,3), activation='relu', padding='same'),
+        Conv2D(128, (3, 3), activation='relu', padding='same'),
         BatchNormalization(),
-        MaxPooling2D((2,2)),
+        MaxPooling2D((2, 2)),
 
         Flatten(),
         Dense(256, activation='relu'),
@@ -105,6 +112,7 @@ def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
     ])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
+
 
 # ----------------------- Dataset Generator -----------------------
 
@@ -118,6 +126,7 @@ def dataset_generator(indices, df, scaler, label_to_idx):
         arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
         label = label_to_idx[df.iloc[i]["label"]]
         yield arr, label
+
 
 def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes, batch_size=64, shuffle=True):
     ds = tf.data.Dataset.from_generator(
@@ -134,6 +143,7 @@ def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes,
     ds = ds.prefetch(tf.data.AUTOTUNE)
     return ds
 
+
 # ----------------------- Training Pipeline -----------------------
 
 def collect_dataset(tf_dataset):
@@ -149,12 +159,13 @@ def collect_dataset(tf_dataset):
 
 
 def train_model(
-    csv_path=CNN_OUTPUT_CSV,
-    batch_size=64,
-    epochs=100,
-    test_size=0.2,
-    val_from_test=0.5,
-    disabled_labels=None
+        csv_path=CNN_OUTPUT_CSV,
+        batch_size=64,
+        epochs=100,
+        test_size=0.2,
+        val_from_test=0.5,
+        disabled_labels=None,
+        downsampling=True
 ):
     df = load_dataset(Path(csv_path))
 
@@ -163,7 +174,8 @@ def train_model(
         if df.empty:
             raise ValueError("All labels removed by disabled_labels")
 
-    df = balanced_downsample(df)
+    if downsampling:
+        df = balanced_downsample(df)
 
     labels = sorted(df["label"].unique())
     label_to_idx = {l: i for i, l in enumerate(labels)}
@@ -212,9 +224,9 @@ def train_model(
     X_val, y_val = collect_dataset(val_ds)
     X_test, y_test = collect_dataset(test_ds)
 
-    np.savez("train_data.npz", X=X_train, y=y_train)
-    np.savez("val_data.npz", X=X_val, y=y_val)
-    np.savez("test_data.npz", X=X_test, y=y_test)
+    np.savez("/opt/model/train_data.npz", X=X_train, y=y_train)
+    np.savez("/opt/model/val_data.npz", X=X_val, y=y_val)
+    np.savez("/opt/model/test_data.npz", X=X_test, y=y_test)
 
     model = build_cnn(input_shape, num_classes)
     stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
@@ -285,6 +297,7 @@ def classify_audio(file_path: str, extractor, top_k=5) -> dict:
         "predictions": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs[:top_k]],
         "all": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs]
     }
+
 
 def load_model():
     global _model, _scaler
