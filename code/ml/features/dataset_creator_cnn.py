@@ -86,10 +86,10 @@ class AudioDatasetCreatorCNN:
     @staticmethod
     def _ensure_hwc(arr):
         arr = np.asarray(arr, dtype=np.float32)
-        if arr.ndim == 2:
+        if arr.ndim == 3 and arr.shape[0] <= 6:  # assume 6 features max
+            arr = np.transpose(arr, (1, 2, 0))  # (C,H,W) -> (H,W,C)
+        elif arr.ndim == 2:
             arr = arr[..., np.newaxis]
-        elif arr.ndim == 4 and arr.shape[0] == 1:
-            arr = arr[0]
         elif arr.ndim != 3:
             raise ValueError(f"Unexpected tensor shape: {arr.shape}")
         return arr
