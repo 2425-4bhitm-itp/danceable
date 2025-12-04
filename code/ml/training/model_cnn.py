@@ -136,45 +136,109 @@ def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes,
 
 # ----------------------- Training Pipeline -----------------------
 
-def train_model(csv_path=CNN_OUTPUT_CSV, batch_size=64, epochs=100, test_size=0.2, val_from_test=0.5, disabled_labels=None):
+def collect_dataset(tf_dataset):
+    X_list = []
+    y_list = []
+    for X_batch, y_batch in tf_dataset:
+        X_list.append(X_batch.numpy())
+        y_list.append(y_batch.numpy())
+
+    X_full = np.concatenate(X_list, axis=0)
+    y_full = np.concatenate(y_list, axis=0)
+    return X_full, y_full
+
+
+def train_model(
+    csv_path=CNN_OUTPUT_CSV,
+    batch_size=64,
+    epochs=100,
+    test_size=0.2,
+    val_from_test=0.5,
+    disabled_labels=None
+):
     df = load_dataset(Path(csv_path))
+
     if disabled_labels:
         df = df[~df["label"].isin(disabled_labels)]
         if df.empty:
-            raise ValueError("All labels removed due to disabled_labels")
+            raise ValueError("All labels removed by disabled_labels")
+
     df = balanced_downsample(df)
 
     labels = sorted(df["label"].unique())
     label_to_idx = {l: i for i, l in enumerate(labels)}
+
     with open(CNN_LABELS_PATH, "w") as f:
         json.dump(labels, f)
 
     train_idx, val_idx, test_idx = song_wise_split(df, test_size, val_from_test)
-    scaler = compute_global_mean_std(df.iloc[train_idx]["npy_path"].tolist(), sample_limit=4000)
+
+    scaler = compute_global_mean_std(
+        df.iloc[train_idx]["npy_path"].tolist(),
+        sample_limit=4000
+    )
     joblib.dump(scaler, SCALER_PATH)
 
     sample_arr = np.load(df.iloc[train_idx[0]]["npy_path"])["input"].astype(np.float32)
+
     while sample_arr.ndim > 3:
         sample_arr = sample_arr.squeeze(0)
+
     if sample_arr.ndim == 2:
         sample_arr = sample_arr[..., np.newaxis]
+
     input_shape = sample_arr.shape
     num_classes = len(labels)
 
-    train_ds = make_tf_dataset(train_idx, df, scaler, label_to_idx, input_shape, num_classes, batch_size=batch_size, shuffle=True)
-    val_ds = make_tf_dataset(val_idx, df, scaler, label_to_idx, input_shape, num_classes, batch_size=batch_size, shuffle=False)
-    test_ds = make_tf_dataset(test_idx, df, scaler, label_to_idx, input_shape, num_classes, batch_size=batch_size, shuffle=False)
+    train_ds = make_tf_dataset(
+        train_idx, df, scaler, label_to_idx,
+        input_shape, num_classes,
+        batch_size=batch_size, shuffle=True
+    )
+
+    val_ds = make_tf_dataset(
+        val_idx, df, scaler, label_to_idx,
+        input_shape, num_classes,
+        batch_size=batch_size, shuffle=False
+    )
+
+    test_ds = make_tf_dataset(
+        test_idx, df, scaler, label_to_idx,
+        input_shape, num_classes,
+        batch_size=batch_size, shuffle=False
+    )
+
+    X_train, y_train = collect_dataset(train_ds)
+    X_val, y_val = collect_dataset(val_ds)
+    X_test, y_test = collect_dataset(test_ds)
+
+    np.savez("train_data.npz", X=X_train, y=y_train)
+    np.savez("val_data.npz", X=X_val, y=y_val)
+    np.savez("test_data.npz", X=X_test, y=y_test)
 
     model = build_cnn(input_shape, num_classes)
     stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
-    history = model.fit(train_ds, validation_data=val_ds, epochs=epochs, callbacks=[stopper], verbose=1)
+
+    history = model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=epochs,
+        callbacks=[stopper],
+        verbose=1
+    )
+
     model.save(CNN_MODEL_PATH)
 
     loss, acc = model.evaluate(test_ds, verbose=0)
-    cm = ct.convert(model, source="tensorflow", inputs=[ct.TensorType(shape=(1,) + input_shape)])
+
+    cm = ct.convert(
+        model,
+        source="tensorflow",
+        inputs=[ct.TensorType(shape=(1,) + input_shape)]
+    )
     cm.save(COREML_PATH)
 
-    print(f"Test Loss: {loss:.4f}, Test Accuracy: {acc:.4f}")
+    print("Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(loss, acc))
 
     return {
         "loss": float(loss),
@@ -182,16 +246,11 @@ def train_model(csv_path=CNN_OUTPUT_CSV, batch_size=64, epochs=100, test_size=0.
         "labels": labels,
         "input_shape": input_shape,
         "history": history.history,
-        "train_ds": train_ds,
-        "val_ds": val_ds,
-        "test_ds": test_ds,
-        "X_train": df.iloc[train_idx],
-        "y_train": [label_to_idx[l] for l in df.iloc[train_idx]["label"]],
-        "X_val": df.iloc[val_idx],
-        "y_val": [label_to_idx[l] for l in df.iloc[val_idx]["label"]],
-        "X_test": df.iloc[test_idx],
-        "y_test": [label_to_idx[l] for l in df.iloc[test_idx]["label"]]
+        "train_idx": train_idx,
+        "val_idx": val_idx,
+        "test_idx": test_idx
     }
+
 
 # ----------------------- Inference -----------------------
 

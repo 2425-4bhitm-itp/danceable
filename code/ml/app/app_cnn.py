@@ -1,33 +1,24 @@
+import concurrent.futures
 import os
-import json
 import uuid
-from pathlib import Path
 
 import numpy as np
-import concurrent.futures
-
-import pandas as pd
-from flask import Flask, request, jsonify, send_from_directory, Response
+from flask import Flask, request, jsonify, Response
 
 from config.paths import (
     SNIPPETS_DIR,
     SONGS_DIR,
-    LABELS_PATH,
     CNN_MODEL_PATH,
-    CNN_TRAIN_DATA_DIR, CNN_OUTPUT_CSV, SCALER_PATH, CNN_LABELS_PATH, BASE_MODEL_DIR
+    CNN_LABELS_PATH
 )
-
-from features.feature_extractor_cnn import AudioFeatureExtractorCNN
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
+from features.feature_extractor_cnn import AudioFeatureExtractorCNN
 from training.model_cnn import (
-    build_cnn,
     train_model,
-    classify_audio,
-    load_model
+    classify_audio
 )
-
+from training.model_evaluator import DanceModelEvaluator
 from utilities import shorten, sort, file_converter
-
 
 flask_app = Flask(__name__)
 
@@ -67,6 +58,7 @@ def process_single_audio(path, label):
         "npy_path": str(save_path)
     }
     dataset_creator.save_csv([row])
+
 
 @flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
@@ -156,22 +148,9 @@ def train():
         "val_accuracy": val_accuracy
     }), 200
 
-@flask_app.route("/evaluate", methods=["POST"])
+
+@flask_app.route("/evaluate", methods=["GET"])
 def evaluate():
-    from training.model_evaluator import DanceModelEvaluator
-
-    data = request.get_json()
-    disabled_labels = data.get("disabled_labels", [])
-    test_size = data.get("test_size", 0.2)
-
-    # Train or reload model
-    result = train_model(disabled_labels=disabled_labels, test_size=test_size)
-
-    # Save processed arrays
-    np.savez(os.path.join(BASE_MODEL_DIR, "train_data.npz"), X=result["X_train"].to_numpy(), y=np.array(result["y_train"]))
-    np.savez(os.path.join(BASE_MODEL_DIR, "val_data.npz"), X=result["X_val"].to_numpy(), y=np.array(result["y_val"]))
-    np.savez(os.path.join(BASE_MODEL_DIR, "test_data.npz"), X=result["X_test"].to_numpy(), y=np.array(result["y_test"]))
-
     evaluator = DanceModelEvaluator(
         model_path=CNN_MODEL_PATH,
         labels_path=CNN_LABELS_PATH
@@ -179,20 +158,14 @@ def evaluate():
 
     evaluator.load_resources()
 
-    datasets = evaluator.load_preprocessed_data()
-    for set_name in ["train", "val", "test"]:
-        X, y = datasets[set_name]
-        evaluator.evaluate_from_arrays_cnn(X, y, set_name=set_name)
-
-    accuracy = result["accuracy"]
-    val_accuracy = max(result["history"]["val_accuracy"])
+    results = evaluator.evaluate_all()
 
     return jsonify({
         "message": "Evaluation completed",
-        "accuracy": accuracy,
-        "val_accuracy": val_accuracy
+        "train_accuracy": results.get("train"),
+        "val_accuracy": results.get("val"),
+        "test_accuracy": results.get("test")
     }), 200
-
 
 
 @flask_app.route("/classify_audio", methods=["POST"])
@@ -203,7 +176,7 @@ def classify_audio():
         return jsonify({"error": "Missing file_path"}), 400
 
     wav = convert_to_wav_if_needed(file_path)
-    #patches = extractor.extract_features_from_file(wav)
+    # patches = extractor.extract_features_from_file(wav)
 
     pred_result = classify_audio(wav, extractor, top_k=5)
     return jsonify(pred_result), 200
@@ -272,6 +245,6 @@ def serve_result_file(filename):
 
 
 if __name__ == "__main__":
-    #global cnn_model
-    #cnn_model = load_model()
+    # global cnn_model
+    # cnn_model = load_model()
     flask_app.run(host="0.0.0.0", port=5002, debug=True)
