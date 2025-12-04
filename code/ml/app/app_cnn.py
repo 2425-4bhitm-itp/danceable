@@ -68,8 +68,6 @@ def process_single_audio(path, label):
     }
     dataset_creator.save_csv([row])
 
-
-
 @flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
     global processing_flag
@@ -81,27 +79,51 @@ def process_all_audio():
     # Load already processed files from the dataset creator
     processed_files = dataset_creator.load_existing()
 
+    # Collect tasks first so we can show progress
+    tasks = []
+    skipped = 0
+    for label in labels:
+        folder = os.path.join(SNIPPETS_DIR, label)
+        wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
+                     if f.lower().endswith((".wav", ".webm", ".caf"))]
+        for file_path in wav_files:
+            if str(file_path) in processed_files:
+                skipped += 1
+                continue
+            tasks.append((file_path, label))
+
+    total = len(tasks)
+    if total == 0:
+        print(f"No new files to process (skipped {skipped} already processed).")
+        processing_flag = False
+        return jsonify({"message": "No new files to process", "skipped": skipped}), 200
+
+    print(f"Processing {total} files (skipped {skipped} already processed)")
+
     def process_file(file_path, label):
-        if str(file_path) in processed_files:
-            print(f"Skipping already processed file: {file_path}")
-            return
         try:
             process_single_audio(file_path, label)
         except Exception as e:
-            print(f"Error processing {file_path}: {e}")
+            # re-raise so the as_completed loop can report it
+            raise
 
+    processed_count = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-        futures = []
-        for label in labels:
-            folder = os.path.join(SNIPPETS_DIR, label)
-            wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
-                         if f.lower().endswith((".wav", ".webm", ".caf"))]
-            for file_path in wav_files:
-                futures.append(executor.submit(process_file, file_path, label))
+        future_to_task = {executor.submit(process_file, fp, lbl): (fp, lbl) for fp, lbl in tasks}
+
+        for future in concurrent.futures.as_completed(future_to_task):
+            fp, lbl = future_to_task[future]
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Error processing {fp}: {e}")
+            processed_count += 1
+            pct = processed_count / total
+            print(f"Progress: {processed_count}/{total} ({pct:.1%}) - last: {os.path.basename(fp)}")
 
     processing_flag = False
     print("Audio processing completed for all files")
-    return jsonify({"message": "Processing completed"}), 200
+    return jsonify({"message": "Processing completed", "total": total, "skipped": skipped}), 200
 
 
 @flask_app.route("/upload_audio", methods=["POST"])
