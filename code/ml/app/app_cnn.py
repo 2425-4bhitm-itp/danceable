@@ -132,12 +132,14 @@ def train():
     test_size = data.get("test_size", 0.2)
     batch_size = data.get("batch_size", 512)
     epochs = data.get("epochs", 100)
+    downsampling = data.get("downsampling", True)
 
     result = train_model(
         disabled_labels=disabled_labels,
         batch_size=batch_size,
         epochs=epochs,
-        test_size=test_size
+        test_size=test_size,
+        downsampling=downsampling
     )
     accuracy = result["accuracy"]
     val_accuracy = max(result["history"]["val_accuracy"])
@@ -169,7 +171,7 @@ def evaluate():
 
 
 @flask_app.route("/classify_audio", methods=["POST"])
-def classify_audio():
+def classify():
     data = request.get_json()
     file_path = data.get("file_path")
     if not file_path:
