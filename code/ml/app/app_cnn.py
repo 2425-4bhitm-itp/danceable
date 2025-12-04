@@ -14,7 +14,7 @@ from config.paths import (
     SONGS_DIR,
     LABELS_PATH,
     CNN_MODEL_PATH,
-    CNN_TRAIN_DATA_DIR, CNN_OUTPUT_CSV, SCALER_PATH, CNN_LABELS_PATH
+    CNN_TRAIN_DATA_DIR, CNN_OUTPUT_CSV, SCALER_PATH, CNN_LABELS_PATH, BASE_MODEL_DIR
 )
 
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
@@ -167,6 +167,11 @@ def evaluate():
     # Train or reload model
     result = train_model(disabled_labels=disabled_labels, test_size=test_size)
 
+    # Save processed arrays
+    np.savez(os.path.join(BASE_MODEL_DIR, "train_data.npz"), X=result["X_train"].to_numpy(), y=np.array(result["y_train"]))
+    np.savez(os.path.join(BASE_MODEL_DIR, "val_data.npz"), X=result["X_val"].to_numpy(), y=np.array(result["y_val"]))
+    np.savez(os.path.join(BASE_MODEL_DIR, "test_data.npz"), X=result["X_test"].to_numpy(), y=np.array(result["y_test"]))
+
     evaluator = DanceModelEvaluator(
         model_path=CNN_MODEL_PATH,
         labels_path=CNN_LABELS_PATH
@@ -174,8 +179,10 @@ def evaluate():
 
     evaluator.load_resources()
 
+    datasets = evaluator.load_preprocessed_data()
     for set_name in ["train", "val", "test"]:
-        evaluator.evaluate_from_arrays_cnn(result["X_" + set_name], result["y_" + set_name], set_name=set_name)
+        X, y = datasets[set_name]
+        evaluator.evaluate_from_arrays_cnn(X, y, set_name=set_name)
 
     accuracy = result["accuracy"]
     val_accuracy = max(result["history"]["val_accuracy"])

@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import joblib
 import matplotlib.pyplot as plt
@@ -12,6 +13,8 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from tensorflow.keras.models import load_model
 import plotly.graph_objects as go
+
+from config.paths import BASE_MODEL_DIR
 
 
 class DanceModelEvaluator:
@@ -380,3 +383,14 @@ class DanceModelEvaluator:
         self._plot_precision_recall(report_df)
 
         print(f"Evaluation completed for {set_name} set")
+
+    def load_preprocessed_data(self):
+        data_dir = Path(BASE_MODEL_DIR)
+        datasets = {}
+        for split in ["train", "val", "test"]:
+            path = data_dir / f"{split}_data.npz"
+            if not path.exists():
+                raise FileNotFoundError(f"{split}_data.npz not found, run training first")
+            arr = np.load(path, allow_pickle=True)
+            datasets[split] = (arr["X"], arr["y"])
+        return datasets
