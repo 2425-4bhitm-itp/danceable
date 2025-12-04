@@ -13,7 +13,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 from tensorflow.keras.models import Sequential
 
-from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH
+from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH, CNN_DATASET_PATH
 
 # ----------------------- Threading / CPU Optimization -----------------------
 tf.config.threading.set_intra_op_parallelism_threads(os.cpu_count())
@@ -224,9 +224,9 @@ def train_model(
     X_val, y_val = collect_dataset(val_ds)
     X_test, y_test = collect_dataset(test_ds)
 
-    np.savez("/opt/model/train_data.npz", X=X_train, y=y_train)
-    np.savez("/opt/model/val_data.npz", X=X_val, y=y_val)
-    np.savez("/opt/model/test_data.npz", X=X_test, y=y_test)
+    np.savez(CNN_DATASET_PATH + "/train_data.npz", X=X_train, y=y_train)
+    np.savez(CNN_DATASET_PATH + "/val_data.npz", X=X_val, y=y_val)
+    np.savez(CNN_DATASET_PATH + "/test_data.npz", X=X_test, y=y_test)
 
     model = build_cnn(input_shape, num_classes)
     stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)

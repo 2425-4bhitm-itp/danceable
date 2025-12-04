@@ -13,7 +13,7 @@ from sklearn.metrics import confusion_matrix
 from tensorflow.keras.models import load_model
 import plotly.graph_objects as go
 
-from config.paths import BASE_MODEL_DIR
+from config.paths import CNN_DATASET_PATH
 
 
 class DanceModelEvaluator:
@@ -31,7 +31,7 @@ class DanceModelEvaluator:
             self.labels = json.load(f)
 
     def load_preprocessed_data(self):
-        base = Path(BASE_MODEL_DIR)
+        base = Path(CNN_DATASET_PATH)
         sets = {}
         for split in ["train", "val", "test"]:
             p = base / f"{split}_data.npz"

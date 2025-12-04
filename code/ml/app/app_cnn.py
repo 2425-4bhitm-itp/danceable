@@ -9,7 +9,7 @@ from config.paths import (
     SNIPPETS_DIR,
     SONGS_DIR,
     CNN_MODEL_PATH,
-    CNN_LABELS_PATH
+    CNN_LABELS_PATH, EVALUATION_RESULTS_DIR
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
@@ -211,18 +211,17 @@ def health():
 
 @flask_app.route("/evaluation_results")
 def show_evaluation_results():
-    results_dir = "/opt/application/evaluation_results"
-    files = os.listdir(results_dir)
+    files = os.listdir(EVALUATION_RESULTS_DIR)
 
     # Filter out CSVs
     files = [f for f in files if not f.lower().endswith(".csv")]
 
     # Build HTML
     html = "<html><head><title>Evaluation Results</title></head><body>"
-    html += f"<h2>Files in {results_dir}</h2><ul>"
+    html += f"<h2>Files in {EVALUATION_RESULTS_DIR}</h2><ul>"
 
     for f in sorted(files):
-        path = os.path.join(results_dir, f)
+        path = os.path.join(EVALUATION_RESULTS_DIR, f)
         html += f'<li><a href="/evaluation_results/file/{f}">{f}</a></li>'
 
     html += "</ul></body></html>"
@@ -231,8 +230,7 @@ def show_evaluation_results():
 
 @flask_app.route("/evaluation_results/file/<filename>")
 def serve_result_file(filename):
-    results_dir = "/opt/application/evaluation_results"
-    path = os.path.join(results_dir, filename)
+    path = os.path.join(EVALUATION_RESULTS_DIR, filename)
     if not os.path.exists(path):
         return "File not found", 404
     with open(path, "rb") as f:
