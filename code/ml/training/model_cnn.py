@@ -224,9 +224,17 @@ def train_model(
     X_val, y_val = collect_dataset(val_ds)
     X_test, y_test = collect_dataset(test_ds)
 
-    np.savez(CNN_DATASET_PATH + "/train_data.npz", X=X_train, y=y_train)
-    np.savez(CNN_DATASET_PATH + "/val_data.npz", X=X_val, y=y_val)
-    np.savez(CNN_DATASET_PATH + "/test_data.npz", X=X_test, y=y_test)
+
+    dataset_dir = Path(CNN_DATASET_PATH)
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+
+    train_path = dataset_dir / "train_data.npz"
+    val_path = dataset_dir / "val_data.npz"
+    test_path = dataset_dir / "test_data.npz"
+
+    np.savez(str(train_path), X=X_train, y=y_train)
+    np.savez(str(val_path), X=X_val, y=y_val)
+    np.savez(str(test_path), X=X_test, y=y_test)
 
     model = build_cnn(input_shape, num_classes)
     stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
