@@ -155,7 +155,8 @@ def train():
 def evaluate():
     evaluator = DanceModelEvaluator(
         model_path=CNN_MODEL_PATH,
-        labels_path=CNN_LABELS_PATH
+        labels_path=CNN_LABELS_PATH,
+        output_dir=EVALUATION_RESULTS_DIR
     )
 
     evaluator.load_resources()
