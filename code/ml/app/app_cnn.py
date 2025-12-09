@@ -181,7 +181,7 @@ def classify():
     wav = convert_to_wav_if_needed(file_path)
     # patches = extractor.extract_features_from_file(wav)
 
-    pred_result = classify_audio(wav, extractor, top_k=5)
+    pred_result = classify_audio(wav, extractor)
     return jsonify(pred_result), 200
 
 

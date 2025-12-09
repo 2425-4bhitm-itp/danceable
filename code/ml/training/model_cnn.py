@@ -274,7 +274,7 @@ def train_model(
 
 # ----------------------- Inference -----------------------
 
-def classify_audio(file_path: str, extractor, top_k=5) -> dict:
+def classify_audio(file_path: str, extractor) -> dict:
     global _model, _scaler
     if _model is None:
         _model = tf.keras.models.load_model(CNN_MODEL_PATH)
@@ -302,8 +302,7 @@ def classify_audio(file_path: str, extractor, top_k=5) -> dict:
     pairs = sorted(zip(labels, avg.tolist()), key=lambda x: x[1], reverse=True)
 
     return {
-        "predictions": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs[:top_k]],
-        "all": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs]
+        "predictions": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs]
     }
 
 
