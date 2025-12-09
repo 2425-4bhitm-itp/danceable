@@ -248,4 +248,4 @@ def serve_result_file(filename):
 if __name__ == "__main__":
     # global cnn_model
     # cnn_model = load_model()
-    flask_app.run(host="0.0.0.0", port=5002, debug=True)
+    flask_app.run(host="0.0.0.0", port=5001, debug=True)

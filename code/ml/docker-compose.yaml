@@ -2,6 +2,6 @@ services:
   ml:
     image: ml
     ports:
-      - "5002:5002"
+      - "5001:5001"
     volumes:
       - ../../compose/song-storage:/app/song-storage
