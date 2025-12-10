@@ -173,8 +173,8 @@ def evaluate():
 
 @flask_app.route("/classify_audio", methods=["POST"])
 def classify():
-    data = request.get_json()
-    file_path = data.get("file_path")
+    file_path = request.args.get('file_path')
+
     if not file_path:
         return jsonify({"error": "Missing file_path"}), 400
 
