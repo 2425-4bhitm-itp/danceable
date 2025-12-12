@@ -1,7 +1,7 @@
 import os
 import uuid
-from pathlib import Path
-import json
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
 import numpy as np
 from config.paths import (
     SNIPPETS_DIR,
@@ -13,6 +13,7 @@ from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
 from flask import Flask, request, jsonify, Response
 from kubernetes import client, config
+from tensorflow.python.distribute.multi_worker_util import worker_count
 from training.model_cnn import (
     train_model,
     classify_audio
@@ -61,6 +62,7 @@ def process_single_audio(path, label):
 def process_all_audio():
     data = request.get_json()
     deleteFiles = data.get("deleteFiles", False)
+    worker_count = data.get("worker_count", 30)
 
     if deleteFiles:
         dataset_creator.clear_files()
@@ -84,78 +86,33 @@ def process_all_audio():
     if total == 0:
         return jsonify({"message": "No new files to process", "skipped": skipped}), 200
 
-    task_file = Path("/app/tasks.json")
-    with open(task_file, "w") as f:
-        json.dump(tasks, f)
+    processed_count = 0
+    errors = []
 
-    config.load_incluster_config()
-    batch = client.BatchV1Api()
+    def run_task(file_path, label):
+        return process_single_audio(file_path, label)
 
-    job_id = str(uuid.uuid4())[:8]
-    job_name = f"ml-audio-processing-{job_id}"
-    parallelism = 10
+    with ProcessPoolExecutor(max_workers=worker_count) as executor:
+        future_map = {
+            executor.submit(run_task, fp, lbl): (fp, lbl)
+            for fp, lbl in tasks
+        }
 
-    container = client.V1Container(
-        name="worker",
-        image="ghcr.io/2425-4bhitm-itp/ml:latest",
-        command=["python", "-u", "app.worker.py"],
-        env=[
-            client.V1EnvVar(name="JOB_PARALLELISM", value=str(parallelism)),
-            client.V1EnvVar(
-                name="JOB_COMPLETION_INDEX",
-                value_from=client.V1EnvVarSource(
-                    field_ref=client.V1ObjectFieldSelector(
-                        field_path="metadata.annotations['batch.kubernetes.io/job-completion-index']"
-                    )
-                )
-            )
-        ],
-        volume_mounts=[
-            client.V1VolumeMount(
-                name="song-volume",
-                mount_path="/app/song-storage"
-            )
-        ]
-    )
-
-    template = client.V1PodTemplateSpec(
-        metadata=client.V1ObjectMeta(labels={"app": "ml-worker"}),
-        spec=client.V1PodSpec(
-            restart_policy="Never",
-            containers=[container],
-            volumes=[
-                client.V1Volume(
-                    name="song-volume",
-                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                        claim_name="song-volume-claim"
-                    )
-                )
-            ]
-        )
-    )
-
-    job_spec = client.V1JobSpec(
-        parallelism=parallelism,
-        completions=parallelism,
-        completion_mode="Indexed",
-        template=template
-    )
-
-    job = client.V1Job(
-        api_version="batch/v1",
-        kind="Job",
-        metadata=client.V1ObjectMeta(name=job_name),
-        spec=job_spec
-    )
-    with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace") as f:
-        ns = f.read().strip()
-    batch.create_namespaced_job(namespace=ns, body=job)
+        for future in as_completed(future_map):
+            fp, lbl = future_map[future]
+            try:
+                future.result()
+            except Exception as e:
+                errors.append((fp, str(e)))
+            processed_count += 1
+            pct = processed_count / total
+            print("progress", processed_count, "/", total, f"{pct:.1%}", "last:", os.path.basename(fp))
 
     return jsonify({
-        "message": "Batch processing job started",
-        "total_tasks": total,
+        "message": "Processing completed",
+        "total": total,
         "skipped": skipped,
-        "job_name": job_name
+        "errors": len(errors)
     }), 200
 
 
