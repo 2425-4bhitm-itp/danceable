@@ -23,6 +23,8 @@ spec:
           volumeMounts:
             - name: song-volume
               mountPath: /app/song-storage
+            - name: model-volume
+              mountPath: /opt/model
           startupProbe:
             httpGet:
               path: /health
@@ -45,6 +47,9 @@ spec:
         - name: song-volume
           persistentVolumeClaim:
             claimName: song-volume-claim
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: model-volume-claim
 
 
 

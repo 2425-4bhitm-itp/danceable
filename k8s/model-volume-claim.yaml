@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: song-volume-claim
+  name: model-volume-claim
   annotations:
-    nfs.io/storage-path: "song-volume-claim"
+    nfs.io/storage-path: "model-volume-claim"
 spec:
   accessModes:
     - ReadWriteOnce
