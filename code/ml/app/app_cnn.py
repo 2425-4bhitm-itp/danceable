@@ -147,8 +147,9 @@ def process_all_audio():
         metadata=client.V1ObjectMeta(name=job_name),
         spec=job_spec
     )
-
-    batch.create_namespaced_job(namespace="default", body=job)
+    with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace") as f:
+        ns = f.read().strip()
+    batch.create_namespaced_job(namespace=ns, body=job)
 
     return jsonify({
         "message": "Batch processing job started",
