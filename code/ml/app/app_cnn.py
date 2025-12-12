@@ -26,6 +26,10 @@ cnn_model = None
 
 csv_lock = Lock()
 
+extractor = AudioFeatureExtractorCNN()
+dataset_creator = AudioDatasetCreatorCNN(extractor)
+
+
 def save_csv_threadsafe(dataset, rows):
     with csv_lock:
         dataset.save_csv(rows)
@@ -87,6 +91,7 @@ def run_task(file_paths_labels, total_tasks, worker_count):
 
 @flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
+    global extractor, dataset_creator
     data = request.get_json()
     deleteFiles = data.get("deleteFiles", False)
     worker_count = data.get("worker_count", 30)
