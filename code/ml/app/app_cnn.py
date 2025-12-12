@@ -11,9 +11,8 @@ from config.paths import (
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
-from flask import Flask, request, jsonify, Response
-from kubernetes import client, config
-from tensorflow.python.distribute.multi_worker_util import worker_count
+from flask import Flask, Response
+from flask import request, jsonify
 from training.model_cnn import (
     train_model,
     classify_audio
@@ -30,7 +29,19 @@ cnn_model = None
 processing_flag = False
 
 
-def convert_to_wav_if_needed(file_path):
+def create_extractor():
+    from app.feature_extractor import AudioFeatureExtractorCNN
+    return AudioFeatureExtractorCNN()
+
+
+def create_dataset_creator():
+    from app.dataset_creator import AudioDatasetCreatorCNN
+    extractor = create_extractor()
+    return AudioDatasetCreatorCNN(extractor)
+
+
+def convert_to_wav_if_needed_local(file_path):
+    from app.file_converter import file_converter
     if file_path.endswith(".wav"):
         return file_path
     if file_path.endswith(".webm"):
@@ -40,13 +51,14 @@ def convert_to_wav_if_needed(file_path):
     return file_path
 
 
-def process_single_audio(path, label):
-    wav_path = convert_to_wav_if_needed(path)
+def run_task(file_path, label):
+    extractor = create_extractor()
+    dataset = create_dataset_creator()
+    wav_path = convert_to_wav_if_needed_local(file_path)
     tensor = extractor.wav_to_spectrogram_tensor(wav_path)
 
     window_id = str(uuid.uuid4())
-    save_path = dataset_creator.output_dir / f"{window_id}.npz"
-
+    save_path = dataset.output_dir / f"{window_id}.npz"
     np.savez(save_path, input=tensor, label=label)
 
     row = {
@@ -55,7 +67,7 @@ def process_single_audio(path, label):
         "label": label,
         "npy_path": str(save_path)
     }
-    dataset_creator.save_csv([row])
+    dataset.save_csv([row])
 
 
 @flask_app.route("/process_all_audio", methods=["POST"])
@@ -89,14 +101,8 @@ def process_all_audio():
     processed_count = 0
     errors = []
 
-    def run_task(file_path, label):
-        return process_single_audio(file_path, label)
-
     with ProcessPoolExecutor(max_workers=worker_count) as executor:
-        future_map = {
-            executor.submit(run_task, fp, lbl): (fp, lbl)
-            for fp, lbl in tasks
-        }
+        future_map = {executor.submit(run_task, fp, lbl): (fp, lbl) for fp, lbl in tasks}
 
         for future in as_completed(future_map):
             fp, lbl = future_map[future]
