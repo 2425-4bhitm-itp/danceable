@@ -1,6 +1,7 @@
 import os
 import uuid
 from pathlib import Path
+import json
 import numpy as np
 from config.paths import (
     SNIPPETS_DIR,
@@ -42,14 +43,11 @@ def process_single_audio(path, label):
     wav_path = convert_to_wav_if_needed(path)
     tensor = extractor.wav_to_spectrogram_tensor(wav_path)
 
-    # Generate unique filename
     window_id = str(uuid.uuid4())
     save_path = dataset_creator.output_dir / f"{window_id}.npz"
 
-    # Save the tensor
     np.savez(save_path, input=tensor, label=label)
 
-    # Update CSV so we can track processed files
     row = {
         "window_id": window_id,
         "filename": os.path.basename(wav_path),
