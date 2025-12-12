@@ -1,10 +1,7 @@
-import concurrent.futures
 import os
 import uuid
 
 import numpy as np
-from flask import Flask, request, jsonify, Response
-
 from config.paths import (
     SNIPPETS_DIR,
     SONGS_DIR,
@@ -13,6 +10,8 @@ from config.paths import (
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
+from flask import Flask, request, jsonify, Response
+from kubernetes import client, config
 from training.model_cnn import (
     train_model,
     classify_audio
@@ -62,18 +61,17 @@ def process_single_audio(path, label):
 
 @flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
-    global processing_flag
-    processing_flag = True
+    data = request.get_json()
+    deleteFiles = data.get("deleteFiles", False)
+
+    if deleteFiles:
+        dataset_creator.clear_files()
 
     labels = os.listdir(SNIPPETS_DIR)
-    print(f"Starting audio processing for {len(labels)} labels")
-
-    # Load already processed files from the dataset creator
     processed_files = dataset_creator.load_existing()
-
-    # Collect tasks first so we can show progress
     tasks = []
     skipped = 0
+
     for label in labels:
         folder = os.path.join(SNIPPETS_DIR, label)
         wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
@@ -86,36 +84,80 @@ def process_all_audio():
 
     total = len(tasks)
     if total == 0:
-        print(f"No new files to process (skipped {skipped} already processed).")
-        processing_flag = False
         return jsonify({"message": "No new files to process", "skipped": skipped}), 200
 
-    print(f"Processing {total} files (skipped {skipped} already processed)")
+    task_file = Path("/app/tasks.json")
+    with open(task_file, "w") as f:
+        json.dump(tasks, f)
 
-    def process_file(file_path, label):
-        try:
-            process_single_audio(file_path, label)
-        except Exception as e:
-            # re-raise so the as_completed loop can report it
-            raise
+    config.load_incluster_config()
+    batch = client.BatchV1Api()
 
-    processed_count = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-        future_to_task = {executor.submit(process_file, fp, lbl): (fp, lbl) for fp, lbl in tasks}
+    job_id = str(uuid.uuid4())[:8]
+    job_name = f"ml-audio-processing-{job_id}"
+    parallelism = 10
 
-        for future in concurrent.futures.as_completed(future_to_task):
-            fp, lbl = future_to_task[future]
-            try:
-                future.result()
-            except Exception as e:
-                print(f"Error processing {fp}: {e}")
-            processed_count += 1
-            pct = processed_count / total
-            print(f"Progress: {processed_count}/{total} ({pct:.1%}) - last: {os.path.basename(fp)}")
+    container = client.V1Container(
+        name="worker",
+        image="ghcr.io/2425-4bhitm-itp/ml:latest",
+        command=["python", "-u", "app.worker.py"],
+        env=[
+            client.V1EnvVar(name="JOB_PARALLELISM", value=str(parallelism)),
+            client.V1EnvVar(
+                name="JOB_COMPLETION_INDEX",
+                value_from=client.V1EnvVarSource(
+                    field_ref=client.V1ObjectFieldSelector(
+                        field_path="metadata.annotations['batch.kubernetes.io/job-completion-index']"
+                    )
+                )
+            )
+        ],
+        volume_mounts=[
+            client.V1VolumeMount(
+                name="song-volume",
+                mount_path="/app/song-storage"
+            )
+        ]
+    )
 
-    processing_flag = False
-    print("Audio processing completed for all files")
-    return jsonify({"message": "Processing completed", "total": total, "skipped": skipped}), 200
+    template = client.V1PodTemplateSpec(
+        metadata=client.V1ObjectMeta(labels={"app": "ml-worker"}),
+        spec=client.V1PodSpec(
+            restart_policy="Never",
+            containers=[container],
+            volumes=[
+                client.V1Volume(
+                    name="song-volume",
+                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                        claim_name="song-volume-claim"
+                    )
+                )
+            ]
+        )
+    )
+
+    job_spec = client.V1JobSpec(
+        parallelism=parallelism,
+        completions=parallelism,
+        completion_mode="Indexed",
+        template=template
+    )
+
+    job = client.V1Job(
+        api_version="batch/v1",
+        kind="Job",
+        metadata=client.V1ObjectMeta(name=job_name),
+        spec=job_spec
+    )
+
+    batch.create_namespaced_job(namespace="default", body=job)
+
+    return jsonify({
+        "message": "Batch processing job started",
+        "total_tasks": total,
+        "skipped": skipped,
+        "job_name": job_name
+    }), 200
 
 
 @flask_app.route("/upload_audio", methods=["POST"])
@@ -183,11 +225,6 @@ def classify():
 
     pred_result = classify_audio(wav, extractor)
     return jsonify(pred_result), 200
-
-
-@flask_app.route("/processing", methods=["GET"])
-def processing():
-    return jsonify({"processing": processing_flag}), 200
 
 
 @flask_app.route("/split_files", methods=["POST"])

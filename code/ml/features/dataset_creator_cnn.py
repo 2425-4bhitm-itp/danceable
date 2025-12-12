@@ -93,3 +93,9 @@ class AudioDatasetCreatorCNN:
         elif arr.ndim != 3:
             raise ValueError(f"Unexpected tensor shape: {arr.shape}")
         return arr
+
+    def clear_files(self):
+        if self.output_csv.exists():
+            self.output_csv.unlink()
+        for npz_file in self.output_dir.glob("*.npz"):
+            npz_file.unlink()
