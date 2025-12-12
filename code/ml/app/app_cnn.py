@@ -19,14 +19,16 @@ from training.model_cnn import (
 )
 from training.model_evaluator import DanceModelEvaluator
 from utilities import shorten, sort, file_converter
+from multiprocessing import Lock
 
 flask_app = Flask(__name__)
-
-extractor = AudioFeatureExtractorCNN()
-dataset_creator = AudioDatasetCreatorCNN(extractor)
-
 cnn_model = None
-processing_flag = False
+
+csv_lock = Lock()
+
+def save_csv_threadsafe(dataset, rows):
+    with csv_lock:
+        dataset.save_csv(rows)
 
 
 def create_extractor():
@@ -51,23 +53,36 @@ def convert_to_wav_if_needed_local(file_path):
     return file_path
 
 
-def run_task(file_path, label):
-    extractor = create_extractor()
-    dataset = create_dataset_creator()
-    wav_path = convert_to_wav_if_needed_local(file_path)
-    tensor = extractor.wav_to_spectrogram_tensor(wav_path)
+def run_task(file_paths_labels, total_tasks, worker_count):
+    batch_size = max(1, int((total_tasks / worker_count) * 0.1))
 
-    window_id = str(uuid.uuid4())
-    save_path = dataset.output_dir / f"{window_id}.npz"
-    np.savez(save_path, input=tensor, label=label)
+    extractor = AudioFeatureExtractorCNN()
+    dataset = AudioDatasetCreatorCNN(extractor)
+    batch_rows = []
 
-    row = {
-        "window_id": window_id,
-        "filename": os.path.basename(wav_path),
-        "label": label,
-        "npy_path": str(save_path)
-    }
-    dataset.save_csv([row])
+    for file_path, label in file_paths_labels:
+        wav_path = convert_to_wav_if_needed_local(file_path)
+        tensor = extractor.wav_to_spectrogram_tensor(wav_path)
+
+        window_id = str(uuid.uuid4())
+        save_path = dataset.output_dir / f"{window_id}.npz"
+        np.savez(save_path, input=tensor, label=label)
+
+        row = {
+            "window_id": window_id,
+            "filename": os.path.basename(wav_path),
+            "label": label,
+            "npy_path": str(save_path)
+        }
+
+        batch_rows.append(row)
+
+        if len(batch_rows) >= batch_size:
+            save_csv_threadsafe(dataset, batch_rows)
+            batch_rows = []
+
+    if batch_rows:
+        save_csv_threadsafe(dataset, batch_rows)
 
 
 @flask_app.route("/process_all_audio", methods=["POST"])
@@ -83,7 +98,6 @@ def process_all_audio():
     processed_files = dataset_creator.load_existing()
     tasks = []
     skipped = 0
-
     for label in labels:
         folder = os.path.join(SNIPPETS_DIR, label)
         wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
@@ -98,21 +112,24 @@ def process_all_audio():
     if total == 0:
         return jsonify({"message": "No new files to process", "skipped": skipped}), 200
 
-    processed_count = 0
+    chunk_size = (total // worker_count) + 1
+    chunks = [tasks[i:i + chunk_size] for i in range(0, total, chunk_size)]
+
     errors = []
+    processed_count = 0
 
     with ProcessPoolExecutor(max_workers=worker_count) as executor:
-        future_map = {executor.submit(run_task, fp, lbl): (fp, lbl) for fp, lbl in tasks}
+        future_map = {executor.submit(run_task, chunk, total, worker_count): chunk for chunk in chunks}
 
         for future in as_completed(future_map):
-            fp, lbl = future_map[future]
             try:
                 future.result()
             except Exception as e:
-                errors.append((fp, str(e)))
-            processed_count += 1
+                for fp, _ in future_map[future]:
+                    errors.append((fp, str(e)))
+            processed_count += len(future_map[future])
             pct = processed_count / total
-            print("progress", processed_count, "/", total, f"{pct:.1%}", "last:", os.path.basename(fp))
+            print(f"Progress: {processed_count}/{total} ({pct:.1%})")
 
     return jsonify({
         "message": "Processing completed",
