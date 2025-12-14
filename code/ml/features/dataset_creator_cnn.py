@@ -99,3 +99,18 @@ class AudioDatasetCreatorCNN:
             self.output_csv.unlink()
         for npz_file in self.output_dir.glob("*.npz"):
             npz_file.unlink()
+
+    def merge_csv_files(self, csv_paths):
+        if not csv_paths:
+            return
+
+        with open(self.csv_path, "w", newline="", encoding="utf-8") as out_f:
+            writer = None
+
+            for path in csv_paths:
+                with open(path, "r", newline="", encoding="utf-8") as in_f:
+                    reader = csv.DictReader(in_f)
+                    if writer is None:
+                        writer = csv.DictWriter(out_f, fieldnames=reader.fieldnames)
+                        writer.writeheader()
+                    writer.writerows(reader)
