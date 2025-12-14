@@ -35,17 +35,6 @@ def save_csv_threadsafe(dataset, rows):
         dataset.save_csv(rows)
 
 
-def create_extractor():
-    from features.feature_extractor_cnn import AudioFeatureExtractorCNN
-    return AudioFeatureExtractorCNN()
-
-
-def create_dataset_creator():
-    from features.dataset_creator_cnn import AudioDatasetCreatorCNN
-    extractor = create_extractor()
-    return AudioDatasetCreatorCNN(extractor)
-
-
 def convert_to_wav_if_needed_local(file_path):
     from utilities import file_converter
     if file_path.endswith(".wav"):
@@ -57,93 +46,104 @@ def convert_to_wav_if_needed_local(file_path):
     return file_path
 
 
-def run_task(file_paths_labels, total_tasks, worker_count):
-    batch_size = max(1, int((total_tasks / worker_count) * 0.1))
-
+def run_task(file_paths_labels, output_dir):
     extractor = AudioFeatureExtractorCNN()
-    dataset = AudioDatasetCreatorCNN(extractor)
-    batch_rows = []
+    rows = []
 
     for file_path, label in file_paths_labels:
         wav_path = convert_to_wav_if_needed_local(file_path)
         tensor = extractor.wav_to_spectrogram_tensor(wav_path)
 
         window_id = str(uuid.uuid4())
-        save_path = dataset.output_dir / f"{window_id}.npz"
+        save_path = output_dir / f"{window_id}.npz"
         np.savez(save_path, input=tensor, label=label)
 
-        row = {
+        rows.append({
             "window_id": window_id,
             "filename": os.path.basename(wav_path),
             "label": label,
             "npy_path": str(save_path)
-        }
+        })
 
-        batch_rows.append(row)
-
-        if len(batch_rows) >= batch_size:
-            save_csv_threadsafe(dataset, batch_rows)
-            batch_rows = []
-
-    if batch_rows:
-        save_csv_threadsafe(dataset, batch_rows)
+    return rows
 
 
 @flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
-    global extractor, dataset_creator
     data = request.get_json()
     deleteFiles = data.get("deleteFiles", False)
     worker_count = data.get("worker_count", 30)
 
-    print(f"Starting processing all audio with {worker_count} workers...")
+    print(f"Starting processing all audio with {worker_count} workers")
+
     if deleteFiles:
         dataset_creator.clear_files()
 
     labels = os.listdir(SNIPPETS_DIR)
-    processed_files = dataset_creator.load_existing()
+    processed_ids = dataset_creator.load_existing()
+
     tasks = []
     skipped = 0
+
     for label in labels:
         folder = os.path.join(SNIPPETS_DIR, label)
-        wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
-                     if f.lower().endswith((".wav", ".webm", ".caf"))]
+        wav_files = [
+            os.path.join(folder, f)
+            for f in os.listdir(folder)
+            if f.lower().endswith((".wav", ".webm", ".caf"))
+        ]
+
         for file_path in wav_files:
-            if str(file_path) in processed_files:
+            if file_path in processed_ids:
                 skipped += 1
                 continue
             tasks.append((file_path, label))
 
     total = len(tasks)
     if total == 0:
-        return jsonify({"message": "No new files to process", "skipped": skipped}), 200
+        return jsonify({
+            "message": "No new files to process",
+            "skipped": skipped
+        }), 200
 
-    chunk_size = (total // worker_count) + 1
+    chunk_size = max(1, total // worker_count)
     chunks = [tasks[i:i + chunk_size] for i in range(0, total, chunk_size)]
 
-    errors = []
     processed_count = 0
+    errors = []
 
     with ProcessPoolExecutor(max_workers=worker_count) as executor:
-        future_map = {executor.submit(run_task, chunk, total, worker_count): chunk for chunk in chunks}
+        futures = [
+            executor.submit(run_task, chunk, dataset_creator.output_dir)
+            for chunk in chunks
+        ]
 
-        for future in as_completed(future_map):
+        for future in as_completed(futures):
             try:
-                future.result()
+                rows = future.result()
+                dataset_creator.save_csv(rows)
+                processed_count += len(rows)
+                pct = processed_count / total
+                print(f"Progress {processed_count}/{total} ({pct:.1%})")
             except Exception as e:
-                for fp, _ in future_map[future]:
-                    errors.append((fp, str(e)))
-            processed_count += len(future_map[future])
-            pct = processed_count / total
-            print(f"Progress: {processed_count}/{total} ({pct:.1%})")
+                errors.append(str(e))
+
     message = jsonify({
         "message": "Processing completed",
         "total": total,
         "skipped": skipped,
         "errors": len(errors)
     })
+
     print(message)
+
+    if errors:
+        print("Errors:")
+        for err in errors:
+            print(err)
+
     return message, 200
+
 
 
 @flask_app.route("/train", methods=["POST"])
