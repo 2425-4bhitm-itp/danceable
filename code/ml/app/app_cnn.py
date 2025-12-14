@@ -249,4 +249,4 @@ def serve_result_file(filename):
 
 
 if __name__ == "__main__":
-    flask_app.run(host="0.0.0.0", port=5001, debug=True, use_reloader=False)
+    flask_app.run(host="0.0.0.0", port=5001, debug=True)
