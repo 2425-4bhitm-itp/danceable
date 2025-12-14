@@ -1,8 +1,6 @@
 import concurrent.futures
-import csv
 import os
 import uuid
-from pathlib import Path
 
 import numpy as np
 from flask import Flask, request, jsonify, Response
@@ -41,44 +39,22 @@ def convert_to_wav_if_needed(file_path):
     return file_path
 
 
-def process_chunk(chunk, output_dir, csv_dir):
-    extractor = AudioFeatureExtractorCNN()
+def process_single_audio(path, label):
+    wav_path = convert_to_wav_if_needed(path)
+    tensor = extractor.wav_to_spectrogram_tensor(wav_path)
 
-    rows = []
-    pid = os.getpid()
-    csv_path = Path(csv_dir) / f"metadata_worker_{pid}.csv"
+    window_id = str(uuid.uuid4())
+    save_path = dataset_creator.output_dir / f"{window_id}.npz"
 
-    for file_path, label in chunk:
-        wav_path = convert_to_wav_if_needed(file_path)
-        tensor = extractor.wav_to_spectrogram_tensor(wav_path)
+    np.savez(save_path, input=tensor, label=label)
 
-        window_id = str(uuid.uuid4())
-        save_path = Path(output_dir) / f"{window_id}.npz"
-
-        np.savez(save_path, input=tensor, label=label)
-
-        rows.append({
-            "window_id": window_id,
-            "filename": os.path.basename(wav_path),
-            "label": label,
-            "npy_path": str(save_path)
-        })
-
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-        writer.writeheader()
-        writer.writerows(rows)
-
-    return str(csv_path), len(rows)
-
-
-def split_into_chunks(items, n):
-    k, m = divmod(len(items), n)
-    return [
-        items[i * k + min(i, m):(i + 1) * k + min(i + 1, m)]
-        for i in range(n)
-        if items[i * k + min(i, m):(i + 1) * k + min(i + 1, m)]
-    ]
+    row = {
+        "window_id": window_id,
+        "filename": os.path.basename(wav_path),
+        "label": label,
+        "npy_path": str(save_path)
+    }
+    dataset_creator.save_csv([row])
 
 
 @flask_app.route("/process_all_audio", methods=["POST"])
@@ -87,7 +63,7 @@ def process_all_audio():
     processing_flag = True
 
     data = request.get_json()
-    worker_count = int(data.get("worker_count", os.cpu_count()))
+    worker_count = data.get("worker_count", 1)
     delete_files = data.get("delete_files", False)
 
     print(f"Worker count set to: {worker_count}")
@@ -104,55 +80,54 @@ def process_all_audio():
 
     tasks = []
     skipped = 0
-
     for label in labels:
         folder = os.path.join(SNIPPETS_DIR, label)
-        for f in os.listdir(folder):
-            if not f.lower().endswith((".wav", ".webm", ".caf")):
-                continue
-            file_path = os.path.join(folder, f)
+        wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
+                     if f.lower().endswith((".wav", ".webm", ".caf"))]
+        for file_path in wav_files:
             if str(file_path) in processed_files:
                 skipped += 1
                 continue
             tasks.append((file_path, label))
 
-    if not tasks:
+    total = len(tasks)
+    if total == 0:
+        print(f"No new files to process (skipped {skipped} already processed).")
         processing_flag = False
         return jsonify({"message": "No new files to process", "skipped": skipped}), 200
 
-    chunks = split_into_chunks(tasks, worker_count)
+    print(f"Processing {total} files (skipped {skipped} already processed)")
 
-    csv_dir = dataset_creator.output_dir / "csv_workers"
-    csv_dir.mkdir(exist_ok=True)
+    def process_file(file_path, label):
+        try:
+            process_single_audio(file_path, label)
+        except Exception as e:
+            raise
 
-    csv_paths = []
-    total_processed = 0
+    processed_count = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
+        future_to_task = {executor.submit(process_file, fp, lbl): (fp, lbl) for fp, lbl in tasks}
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=worker_count) as executor:
-        futures = [
-            executor.submit(
-                process_chunk,
-                chunk,
-                dataset_creator.output_dir,
-                csv_dir
-            )
-            for chunk in chunks
-        ]
-
-        for future in concurrent.futures.as_completed(futures):
-            csv_path, count = future.result()
-            csv_paths.append(csv_path)
-            total_processed += count
-
-    dataset_creator.merge_csv_files(csv_paths)
+        for future in concurrent.futures.as_completed(future_to_task):
+            fp, lbl = future_to_task[future]
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Error processing {fp}: {e}")
+            processed_count += 1
+            pct = processed_count / total
+            print(f"Progress: {processed_count}/{total} ({pct:.1%}) - last: {os.path.basename(fp)}")
 
     processing_flag = False
+    print("Audio processing completed for all files")
+    return jsonify({"message": "Processing completed", "total": total, "skipped": skipped}), 200
 
-    return jsonify({
-        "message": "Processing completed",
-        "processed": total_processed,
-        "skipped": skipped
-    }), 200
+
+@flask_app.route("/upload_audio", methods=["POST"])
+def upload_audio():
+    data = request.get_json()
+    process_single_audio(data["file_path"], data["label"])
+    return jsonify({"message": "File processed"}), 200
 
 
 @flask_app.route("/train", methods=["POST"])
