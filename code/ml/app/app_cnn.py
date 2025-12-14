@@ -18,7 +18,7 @@ from training.model_cnn import (
     classify_audio
 )
 from training.model_evaluator import DanceModelEvaluator
-from utilities import shorten, sort, file_converter
+from utilities import shorten, sort
 from multiprocessing import Lock
 
 flask_app = Flask(__name__)
@@ -36,18 +36,18 @@ def save_csv_threadsafe(dataset, rows):
 
 
 def create_extractor():
-    from app.feature_extractor import AudioFeatureExtractorCNN
+    from features.feature_extractor_cnn import AudioFeatureExtractorCNN
     return AudioFeatureExtractorCNN()
 
 
 def create_dataset_creator():
-    from app.dataset_creator import AudioDatasetCreatorCNN
+    from features.dataset_creator_cnn import AudioDatasetCreatorCNN
     extractor = create_extractor()
     return AudioDatasetCreatorCNN(extractor)
 
 
 def convert_to_wav_if_needed_local(file_path):
-    from app.file_converter import file_converter
+    from utilities import file_converter
     if file_path.endswith(".wav"):
         return file_path
     if file_path.endswith(".webm"):
@@ -96,6 +96,7 @@ def process_all_audio():
     deleteFiles = data.get("deleteFiles", False)
     worker_count = data.get("worker_count", 30)
 
+    print(f"Starting processing all audio with {worker_count} workers...")
     if deleteFiles:
         dataset_creator.clear_files()
 
@@ -135,20 +136,14 @@ def process_all_audio():
             processed_count += len(future_map[future])
             pct = processed_count / total
             print(f"Progress: {processed_count}/{total} ({pct:.1%})")
-
-    return jsonify({
+    message = jsonify({
         "message": "Processing completed",
         "total": total,
         "skipped": skipped,
         "errors": len(errors)
-    }), 200
-
-
-@flask_app.route("/upload_audio", methods=["POST"])
-def upload_audio():
-    data = request.get_json()
-    process_single_audio(data["file_path"], data["label"])
-    return jsonify({"message": "File processed"}), 200
+    })
+    print(message)
+    return message, 200
 
 
 @flask_app.route("/train", methods=["POST"])
@@ -204,7 +199,7 @@ def classify():
     if not file_path:
         return jsonify({"error": "Missing file_path"}), 400
 
-    wav = convert_to_wav_if_needed(file_path)
+    wav = convert_to_wav_if_needed_local(file_path)
     # patches = extractor.extract_features_from_file(wav)
 
     pred_result = classify_audio(wav, extractor)
@@ -267,6 +262,4 @@ def serve_result_file(filename):
 
 
 if __name__ == "__main__":
-    # global cnn_model
-    # cnn_model = load_model()
     flask_app.run(host="0.0.0.0", port=5001, debug=True)
