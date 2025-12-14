@@ -1,8 +1,10 @@
+import concurrent.futures
 import os
 import uuid
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import numpy as np
+from flask import Flask, request, jsonify, Response
+
 from config.paths import (
     SNIPPETS_DIR,
     SONGS_DIR,
@@ -11,32 +13,23 @@ from config.paths import (
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
-from flask import Flask, Response
-from flask import request, jsonify
 from training.model_cnn import (
     train_model,
     classify_audio
 )
 from training.model_evaluator import DanceModelEvaluator
-from utilities import shorten, sort
-from multiprocessing import Lock
+from utilities import shorten, sort, file_converter
 
 flask_app = Flask(__name__)
-cnn_model = None
-
-csv_lock = Lock()
 
 extractor = AudioFeatureExtractorCNN()
 dataset_creator = AudioDatasetCreatorCNN(extractor)
 
-
-def save_csv_threadsafe(dataset, rows):
-    with csv_lock:
-        dataset.save_csv(rows)
+cnn_model = None
+processing_flag = False
 
 
-def convert_to_wav_if_needed_local(file_path):
-    from utilities import file_converter
+def convert_to_wav_if_needed(file_path):
     if file_path.endswith(".wav"):
         return file_path
     if file_path.endswith(".webm"):
@@ -46,104 +39,95 @@ def convert_to_wav_if_needed_local(file_path):
     return file_path
 
 
-def run_task(file_paths_labels, output_dir):
-    extractor = AudioFeatureExtractorCNN()
-    rows = []
+def process_single_audio(path, label):
+    wav_path = convert_to_wav_if_needed(path)
+    tensor = extractor.wav_to_spectrogram_tensor(wav_path)
 
-    for file_path, label in file_paths_labels:
-        wav_path = convert_to_wav_if_needed_local(file_path)
-        tensor = extractor.wav_to_spectrogram_tensor(wav_path)
+    window_id = str(uuid.uuid4())
+    save_path = dataset_creator.output_dir / f"{window_id}.npz"
 
-        window_id = str(uuid.uuid4())
-        save_path = output_dir / f"{window_id}.npz"
-        np.savez(save_path, input=tensor, label=label)
+    np.savez(save_path, input=tensor, label=label)
 
-        rows.append({
-            "window_id": window_id,
-            "filename": os.path.basename(wav_path),
-            "label": label,
-            "npy_path": str(save_path)
-        })
-
-    return rows
+    row = {
+        "window_id": window_id,
+        "filename": os.path.basename(wav_path),
+        "label": label,
+        "npy_path": str(save_path)
+    }
+    dataset_creator.save_csv([row])
 
 
 @flask_app.route("/process_all_audio", methods=["POST"])
 def process_all_audio():
+    global processing_flag
+    processing_flag = True
+
     data = request.get_json()
-    deleteFiles = data.get("deleteFiles", False)
-    worker_count = data.get("worker_count", 30)
+    worker_count = data.get("worker_count", 1)
+    delete_files = data.get("delete_files", False)
 
-    print(f"Starting processing all audio with {worker_count} workers")
+    print(f"Worker count set to: {worker_count}")
+    print(f"Available CPU cores: {os.cpu_count()}")
 
-    if deleteFiles:
+    if delete_files:
         dataset_creator.clear_files()
+        print("Cleared existing processed files")
 
     labels = os.listdir(SNIPPETS_DIR)
-    processed_ids = dataset_creator.load_existing()
+    print(f"Starting audio processing for {len(labels)} labels")
+
+    processed_files = dataset_creator.load_existing()
 
     tasks = []
     skipped = 0
-
     for label in labels:
         folder = os.path.join(SNIPPETS_DIR, label)
-        wav_files = [
-            os.path.join(folder, f)
-            for f in os.listdir(folder)
-            if f.lower().endswith((".wav", ".webm", ".caf"))
-        ]
-
+        wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
+                     if f.lower().endswith((".wav", ".webm", ".caf"))]
         for file_path in wav_files:
-            if file_path in processed_ids:
+            if str(file_path) in processed_files:
                 skipped += 1
                 continue
             tasks.append((file_path, label))
 
     total = len(tasks)
     if total == 0:
-        return jsonify({
-            "message": "No new files to process",
-            "skipped": skipped
-        }), 200
+        print(f"No new files to process (skipped {skipped} already processed).")
+        processing_flag = False
+        return jsonify({"message": "No new files to process", "skipped": skipped}), 200
 
-    chunk_size = max(1, total // worker_count)
-    chunks = [tasks[i:i + chunk_size] for i in range(0, total, chunk_size)]
+    print(f"Processing {total} files (skipped {skipped} already processed)")
+
+    def process_file(file_path, label):
+        try:
+            process_single_audio(file_path, label)
+        except Exception as e:
+            raise
 
     processed_count = 0
-    errors = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
+        future_to_task = {executor.submit(process_file, fp, lbl): (fp, lbl) for fp, lbl in tasks}
 
-    with ProcessPoolExecutor(max_workers=worker_count) as executor:
-        futures = [
-            executor.submit(run_task, chunk, dataset_creator.output_dir)
-            for chunk in chunks
-        ]
-
-        for future in as_completed(futures):
+        for future in concurrent.futures.as_completed(future_to_task):
+            fp, lbl = future_to_task[future]
             try:
-                rows = future.result()
-                dataset_creator.save_csv(rows)
-                processed_count += len(rows)
-                pct = processed_count / total
-                print(f"Progress {processed_count}/{total} ({pct:.1%})")
+                future.result()
             except Exception as e:
-                errors.append(str(e))
+                print(f"Error processing {fp}: {e}")
+            processed_count += 1
+            pct = processed_count / total
+            print(f"Progress: {processed_count}/{total} ({pct:.1%}) - last: {os.path.basename(fp)}")
 
-    message = jsonify({
-        "message": "Processing completed",
-        "total": total,
-        "skipped": skipped,
-        "errors": len(errors)
-    })
+    processing_flag = False
+    print("Audio processing completed for all files")
+    return jsonify({"message": "Processing completed", "total": total, "skipped": skipped}), 200
 
-    print(message)
 
-    if errors:
-        print("Errors:")
-        for err in errors:
-            print(err)
-
-    return message, 200
-
+@flask_app.route("/upload_audio", methods=["POST"])
+def upload_audio():
+    data = request.get_json()
+    process_single_audio(data["file_path"], data["label"])
+    return jsonify({"message": "File processed"}), 200
 
 
 @flask_app.route("/train", methods=["POST"])
@@ -199,11 +183,15 @@ def classify():
     if not file_path:
         return jsonify({"error": "Missing file_path"}), 400
 
-    wav = convert_to_wav_if_needed_local(file_path)
-    # patches = extractor.extract_features_from_file(wav)
+    wav = convert_to_wav_if_needed(file_path)
 
     pred_result = classify_audio(wav, extractor)
     return jsonify(pred_result), 200
+
+
+@flask_app.route("/processing", methods=["GET"])
+def processing():
+    return jsonify({"processing": processing_flag}), 200
 
 
 @flask_app.route("/split_files", methods=["POST"])
@@ -252,7 +240,6 @@ def serve_result_file(filename):
         return "File not found", 404
     with open(path, "rb") as f:
         data = f.read()
-    # Set MIME type based on extension
     ext = filename.lower().split(".")[-1]
     if ext == "png":
         mimetype = "image/png"
