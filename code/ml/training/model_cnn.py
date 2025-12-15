@@ -8,12 +8,12 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
-from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 from tensorflow.keras.models import Sequential
 
 from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH, CNN_DATASET_PATH
+import time
 
 # ----------------------- Threading / CPU Optimization -----------------------
 tf.config.threading.set_intra_op_parallelism_threads(os.cpu_count())
@@ -23,6 +23,7 @@ os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
 
 _model = None
 _scaler = None
+_labels = None
 
 
 # ----------------------- Dataset Utilities -----------------------
@@ -167,6 +168,7 @@ def train_model(
         disabled_labels=None,
         downsampling=True
 ):
+    global _labels
     df = load_dataset(Path(csv_path))
 
     if disabled_labels:
@@ -177,11 +179,12 @@ def train_model(
     if downsampling:
         df = balanced_downsample(df)
 
-    labels = sorted(df["label"].unique())
-    label_to_idx = {l: i for i, l in enumerate(labels)}
+    _labels = sorted(df["label"].unique())
+    label_to_idx = {l: i for i, l in enumerate(_labels)}
 
     with open(CNN_LABELS_PATH, "w") as f:
-        json.dump(labels, f)
+        json.dump(_labels, f)
+
 
     train_idx, val_idx, test_idx = song_wise_split(df, test_size, val_from_test)
 
@@ -200,7 +203,7 @@ def train_model(
         sample_arr = sample_arr[..., np.newaxis]
 
     input_shape = sample_arr.shape
-    num_classes = len(labels)
+    num_classes = len(_labels)
 
     train_ds = make_tf_dataset(
         train_idx, df, scaler, label_to_idx,
@@ -263,7 +266,7 @@ def train_model(
     return {
         "loss": float(loss),
         "accuracy": float(acc),
-        "labels": labels,
+        "labels": _labels,
         "input_shape": input_shape,
         "history": history.history,
         "train_idx": train_idx,
@@ -275,34 +278,43 @@ def train_model(
 # ----------------------- Inference -----------------------
 
 def classify_audio(file_path: str, extractor) -> dict:
-    global _model, _scaler
+    global _model, _scaler, _labels
     if _model is None:
         _model = tf.keras.models.load_model(CNN_MODEL_PATH)
     if _scaler is None:
         _scaler = joblib.load(SCALER_PATH)
+    if _labels is None:
+        with open(CNN_LABELS_PATH) as f:
+            _labels = json.load(f)
 
     patches = extractor.extract_features_from_file(file_path)
     if not patches:
         raise ValueError("No patches extracted")
 
-    arrs = []
-    for p in patches:
-        a = p.astype(np.float32)
-        if a.ndim == 4 and a.shape[0] == 1:
-            a = a[0]
-        a = (a - _scaler["mean"]) / (_scaler["std"] + 1e-8)
-        arrs.append(a)
+    batch = np.asarray(patches, dtype=np.float32)
 
-    batch = np.stack(arrs, axis=0)
+    if batch.ndim == 5 and batch.shape[1] == 1:
+        batch = batch[:, 0]
+
+    mean = _scaler["mean"]
+    std = _scaler["std"]
+
+    batch = (batch - mean) / (std + 1e-8)
+
     probs = _model.predict(batch, verbose=0)
     avg = probs.mean(axis=0)
 
-    with open(CNN_LABELS_PATH) as f:
-        labels = json.load(f)
-    pairs = sorted(zip(labels, avg.tolist()), key=lambda x: x[1], reverse=True)
+    pairs = sorted(
+        zip(_labels, avg.tolist()),
+        key=lambda x: x[1],
+        reverse=True
+    )
 
     return {
-        "predictions": [{"danceName": l, "confidence": float(f"{c:.6f}")} for l, c in pairs]
+        "predictions": [
+            {"danceName": label, "confidence": float(f"{conf:.6f}")}
+            for label, conf in pairs
+        ]
     }
 
 
