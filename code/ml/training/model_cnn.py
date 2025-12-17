@@ -20,8 +20,6 @@ tf.config.threading.set_inter_op_parallelism_threads(os.cpu_count())
 os.environ["OMP_NUM_THREADS"] = str(os.cpu_count())
 os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
 
-strategy = tf.distribute.MultiWorkerMirroredStrategy()
-
 _model = None
 _scaler = None
 _labels = None
@@ -263,18 +261,17 @@ def train_model(
     val_ds = val_ds.with_options(options)
     test_ds = test_ds.with_options(options)
 
-    with strategy.scope():
-        if model_config is None:
-            model = build_cnn(input_shape, num_classes)
-        else:
-            model = build_cnn(
-                input_shape=input_shape,
-                num_classes=num_classes,
-                filters=model_config["filters"],
-                dense_units=model_config["dense_units"],
-                dropout_rate=model_config["dropout_rate"],
-                learning_rate=model_config["learning_rate"]
-            )
+    if model_config is None:
+        model = build_cnn(input_shape, num_classes)
+    else:
+        model = build_cnn(
+            input_shape=input_shape,
+            num_classes=num_classes,
+            filters=model_config["filters"],
+            dense_units=model_config["dense_units"],
+            dropout_rate=model_config["dropout_rate"],
+            learning_rate=model_config["learning_rate"]
+        )
 
     stopper = EarlyStopping(
         monitor="val_loss",

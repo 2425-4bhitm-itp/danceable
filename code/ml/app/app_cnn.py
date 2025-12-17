@@ -1,5 +1,6 @@
 import concurrent.futures
 import os
+import subprocess
 import uuid
 
 import numpy as np
@@ -14,7 +15,6 @@ from config.paths import (
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
 from training.model_cnn import (
-    train_model,
     classify_audio
 )
 from training.model_evaluator import DanceModelEvaluator
@@ -133,27 +133,15 @@ def upload_audio():
 @flask_app.route("/train", methods=["POST"])
 def train():
     data = request.get_json()
-    disabled_labels = data.get("disabled_labels", [])
-    test_size = data.get("test_size", 0.2)
-    batch_size = data.get("batch_size", 512)
-    epochs = data.get("epochs", 100)
-    downsampling = data.get("downsampling", True)
+    # Optionally pass parameters via env vars
+    env = os.environ.copy()
+    env["BATCH_SIZE"] = str(data.get("batch_size", 512))
+    env["EPOCHS"] = str(data.get("epochs", 100))
 
-    result = train_model(
-        disabled_labels=disabled_labels,
-        batch_size=batch_size,
-        epochs=epochs,
-        test_size=test_size,
-        downsampling=downsampling
-    )
-    accuracy = result["accuracy"]
-    val_accuracy = max(result["history"]["val_accuracy"])
+    # Start the training script asynchronously
+    subprocess.Popen(["python", "/opt/application/training/train_distributed.py"], env=env)
 
-    return jsonify({
-        "message": "Training completed",
-        "accuracy": accuracy,
-        "val_accuracy": val_accuracy
-    }), 200
+    return jsonify({"message": "Training started"}), 200
 
 
 @flask_app.route("/evaluate", methods=["GET"])
