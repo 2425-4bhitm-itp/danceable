@@ -20,6 +20,8 @@ tf.config.threading.set_inter_op_parallelism_threads(os.cpu_count())
 os.environ["OMP_NUM_THREADS"] = str(os.cpu_count())
 os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
 
+strategy = tf.distribute.MultiWorkerMirroredStrategy()
+
 _model = None
 _scaler = None
 _labels = None
@@ -260,8 +262,6 @@ def train_model(
     train_ds = train_ds.with_options(options)
     val_ds = val_ds.with_options(options)
     test_ds = test_ds.with_options(options)
-
-    strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
     with strategy.scope():
         if model_config is None:
