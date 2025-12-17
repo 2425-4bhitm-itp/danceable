@@ -13,7 +13,6 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 from tensorflow.keras.models import Sequential
 
 from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH, CNN_DATASET_PATH
-import time
 
 # ----------------------- Threading / CPU Optimization -----------------------
 tf.config.threading.set_intra_op_parallelism_threads(os.cpu_count())
@@ -64,7 +63,6 @@ def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5):
 
     # Second split: val vs test, maintain stratification
     temp_y = y[temp_idx]
-    temp_groups = groups[temp_idx]
     sss = StratifiedShuffleSplit(n_splits=1, test_size=val_from_test, random_state=42)
     val_rel_idx, test_rel_idx = next(sss.split(temp_idx.reshape(-1, 1), temp_y))
 
@@ -92,27 +90,40 @@ def compute_global_mean_std(npy_paths: list, sample_limit=5000) -> dict:
 
 # ----------------------- CNN Model -----------------------
 
-def build_cnn(input_shape: tuple, num_classes: int) -> tf.keras.Model:
-    model = Sequential([
-        Conv2D(32, (3, 3), activation='relu', padding='same', input_shape=input_shape),
-        BatchNormalization(),
-        MaxPooling2D((2, 2)),
+def build_cnn(
+        input_shape: tuple,
+        num_classes: int,
+        filters=(32, 64, 128),
+        kernel_size=(3, 3),
+        dense_units=256,
+        dropout_rate=0.5,
+        learning_rate=1e-3
+) -> tf.keras.Model:
+    model = Sequential()
 
-        Conv2D(64, (3, 3), activation='relu', padding='same'),
-        BatchNormalization(),
-        MaxPooling2D((2, 2)),
+    for i, f in enumerate(filters):
+        if i == 0:
+            model.add(Conv2D(f, kernel_size, activation="relu", padding="same", input_shape=input_shape))
+        else:
+            model.add(Conv2D(f, kernel_size, activation="relu", padding="same"))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D((2, 2)))
 
-        Conv2D(128, (3, 3), activation='relu', padding='same'),
-        BatchNormalization(),
-        MaxPooling2D((2, 2)),
+    model.add(Flatten())
+    model.add(Dense(dense_units, activation="relu"))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(num_classes, activation="softmax"))
 
-        Flatten(),
-        Dense(256, activation='relu'),
-        Dropout(0.5),
-        Dense(num_classes, activation='softmax')
-    ])
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+
+    model.compile(
+        optimizer=optimizer,
+        loss="categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+
     return model
+
 
 
 # ----------------------- Dataset Generator -----------------------
@@ -166,7 +177,8 @@ def train_model(
         test_size=0.2,
         val_from_test=0.5,
         disabled_labels=None,
-        downsampling=True
+        downsampling=True,
+        model_config=None
 ):
     global _labels
     df = load_dataset(Path(csv_path))
@@ -239,7 +251,18 @@ def train_model(
     np.savez(str(val_path), X=X_val, y=y_val)
     np.savez(str(test_path), X=X_test, y=y_test)
 
-    model = build_cnn(input_shape, num_classes)
+    if model_config is None:
+        model = build_cnn(input_shape, num_classes)
+    else:
+        model = build_cnn(
+            input_shape=input_shape,
+            num_classes=num_classes,
+            filters=model_config["filters"],
+            dense_units=model_config["dense_units"],
+            dropout_rate=model_config["dropout_rate"],
+            learning_rate=model_config["learning_rate"]
+        )
+
     stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
 
     history = model.fit(
@@ -263,7 +286,7 @@ def train_model(
 
     print("Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(loss, acc))
 
-    return {
+    message = {
         "loss": float(loss),
         "accuracy": float(acc),
         "labels": _labels,
@@ -273,6 +296,10 @@ def train_model(
         "val_idx": val_idx,
         "test_idx": test_idx
     }
+
+    print(message)
+
+    return message
 
 
 # ----------------------- Inference -----------------------

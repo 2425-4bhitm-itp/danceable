@@ -1,104 +1,72 @@
-from itertools import chain
 import itertools
-import pandas as pd
-import matplotlib.pyplot as plt
-import os
-import seaborn as sns
+import json
+import uuid
+from datetime import datetime
+from pathlib import Path
 
-ALL_FEATURE_GROUPS = ["mfcc", "chroma", "mel", "contrast", "tonnetz",
-                      "tempogram", "rms", "spectral_flux", "onset", "tempo"]
-RESULTS_CSV = "feature_combination_results.csv"
+import tensorflow as tf
 
-def normal_model():
-    from training.model import train
-    from training.model_evaluator import DanceModelEvaluator
-    from config.paths import MODEL_PATH, SCALER_PATH, LABELS_PATH, FEATURES_CSV
+from training.model_cnn import train_model, build_cnn
 
-    #main()
-    #analyze_results()
 
-    result = train(disabled_labels= ["foxtrott", "tango"],
-          selected_features=all_groups,
-          test_size=0.15
+def run_experiment(config: dict) -> dict:
+    message = train_model(
+        batch_size=config["batch_size"],
+        epochs=config["epochs"],
+        model_config=config
     )
 
-    # results = []
-    #
-    # for i in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]:
-    #     print(f"Training with test size: {i}")
-    #     result = train(
-    #         disabled_labels=["foxtrott"],
-    #         selected_features=all_groups,
-    #         test_size=i
-    #     )
-    #
-    #     results.append({
-    #         "test_size": i,
-    #         "loss": result["loss"],
-    #         "accuracy": result["accuracy"]
-    #     })
-    #
-    # df_results = pd.DataFrame(results)
-    # print(df_results.to_string(index=False))
+    return {
+        "filters": config["filters"],
+        "dense_units": config["dense_units"],
+        "dropout_rate": config["dropout_rate"],
+        "learning_rate": config["learning_rate"],
+        "batch_size": config["batch_size"],
+        "test_loss": message["loss"],
+        "test_accuracy": message["accuracy"]
+    }
 
 
-    evaluator = DanceModelEvaluator(
-        model_path=MODEL_PATH,
-        scaler_path=SCALER_PATH,
-        labels_path=LABELS_PATH,
-        features_csv=FEATURES_CSV
-    )
+def main():
+    search_space = {
+        "filters": [
+            (32, 64, 128),
+            (32, 64)
+        ],
+        "dense_units": [128, 256],
+        "dropout_rate": [0.3, 0.5],
+        "learning_rate": [1e-3, 3e-4],
+        "batch_size": [32, 64],
+        "epochs": [100]
+    }
 
-    evaluator.load_resources()
-    evaluator.evaluate_from_arrays(result["X_test"], result["y_test"], set_name="test")
+    keys = list(search_space.keys())
+    runs = list(itertools.product(*search_space.values()))
 
-    evaluator.evaluate_from_arrays(result["X_train"], result["y_train"], set_name="train")
+    log_dir = Path("cnn_runs")
+    log_dir.mkdir(exist_ok=True)
 
-    evaluator.evaluate_from_arrays(result["X_val"], result["y_val"], set_name="val")
+    results = []
 
-def cnn_model():
-    from training.model_cnn import train_model as train
-    from training.model_evaluator import DanceModelEvaluator
-    from config.paths import MODEL_PATH, SCALER_PATH, LABELS_PATH, FEATURES_CSV
+    for values in runs:
+        config = dict(zip(keys, values))
+        run_id = uuid.uuid4().hex[:8]
+        timestamp = datetime.utcnow().isoformat()
 
-    result = train(
-        disabled_labels=["foxtrott", "tango"],
-        test_size=0.15
-    )
+        tf.keras.backend.clear_session()
 
-    # results = []
-    # for i in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]:
-    #     print(f"Training with test size: {i}")
-    #     r = train(
-    #         disabled_labels=["foxtrott"],
-    #         selected_features=all_groups,
-    #         test_size=i,
-    #         input_shape=None,
-    #         num_classes=None
-    #     )
-    #     results.append({
-    #         "test_size": i,
-    #         "loss": r["loss"],
-    #         "accuracy": r["accuracy"]
-    #     })
-    # df_results = pd.DataFrame(results)
-    # print(df_results.to_string(index=False))
+        result = run_experiment(config)
+        result["run_id"] = run_id
+        result["timestamp"] = timestamp
 
+        results.append(result)
 
-    evaluator = DanceModelEvaluator(
-        model_path=MODEL_PATH,
-        scaler_path=SCALER_PATH,
-        labels_path=LABELS_PATH,
-        features_csv=FEATURES_CSV
-    )
+        with open(log_dir / f"run_{run_id}.json", "w") as f:
+            json.dump(result, f, indent=2)
 
-    evaluator.load_resources()
-
-    evaluator.evaluate_from_arrays_cnn(result["X_test"], result["y_test"], set_name="test_cnn")
-    evaluator.evaluate_from_arrays_cnn(result["X_val"], result["y_val"], set_name="val_cnn")
-    evaluator.evaluate_from_arrays_cnn(result["X_train"], result["y_train"], set_name="train_cnn")
+    with open(log_dir / "summary.json", "w") as f:
+        json.dump(results, f, indent=2)
 
 
 if __name__ == "__main__":
-    #normal_model()
-    cnn_model()
+    main()
