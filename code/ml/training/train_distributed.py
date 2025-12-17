@@ -1,6 +1,6 @@
 import os
 import tensorflow as tf
-from training.model_cnn import train_model
+from model_cnn import train_model
 
 strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
