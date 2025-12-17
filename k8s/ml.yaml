@@ -1,96 +1,6 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ml-train
-spec:
-  clusterIP: None
-  selector:
-    app: ml-train
-  ports:
-    - name: tf
-      port: 2222
-      targetPort: 2222
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: ml-train
-spec:
-  serviceName: ml-train
-  replicas: 0
-  selector:
-    matchLabels:
-      app: ml-train
-  template:
-    metadata:
-      labels:
-        app: ml-train
-    spec:
-      containers:
-        - name: ml-train
-          image: ghcr.io/2425-4bhitm-itp/ml:latest
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 2222
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: REPLICAS
-              value: "4"
-            - name: BATCH_SIZE
-              value: "512"
-            - name: EPOCHS
-              value: "100"
-            - name: DISABLED_LABELS
-              value: ""
-            - name: TEST_SIZE
-              value: "0.1"
-            - name: DOWNSAMPLING
-              value: "false"
-          command:
-            - /bin/sh
-            - -c
-            - |
-              INDEX=$(echo "${POD_NAME}" | awk -F'-' '{print $NF}')
-
-              WORKERS=""
-              i=0
-              while [ $i -lt ${REPLICAS} ]; do
-                WORKERS="${WORKERS}\"ml-train-${i}.ml-train:2222\","
-                i=$((i+1))
-              done
-              WORKERS=$(echo ${WORKERS} | sed 's/,$//')
-
-              export TF_CONFIG=$(cat <<EOF
-              {
-                "cluster": {
-                  "worker": [ ${WORKERS} ]
-                },
-                "task": {
-                  "type": "worker",
-                  "index": ${INDEX}
-                }
-              }
-              EOF
-              )
-
-              echo "TF_CONFIG=${TF_CONFIG}"
-              exec python -m training.train_distributed
-
-      volumes:
-        - name: song-volume
-          persistentVolumeClaim:
-            claimName: song-volume-claim
-        - name: model-volume
-          persistentVolumeClaim:
-            claimName: model-volume-claim
-
----
-apiVersion: v1
-kind: Service
-metadata:
   name: ml-api
 spec:
   selector:
@@ -130,6 +40,24 @@ spec:
               mountPath: /app/song-storage
             - name: model-volume
               mountPath: /opt/model
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            failureThreshold: 12
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 30
+            periodSeconds: 60
       volumes:
         - name: song-volume
           persistentVolumeClaim:
@@ -137,3 +65,91 @@ spec:
         - name: model-volume
           persistentVolumeClaim:
             claimName: model-volume-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-train
+spec:
+  clusterIP: None
+  selector:
+    app: ml-train
+  ports:
+    - name: tf
+      port: 2222
+      targetPort: 2222
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ml-train
+spec:
+  serviceName: ml-train
+  replicas: 4
+  selector:
+    matchLabels:
+      app: ml-train
+  template:
+    metadata:
+      labels:
+        app: ml-train
+    spec:
+      containers:
+        - name: ml-train
+          image: ghcr.io/2425-4bhitm-itp/ml:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 2222
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: REPLICAS
+              value: "4"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              INDEX=$(echo "${POD_NAME}" | awk -F'-' '{print $NF}')
+
+              WORKERS=""
+              i=0
+              while [ $i -lt ${REPLICAS} ]; do
+                WORKERS="${WORKERS}\"ml-train-${i}.ml-train:2222\","
+                i=$((i+1))
+              done
+              WORKERS=$(echo ${WORKERS} | sed 's/,$//')
+
+              export TF_CONFIG=$(cat <<EOF
+              {
+                "cluster": {
+                  "worker": [ ${WORKERS} ]
+                },
+                "task": {
+                  "type": "worker",
+                  "index": ${INDEX}
+                }
+              }
+              EOF
+              )
+
+              echo "TF_CONFIG=${TF_CONFIG}"
+              exec python -m training.train_distributed
+          volumeMounts:
+            - name: song-volume
+              mountPath: /app/song-storage
+            - name: model-volume
+              mountPath: /opt/model
+            - name: env-volume
+              mountPath: /env
+      volumes:
+        - name: song-volume
+          persistentVolumeClaim:
+            claimName: song-volume-claim
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: model-volume-claim
+        - name: env-volume
+          persistentVolumeClaim:
+            claimName: train-env-claim

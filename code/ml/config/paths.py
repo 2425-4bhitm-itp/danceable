@@ -3,6 +3,7 @@ from pathlib import Path
 # Base directory for all storage
 BASE_DIR = Path("/app/song-storage")
 BASE_MODEL_DIR = Path("/opt/model")
+TRAIN_ENV_PATH = Path("/env")
 
 # Model files
 MODEL_PATH = BASE_MODEL_DIR / "model.keras"

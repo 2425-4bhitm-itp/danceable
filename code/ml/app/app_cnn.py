@@ -10,7 +10,9 @@ from config.paths import (
     SNIPPETS_DIR,
     SONGS_DIR,
     CNN_MODEL_PATH,
-    CNN_LABELS_PATH, EVALUATION_RESULTS_DIR
+    CNN_LABELS_PATH,
+    EVALUATION_RESULTS_DIR,
+    TRAIN_ENV_PATH
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
@@ -133,46 +135,29 @@ def upload_audio():
 @flask_app.route("/train", methods=["POST"])
 def train():
     data = request.get_json()
-    replicas = 4
+
+    # default parameters
     batch_size = str(data.get("batch_size", 512))
     epochs = str(data.get("epochs", 100))
     disabled_labels = data.get("disabled_labels", [])
     test_size = str(data.get("test_size", 0.1))
     downsampling = str(data.get("downsampling", False)).lower()
 
-    config.load_incluster_config()
-    api = client.AppsV1Api()
+    # write parameters to files in shared PVC
+    os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
+    with open(os.path.join(TRAIN_ENV_PATH, "BATCH_SIZE"), "w") as f:
+        f.write(batch_size)
+    with open(os.path.join(TRAIN_ENV_PATH, "EPOCHS"), "w") as f:
+        f.write(epochs)
+    with open(os.path.join(TRAIN_ENV_PATH, "DISABLED_LABELS"), "w") as f:
+        f.write(",".join(disabled_labels))
+    with open(os.path.join(TRAIN_ENV_PATH, "TEST_SIZE"), "w") as f:
+        f.write(test_size)
+    with open(os.path.join(TRAIN_ENV_PATH, "DOWNSAMPLING"), "w") as f:
+        f.write(downsampling)
 
-    body = {
-        "spec": {
-            "replicas": replicas,
-            "template": {
-                "spec": {
-                    "containers": [
-                        {
-                            "name": "ml-train",
-                            "env": [
-                                {"name": "BATCH_SIZE", "value": batch_size},
-                                {"name": "EPOCHS", "value": epochs},
-                                {"name": "DISABLED_LABELS", "value": ",".join(disabled_labels)},
-                                {"name": "TEST_SIZE", "value": test_size},
-                                {"name": "DOWNSAMPLING", "value": downsampling}
-                            ]
-                        }
-                    ]
-                }
-            }
-        }
-    }
-
-    with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace") as f:
-        ns = f.read().strip()
-
-    api.patch_namespaced_stateful_set(
-        name="ml-train",
-        namespace=ns,
-        body=body
-    )
+    with open(os.path.join(TRAIN_ENV_PATH, "START_TRAINING"), "w") as f:
+        f.write("true")
 
     return jsonify({"message": "Training triggered"}), 200
 
