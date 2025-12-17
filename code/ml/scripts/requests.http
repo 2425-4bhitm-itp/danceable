@@ -14,6 +14,12 @@ content-type: application/json
 ### process all audio
 
 POST https://it210190.cloud.htl-leonding.ac.at/process_all_audio
+content-type: application/json
+
+{
+  "delete_files": true,
+  "worker_count": 16
+}
 
 ### train
 
@@ -37,12 +43,7 @@ GET https://it210190.cloud.htl-leonding.ac.at/evaluate
 
 ### classify
 
-POST https://it210190.cloud.htl-leonding.ac.at/classify_audio
-content-type: application/json
-
-{
-    "file_path": "/app/song-storage/songs/snippets/rumba/99bpm_rumba_backstreet-boys-i-want-it-that-way-3_part1.wav"
-}
+POST https://it210190.cloud.htl-leonding.ac.at/classify_audio?file_path=/opt/application/data/Sway_Michael_Buble_Handy.wav
 
 ### is proccessing
 

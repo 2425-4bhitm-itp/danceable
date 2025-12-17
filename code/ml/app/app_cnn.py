@@ -1,10 +1,10 @@
 import concurrent.futures
 import os
-import subprocess
 import uuid
 
 import numpy as np
 from flask import Flask, request, jsonify, Response
+from kubernetes import client, config
 
 from config.paths import (
     SNIPPETS_DIR,
@@ -133,15 +133,48 @@ def upload_audio():
 @flask_app.route("/train", methods=["POST"])
 def train():
     data = request.get_json()
-    # Optionally pass parameters via env vars
-    env = os.environ.copy()
-    env["BATCH_SIZE"] = str(data.get("batch_size", 512))
-    env["EPOCHS"] = str(data.get("epochs", 100))
+    replicas = 4
+    batch_size = str(data.get("batch_size", 512))
+    epochs = str(data.get("epochs", 100))
+    disabled_labels = data.get("disabled_labels", [])
+    test_size = str(data.get("test_size", 0.1))
+    downsampling = str(data.get("downsampling", False)).lower()
 
-    # Start the training script asynchronously
-    subprocess.Popen(["python", "/opt/application/training/train_distributed.py"], env=env)
+    config.load_incluster_config()
+    api = client.AppsV1Api()
 
-    return jsonify({"message": "Training started"}), 200
+    body = {
+        "spec": {
+            "replicas": replicas,
+            "template": {
+                "spec": {
+                    "containers": [
+                        {
+                            "name": "ml-train",
+                            "env": [
+                                {"name": "BATCH_SIZE", "value": batch_size},
+                                {"name": "EPOCHS", "value": epochs},
+                                {"name": "DISABLED_LABELS", "value": ",".join(disabled_labels)},
+                                {"name": "TEST_SIZE", "value": test_size},
+                                {"name": "DOWNSAMPLING", "value": downsampling}
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+
+    with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace") as f:
+        ns = f.read().strip()
+
+    api.patch_namespaced_stateful_set(
+        name="ml-train",
+        namespace=ns,
+        body=body
+    )
+
+    return jsonify({"message": "Training triggered"}), 200
 
 
 @flask_app.route("/evaluate", methods=["GET"])

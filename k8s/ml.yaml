@@ -1,39 +1,37 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ml
+  name: ml-train
 spec:
   clusterIP: None
   selector:
-    app: ml
+    app: ml-train
   ports:
     - name: tf
-      port: 5001
-      targetPort: 5001
+      port: 2222
+      targetPort: 2222
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: ml
+  name: ml-train
 spec:
-  serviceName: ml
-  replicas: 4
+  serviceName: ml-train
+  replicas: 0
   selector:
     matchLabels:
-      app: ml
+      app: ml-train
   template:
     metadata:
       labels:
-        app: ml
+        app: ml-train
     spec:
       containers:
-        - name: ml
+        - name: ml-train
           image: ghcr.io/2425-4bhitm-itp/ml:latest
           imagePullPolicy: Always
-
           ports:
             - containerPort: 2222
-
           env:
             - name: POD_NAME
               valueFrom:
@@ -41,7 +39,16 @@ spec:
                   fieldPath: metadata.name
             - name: REPLICAS
               value: "4"
-
+            - name: BATCH_SIZE
+              value: "512"
+            - name: EPOCHS
+              value: "100"
+            - name: DISABLED_LABELS
+              value: ""
+            - name: TEST_SIZE
+              value: "0.1"
+            - name: DOWNSAMPLING
+              value: "false"
           command:
             - /bin/sh
             - -c
@@ -51,10 +58,9 @@ spec:
               WORKERS=""
               i=0
               while [ $i -lt ${REPLICAS} ]; do
-                WORKERS="${WORKERS}\"ml-${i}.ml:2222\","
+                WORKERS="${WORKERS}\"ml-train-${i}.ml-train:2222\","
                 i=$((i+1))
               done
-
               WORKERS=$(echo ${WORKERS} | sed 's/,$//')
 
               export TF_CONFIG=$(cat <<EOF
@@ -71,14 +77,59 @@ spec:
               )
 
               echo "TF_CONFIG=${TF_CONFIG}"
-              exec python -m app.app_cnn
+              exec python -m training.train_distributed
 
+      volumes:
+        - name: song-volume
+          persistentVolumeClaim:
+            claimName: song-volume-claim
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: model-volume-claim
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-api
+spec:
+  selector:
+    app: ml-api
+  ports:
+    - name: http
+      port: 5001
+      targetPort: 5001
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ml-api
+spec:
+  serviceName: ml-api
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-api
+  template:
+    metadata:
+      labels:
+        app: ml-api
+    spec:
+      containers:
+        - name: ml-api
+          image: ghcr.io/2425-4bhitm-itp/ml:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001
+          command:
+            - python
+            - -m
+            - app.app_cnn
           volumeMounts:
             - name: song-volume
               mountPath: /app/song-storage
             - name: model-volume
               mountPath: /opt/model
-
       volumes:
         - name: song-volume
           persistentVolumeClaim:
