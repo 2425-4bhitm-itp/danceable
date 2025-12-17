@@ -2,8 +2,8 @@ import os
 import time
 import tensorflow as tf
 from training.model_cnn import train_model
+from config.paths import TRAIN_ENV_PATH
 
-TRAIN_ENV_PATH = "/env"  # must match PVC mount
 REPLICAS = int(os.environ.get("REPLICAS", 4))
 POD_NAME = os.environ.get("POD_NAME")
 
