@@ -17,7 +17,7 @@ metadata:
   name: ml
 spec:
   serviceName: ml
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: ml
@@ -71,7 +71,7 @@ spec:
               )
 
               echo "TF_CONFIG=${TF_CONFIG}"
-              exec python main.py
+              exec python -m app.app_cnn
 
           volumeMounts:
             - name: song-volume

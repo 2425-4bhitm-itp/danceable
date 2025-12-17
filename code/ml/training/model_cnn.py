@@ -24,8 +24,6 @@ _model = None
 _scaler = None
 _labels = None
 
-strategy = tf.distribute.MultiWorkerMirroredStrategy()
-
 
 # ----------------------- Dataset Utilities -----------------------
 
