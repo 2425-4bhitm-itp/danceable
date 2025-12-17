@@ -65,6 +65,10 @@ spec:
         - name: model-volume
           persistentVolumeClaim:
             claimName: model-volume-claim
+        - name: env-volume
+          persistentVolumeClaim:
+            claimName: env-volume-claim
+
 ---
 apiVersion: v1
 kind: Service
@@ -152,4 +156,4 @@ spec:
             claimName: model-volume-claim
         - name: env-volume
           persistentVolumeClaim:
-            claimName: train-env-claim
+            claimName: env-volume-claim

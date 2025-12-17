@@ -4,7 +4,6 @@ import uuid
 
 import numpy as np
 from flask import Flask, request, jsonify, Response
-from kubernetes import client, config
 
 from config.paths import (
     SNIPPETS_DIR,
@@ -136,14 +135,12 @@ def upload_audio():
 def train():
     data = request.get_json()
 
-    # default parameters
     batch_size = str(data.get("batch_size", 512))
     epochs = str(data.get("epochs", 100))
     disabled_labels = data.get("disabled_labels", [])
     test_size = str(data.get("test_size", 0.1))
     downsampling = str(data.get("downsampling", False)).lower()
 
-    # write parameters to files in shared PVC
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
     with open(os.path.join(TRAIN_ENV_PATH, "BATCH_SIZE"), "w") as f:
         f.write(batch_size)
@@ -253,6 +250,21 @@ def serve_result_file(filename):
         mimetype = "text/html"
     return Response(data, mimetype=mimetype)
 
+def init_train_env():
+    defaults = {
+        "BATCH_SIZE": "512",
+        "EPOCHS": "100",
+        "DISABLED_LABELS": "",
+        "TEST_SIZE": "0.1",
+        "DOWNSAMPLING": "false",
+        "START_TRAINING": "false"
+    }
+    for k, v in defaults.items():
+        path = os.path.join(TRAIN_ENV_PATH, k)
+        if not os.path.exists(path):
+            with open(path, "w") as f:
+                f.write(v)
 
 if __name__ == "__main__":
+    init_train_env()
     flask_app.run(host="0.0.0.0", port=5001, debug=True)

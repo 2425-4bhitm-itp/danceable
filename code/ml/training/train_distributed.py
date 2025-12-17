@@ -8,9 +8,13 @@ REPLICAS = int(os.environ.get("REPLICAS", 4))
 POD_NAME = os.environ.get("POD_NAME")
 
 start_file = os.path.join(TRAIN_ENV_PATH, "START_TRAINING")
+print("Waiting for start signal...")
 while not os.path.exists(start_file) or open(start_file).read().strip().lower() != "true":
+    print(not os.path.exists(start_file))
+    print(open(start_file).read().strip().lower() != "true")
+    print("---------------------------------------------")
     time.sleep(1)
-
+print("Training started...")
 def read_env_file(name, default=None):
     try:
         return open(os.path.join(TRAIN_ENV_PATH, name)).read().strip()
