@@ -1,3 +1,94 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml
+spec:
+  clusterIP: None
+  selector:
+    app: ml
+  ports:
+    - name: tf
+      port: 2222
+      targetPort: 2222
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ml
+spec:
+  serviceName: ml
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml
+  template:
+    metadata:
+      labels:
+        app: ml
+    spec:
+      containers:
+        - name: ml
+          image: ghcr.io/2425-4bhitm-itp/ml:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 2222
+
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: REPLICAS
+              value: "4"
+
+          command:
+            - /bin/sh
+            - -c
+            - |
+              INDEX=$(echo "${POD_NAME}" | awk -F'-' '{print $NF}')
+
+              WORKERS=""
+              i=0
+              while [ $i -lt ${REPLICAS} ]; do
+                WORKERS="${WORKERS}\"ml-${i}.ml:2222\","
+                i=$((i+1))
+              done
+
+              WORKERS=$(echo ${WORKERS} | sed 's/,$//')
+
+              export TF_CONFIG=$(cat <<EOF
+              {
+                "cluster": {
+                  "worker": [ ${WORKERS} ]
+                },
+                "task": {
+                  "type": "worker",
+                  "index": ${INDEX}
+                }
+              }
+              EOF
+              )
+
+              echo "TF_CONFIG=${TF_CONFIG}"
+              exec python main.py
+
+          volumeMounts:
+            - name: song-volume
+              mountPath: /app/song-storage
+            - name: model-volume
+              mountPath: /opt/model
+
+      volumes:
+        - name: song-volume
+          persistentVolumeClaim:
+            claimName: song-volume-claim
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: model-volume-claim
+
+
+
 # Quarkus Application Server
 apiVersion: apps/v1
 kind: Deployment

@@ -24,6 +24,8 @@ _model = None
 _scaler = None
 _labels = None
 
+strategy = tf.distribute.MultiWorkerMirroredStrategy()
+
 
 # ----------------------- Dataset Utilities -----------------------
 
@@ -125,7 +127,6 @@ def build_cnn(
     return model
 
 
-
 # ----------------------- Dataset Generator -----------------------
 
 def dataset_generator(indices, df, scaler, label_to_idx):
@@ -170,6 +171,12 @@ def collect_dataset(tf_dataset):
     return X_full, y_full
 
 
+def is_chief():
+    tf_config = json.loads(os.environ.get("TF_CONFIG", "{}"))
+    task = tf_config.get("task", {})
+    return task.get("type") == "worker" and task.get("index") == 0
+
+
 def train_model(
         csv_path=CNN_OUTPUT_CSV,
         batch_size=64,
@@ -181,6 +188,7 @@ def train_model(
         model_config=None
 ):
     global _labels
+
     df = load_dataset(Path(csv_path))
 
     if disabled_labels:
@@ -194,23 +202,36 @@ def train_model(
     _labels = sorted(df["label"].unique())
     label_to_idx = {l: i for i, l in enumerate(_labels)}
 
-    with open(CNN_LABELS_PATH, "w") as f:
-        json.dump(_labels, f)
-
-
     train_idx, val_idx, test_idx = song_wise_split(df, test_size, val_from_test)
+
+    artifact_dir = Path(CNN_DATASET_PATH)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+
+    if is_chief():
+        with open(CNN_LABELS_PATH, "w") as f:
+            json.dump(_labels, f)
+
+        with open(artifact_dir / "splits.json", "w") as f:
+            json.dump(
+                {
+                    "train_idx": train_idx.tolist(),
+                    "val_idx": val_idx.tolist(),
+                    "test_idx": test_idx.tolist(),
+                },
+                f
+            )
 
     scaler = compute_global_mean_std(
         df.iloc[train_idx]["npy_path"].tolist(),
         sample_limit=4000
     )
-    joblib.dump(scaler, SCALER_PATH)
+
+    if is_chief():
+        joblib.dump(scaler, SCALER_PATH)
 
     sample_arr = np.load(df.iloc[train_idx[0]]["npy_path"])["input"].astype(np.float32)
-
     while sample_arr.ndim > 3:
         sample_arr = sample_arr.squeeze(0)
-
     if sample_arr.ndim == 2:
         sample_arr = sample_arr[..., np.newaxis]
 
@@ -235,35 +256,33 @@ def train_model(
         batch_size=batch_size, shuffle=False
     )
 
-    X_train, y_train = collect_dataset(train_ds)
-    X_val, y_val = collect_dataset(val_ds)
-    X_test, y_test = collect_dataset(test_ds)
+    options = tf.data.Options()
+    options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
 
+    train_ds = train_ds.with_options(options)
+    val_ds = val_ds.with_options(options)
+    test_ds = test_ds.with_options(options)
 
-    dataset_dir = Path(CNN_DATASET_PATH)
-    dataset_dir.mkdir(parents=True, exist_ok=True)
+    strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
-    train_path = dataset_dir / "train_data.npz"
-    val_path = dataset_dir / "val_data.npz"
-    test_path = dataset_dir / "test_data.npz"
+    with strategy.scope():
+        if model_config is None:
+            model = build_cnn(input_shape, num_classes)
+        else:
+            model = build_cnn(
+                input_shape=input_shape,
+                num_classes=num_classes,
+                filters=model_config["filters"],
+                dense_units=model_config["dense_units"],
+                dropout_rate=model_config["dropout_rate"],
+                learning_rate=model_config["learning_rate"]
+            )
 
-    np.savez(str(train_path), X=X_train, y=y_train)
-    np.savez(str(val_path), X=X_val, y=y_val)
-    np.savez(str(test_path), X=X_test, y=y_test)
-
-    if model_config is None:
-        model = build_cnn(input_shape, num_classes)
-    else:
-        model = build_cnn(
-            input_shape=input_shape,
-            num_classes=num_classes,
-            filters=model_config["filters"],
-            dense_units=model_config["dense_units"],
-            dropout_rate=model_config["dropout_rate"],
-            learning_rate=model_config["learning_rate"]
-        )
-
-    stopper = EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)
+    stopper = EarlyStopping(
+        monitor="val_loss",
+        patience=12,
+        restore_best_weights=True
+    )
 
     history = model.fit(
         train_ds,
@@ -273,33 +292,35 @@ def train_model(
         verbose=1
     )
 
-    model.save(CNN_MODEL_PATH)
+    if is_chief():
+        model.save(CNN_MODEL_PATH)
 
-    loss, acc = model.evaluate(test_ds, verbose=0)
+        loss, acc = model.evaluate(test_ds, verbose=0)
 
-    cm = ct.convert(
-        model,
-        source="tensorflow",
-        inputs=[ct.TensorType(shape=(1,) + input_shape)]
-    )
-    cm.save(COREML_PATH)
+        cm = ct.convert(
+            model,
+            source="tensorflow",
+            inputs=[ct.TensorType(shape=(1,) + input_shape)]
+        )
+        cm.save(COREML_PATH)
 
-    print("Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(loss, acc))
+        message = {
+            "loss": float(loss),
+            "accuracy": float(acc),
+            "labels": _labels,
+            "input_shape": input_shape,
+            "history": history.history,
+            "train_idx": train_idx.tolist(),
+            "val_idx": val_idx.tolist(),
+            "test_idx": test_idx.tolist()
+        }
 
-    message = {
-        "loss": float(loss),
-        "accuracy": float(acc),
-        "labels": _labels,
-        "input_shape": input_shape,
-        "history": history.history,
-        "train_idx": train_idx,
-        "val_idx": val_idx,
-        "test_idx": test_idx
-    }
+        print("Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(loss, acc))
+        print(message)
 
-    print(message)
+        return message
 
-    return message
+    return None
 
 
 # ----------------------- Inference -----------------------
