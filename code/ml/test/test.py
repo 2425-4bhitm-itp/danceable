@@ -6,15 +6,20 @@ from pathlib import Path
 
 import tensorflow as tf
 
-from training.model_cnn import train_model, build_cnn
+from training.model_cnn import train_model
 
 
 def run_experiment(config: dict) -> dict:
-    message = train_model(
-        batch_size=config["batch_size"],
-        epochs=config["epochs"],
-        model_config=config
-    )
+    tf.keras.backend.clear_session()
+
+    strategy = tf.distribute.MultiWorkerMirroredStrategy()
+
+    with strategy.scope():
+        message = train_model(
+            batch_size=config["batch_size"],
+            epochs=config["epochs"],
+            model_config=config
+        )
 
     return {
         "filters": config["filters"],
@@ -22,6 +27,7 @@ def run_experiment(config: dict) -> dict:
         "dropout_rate": config["dropout_rate"],
         "learning_rate": config["learning_rate"],
         "batch_size": config["batch_size"],
+        "epochs": config["epochs"],
         "test_loss": message["loss"],
         "test_accuracy": message["accuracy"]
     }
@@ -53,7 +59,7 @@ def main():
         run_id = uuid.uuid4().hex[:8]
         timestamp = datetime.utcnow().isoformat()
 
-        tf.keras.backend.clear_session()
+        print(f"Starting distributed run {run_id} with config {config}")
 
         result = run_experiment(config)
         result["run_id"] = run_id
@@ -63,6 +69,8 @@ def main():
 
         with open(log_dir / f"run_{run_id}.json", "w") as f:
             json.dump(result, f, indent=2)
+
+        print(f"Finished run {run_id}")
 
     with open(log_dir / "summary.json", "w") as f:
         json.dump(results, f, indent=2)
