@@ -286,18 +286,18 @@ def train_model(
         callbacks=[stopper],
         verbose=1
     )
-
+    message = None
     if is_chief():
+        print("Chief: saving weights...", flush=True)
         model.save(CNN_MODEL_PATH)
-
+        print("Chief: evaluating on test set...", flush=True)
         loss, acc = model.evaluate(test_ds, verbose=0)
+        print(f"Chief: evaluation done - loss: {loss:.4f}, acc: {acc:.4f}", flush=True)
 
-        cm = ct.convert(
-            model,
-            source="tensorflow",
-            inputs=[ct.TensorType(shape=(1,) + input_shape)]
-        )
+        print("Chief: converting to CoreML...", flush=True)
+        cm = ct.convert(model, source="tensorflow", inputs=[ct.TensorType(shape=(1,) + input_shape)])
         cm.save(COREML_PATH)
+        print("Chief: CoreML conversion done", flush=True)
 
         message = {
             "loss": float(loss),
@@ -309,13 +309,9 @@ def train_model(
             "val_idx": val_idx.tolist(),
             "test_idx": test_idx.tolist()
         }
+        print(f"Chief: message ready - {message}", flush=True)
 
-        print("Test Loss: {:.4f}, Test Accuracy: {:.4f}".format(loss, acc))
-        print(message)
-
-        return message
-
-    return None
+    return message
 
 
 # ----------------------- Inference -----------------------
