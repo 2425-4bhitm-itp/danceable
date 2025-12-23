@@ -1,8 +1,10 @@
 import os
 import time
+
 import tensorflow as tf
-from training.model_cnn import train_model
+
 from config.paths import TRAIN_ENV_PATH
+from training.model_cnn import train_model
 
 POD_NAME = os.environ["POD_NAME"]
 REPLICAS = int(os.environ["REPLICAS"])
@@ -11,18 +13,10 @@ training_id_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_ID")
 state_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_STATE")
 ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
 
-with open(training_id_file, "w") as f:
-    f.write("-1")
-
-with open(state_file, "w") as f:
-    f.write("idle")
-
-with open(ready_file, "w") as f:
-    f.write("")
-
 last_seen_id = -1
 
 print(f"{POD_NAME} started")
+
 
 def read_env_file(name, default=None):
     try:
@@ -53,9 +47,21 @@ def register_ready():
             time.sleep(1)
 
 
-register_ready()
-print(f"{POD_NAME} registered as ready")
+def initialize_training_files():
+    os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
 
+    if POD_NAME == "ml-train-0" or not os.path.exists(training_id_file):
+        with open(training_id_file, "w") as f:
+            f.write("-1")
+        with open(state_file, "w") as f:
+            f.write("idle")
+        with open(ready_file, "w") as f:
+            f.write("")
+
+
+register_ready()
+initialize_training_files()
+print(f"{POD_NAME} registered as ready")
 
 while True:
     if not os.path.isfile(training_id_file):
