@@ -11,6 +11,15 @@ training_id_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_ID")
 state_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_STATE")
 ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
 
+with open(training_id_file, "w") as f:
+    f.write("-1")
+
+with open(state_file, "w") as f:
+    f.write("idle")
+
+with open(ready_file, "w") as f:
+    f.write("")
+
 last_seen_id = -1
 
 print(f"{POD_NAME} started")

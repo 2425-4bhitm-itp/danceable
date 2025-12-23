@@ -280,7 +280,8 @@ def init_train_env():
         "EPOCHS": "100",
         "DISABLED_LABELS": "",
         "TEST_SIZE": "0.1",
-        "DOWNSAMPLING": "false"
+        "DOWNSAMPLING": "false",
+        "TRAINING_ID": "-1"
     }
 
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
@@ -290,8 +291,6 @@ def init_train_env():
         if not os.path.exists(path):
             with open(path, "w") as f:
                 f.write(v)
-    with open(os.path.join(TRAIN_ENV_PATH, "TRAINING_ID"), "w") as f:
-        f.write("-1")
 
 def wait_for_all_workers():
     ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
