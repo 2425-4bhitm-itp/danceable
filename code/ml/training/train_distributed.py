@@ -1,10 +1,8 @@
 import os
 import time
-
 import tensorflow as tf
-
-from config.paths import TRAIN_ENV_PATH
 from training.model_cnn import train_model
+from config.paths import TRAIN_ENV_PATH
 
 POD_NAME = os.environ["POD_NAME"]
 REPLICAS = int(os.environ["REPLICAS"])
@@ -12,6 +10,7 @@ REPLICAS = int(os.environ["REPLICAS"])
 training_id_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_ID")
 state_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_STATE")
 ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
+reset_lock_file = os.path.join(TRAIN_ENV_PATH, "RESET_LOCK")
 
 last_seen_id = -1
 
@@ -25,9 +24,37 @@ def read_env_file(name, default=None):
         return default
 
 
+def acquire_reset_lock():
+    os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
+    try:
+        fd = os.open(reset_lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, POD_NAME.encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
+
+
+def wait_for_reset_completion():
+    while os.path.exists(reset_lock_file):
+        time.sleep(0.5)
+
+
+def initialize_training_files():
+    if acquire_reset_lock():
+        with open(training_id_file, "w") as f:
+            f.write("-1")
+        with open(state_file, "w") as f:
+            f.write("idle")
+        print(f"{POD_NAME} performed training reset")
+        # Release lock
+        os.remove(reset_lock_file)
+    else:
+        wait_for_reset_completion()
+
+
 def register_ready():
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
-
     while True:
         try:
             if os.path.exists(ready_file):
@@ -41,27 +68,15 @@ def register_ready():
                 with open(ready_file, "w") as f:
                     for w in sorted(workers):
                         f.write(w + "\n")
-
             return
         except Exception:
             time.sleep(1)
 
 
-def initialize_training_files():
-    os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
-
-    if POD_NAME == "ml-train-0" or not os.path.exists(training_id_file):
-        with open(training_id_file, "w") as f:
-            f.write("-1")
-        with open(state_file, "w") as f:
-            f.write("idle")
-        with open(ready_file, "w") as f:
-            f.write("")
-
-
-register_ready()
 initialize_training_files()
+register_ready()
 print(f"{POD_NAME} registered as ready")
+
 
 while True:
     if not os.path.isfile(training_id_file):
