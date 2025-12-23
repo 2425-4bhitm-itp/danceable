@@ -1,5 +1,6 @@
 import concurrent.futures
 import os
+import time
 import uuid
 
 import numpy as np
@@ -142,6 +143,20 @@ def train():
     downsampling = str(data.get("downsampling", False)).lower()
 
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
+
+    state_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_STATE")
+    id_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_ID")
+
+    if os.path.exists(state_file):
+        state = open(state_file).read().strip()
+        if state != "idle":
+            return jsonify({"error": "Training already running"}), 409
+
+    with open(state_file, "w") as f:
+        f.write("starting")
+
+    wait_for_all_workers()
+
     with open(os.path.join(TRAIN_ENV_PATH, "BATCH_SIZE"), "w") as f:
         f.write(batch_size)
     with open(os.path.join(TRAIN_ENV_PATH, "EPOCHS"), "w") as f:
@@ -153,10 +168,19 @@ def train():
     with open(os.path.join(TRAIN_ENV_PATH, "DOWNSAMPLING"), "w") as f:
         f.write(downsampling)
 
-    with open(os.path.join(TRAIN_ENV_PATH, "START_TRAINING"), "w") as f:
-        f.write("true")
+    if os.path.exists(id_file):
+        current = int(open(id_file).read().strip())
+    else:
+        current = 0
 
-    return jsonify({"message": "Training triggered"}), 200
+    with open(id_file, "w") as f:
+        f.write(str(current + 1))
+
+    with open(state_file, "w") as f:
+        f.write("running")
+
+    return jsonify({"message": "Training started"}), 200
+
 
 
 @flask_app.route("/evaluate", methods=["GET"])
@@ -257,13 +281,35 @@ def init_train_env():
         "DISABLED_LABELS": "",
         "TEST_SIZE": "0.1",
         "DOWNSAMPLING": "false",
-        "START_TRAINING": "false"
+        "TRAINING_ID": "-1"
     }
+
+    os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
+
     for k, v in defaults.items():
         path = os.path.join(TRAIN_ENV_PATH, k)
         if not os.path.exists(path):
             with open(path, "w") as f:
                 f.write(v)
+
+def wait_for_all_workers():
+    ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
+
+    expected = {f"ml-train-{i}" for i in range(4)}
+
+    while True:
+        if not os.path.exists(ready_file):
+            time.sleep(1)
+            continue
+
+        with open(ready_file, "r") as f:
+            ready = {line.strip() for line in f if line.strip()}
+
+        if expected.issubset(ready):
+            return
+
+        time.sleep(1)
+
 
 if __name__ == "__main__":
     init_train_env()
