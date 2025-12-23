@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 
-import coremltools as ct
 import joblib
 import numpy as np
 import pandas as pd
@@ -12,7 +11,8 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 from tensorflow.keras.models import Sequential
 
-from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, COREML_PATH, CNN_DATASET_PATH
+from config.paths import CNN_MODEL_PATH, SCALER_PATH, CNN_LABELS_PATH, CNN_OUTPUT_CSV, CNN_DATASET_PATH, \
+    CNN_WEIGHTS_PATH
 
 # ----------------------- Threading / CPU Optimization -----------------------
 tf.config.threading.set_intra_op_parallelism_threads(os.cpu_count())
@@ -202,22 +202,17 @@ def train_model(
 
     train_idx, val_idx, test_idx = song_wise_split(df, test_size, val_from_test)
 
-    artifact_dir = Path(CNN_DATASET_PATH)
-    artifact_dir.mkdir(parents=True, exist_ok=True)
-
     if is_chief():
-        with open(CNN_LABELS_PATH, "w") as f:
-            json.dump(_labels, f)
-
-        with open(artifact_dir / "splits.json", "w") as f:
-            json.dump(
-                {
-                    "train_idx": train_idx.tolist(),
-                    "val_idx": val_idx.tolist(),
-                    "test_idx": test_idx.tolist(),
-                },
-                f
-            )
+        Path(CNN_DATASET_PATH).mkdir(parents=True, exist_ok=True)
+        json.dump(_labels, open(CNN_LABELS_PATH, "w"))
+        json.dump(
+            {
+                "train_idx": train_idx.tolist(),
+                "val_idx": val_idx.tolist(),
+                "test_idx": test_idx.tolist(),
+            },
+            open(Path(CNN_DATASET_PATH) / "splits.json", "w")
+        )
 
     scaler = compute_global_mean_std(
         df.iloc[train_idx]["npy_path"].tolist(),
@@ -248,30 +243,16 @@ def train_model(
         batch_size=batch_size, shuffle=False
     )
 
-    test_ds = make_tf_dataset(
-        test_idx, df, scaler, label_to_idx,
-        input_shape, num_classes,
-        batch_size=batch_size, shuffle=False
-    )
-
     options = tf.data.Options()
     options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
-
     train_ds = train_ds.with_options(options)
     val_ds = val_ds.with_options(options)
-    test_ds = test_ds.with_options(options)
 
-    if model_config is None:
-        model = build_cnn(input_shape, num_classes)
-    else:
-        model = build_cnn(
-            input_shape=input_shape,
-            num_classes=num_classes,
-            filters=model_config["filters"],
-            dense_units=model_config["dense_units"],
-            dropout_rate=model_config["dropout_rate"],
-            learning_rate=model_config["learning_rate"]
-        )
+    model = build_cnn(
+        input_shape=input_shape,
+        num_classes=num_classes,
+        **(model_config or {})
+    )
 
     stopper = EarlyStopping(
         monitor="val_loss",
@@ -279,39 +260,17 @@ def train_model(
         restore_best_weights=True
     )
 
-    history = model.fit(
+    model.fit(
         train_ds,
         validation_data=val_ds,
         epochs=epochs,
         callbacks=[stopper],
         verbose=1
     )
-    message = None
+
     if is_chief():
-        print("Chief: saving weights...", flush=True)
-        model.save(CNN_MODEL_PATH)
-        print("Chief: evaluating on test set...", flush=True)
-        loss, acc = model.evaluate(test_ds, verbose=0)
-        print(f"Chief: evaluation done - loss: {loss:.4f}, acc: {acc:.4f}", flush=True)
-
-        print("Chief: converting to CoreML...", flush=True)
-        cm = ct.convert(model, source="tensorflow", inputs=[ct.TensorType(shape=(1,) + input_shape)])
-        cm.save(COREML_PATH)
-        print("Chief: CoreML conversion done", flush=True)
-
-        message = {
-            "loss": float(loss),
-            "accuracy": float(acc),
-            "labels": _labels,
-            "input_shape": input_shape,
-            "history": history.history,
-            "train_idx": train_idx.tolist(),
-            "val_idx": val_idx.tolist(),
-            "test_idx": test_idx.tolist()
-        }
-        print(f"Chief: message ready - {message}", flush=True)
-
-    return message
+        print("Chief: saving weights", flush=True)
+        model.save_weights(CNN_WEIGHTS_PATH)
 
 
 # ----------------------- Inference -----------------------

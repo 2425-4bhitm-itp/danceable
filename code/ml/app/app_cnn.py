@@ -168,11 +168,7 @@ def train():
     with open(os.path.join(TRAIN_ENV_PATH, "DOWNSAMPLING"), "w") as f:
         f.write(downsampling)
 
-    if os.path.exists(id_file):
-        current = int(open(id_file).read().strip())
-    else:
-        current = 0
-
+    current = int(open(id_file).read().strip()) if os.path.exists(id_file) else 0
     with open(id_file, "w") as f:
         f.write(str(current + 1))
 

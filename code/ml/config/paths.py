@@ -14,6 +14,7 @@ COREML_PATH = BASE_MODEL_DIR / "model.mlmodel"
 # CNN-specific model paths
 CNN_MODEL_PATH = BASE_MODEL_DIR / "model_cnn.keras"
 CNN_LABELS_PATH = BASE_MODEL_DIR / "label_order_cnn.json"
+CNN_WEIGHTS_PATH = BASE_MODEL_DIR / "model_cnn_weights.h5"
 
 # Directory where spectrogram tensors are stored for CNN training
 CNN_TRAIN_DATA_DIR = BASE_DIR / "cnn_tensors"

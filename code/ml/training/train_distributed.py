@@ -2,6 +2,7 @@ import os
 import time
 import tensorflow as tf
 from training.model_cnn import train_model
+from training.evaluate import evaluate_and_export
 from config.paths import TRAIN_ENV_PATH
 
 POD_NAME = os.environ["POD_NAME"]
@@ -47,7 +48,6 @@ def initialize_training_files():
         with open(state_file, "w") as f:
             f.write("idle")
         print(f"{POD_NAME} performed training reset")
-        # Release lock
         os.remove(reset_lock_file)
     else:
         wait_for_reset_completion()
@@ -57,11 +57,10 @@ def register_ready():
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
     while True:
         try:
+            workers = set()
             if os.path.exists(ready_file):
                 with open(ready_file, "r") as f:
                     workers = {line.strip() for line in f if line.strip()}
-            else:
-                workers = set()
 
             if POD_NAME not in workers:
                 workers.add(POD_NAME)
@@ -113,5 +112,8 @@ while True:
     print(f"{POD_NAME} finished training run {current_id}")
 
     if POD_NAME == "ml-train-0":
+        print("Chief: starting single-worker evaluation and export")
+        evaluate_and_export()
+
         with open(state_file, "w") as f:
             f.write("idle")
