@@ -40,6 +40,8 @@ spec:
               mountPath: /app/song-storage
             - name: model-volume
               mountPath: /opt/model
+            - name: env-volume
+              mountPath: /env
           startupProbe:
             httpGet:
               path: /health
