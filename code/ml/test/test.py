@@ -42,7 +42,7 @@ def main():
         "dense_units": [128, 256],
         "dropout_rate": [0.3, 0.5],
         "learning_rate": [1e-3, 3e-4],
-        "batch_size": [32, 64],
+        "batch_size": [128, 512],
         "epochs": [100]
     }
 
