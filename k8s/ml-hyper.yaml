@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-hyper
+spec:
+  clusterIP: None
+  selector:
+    app: ml-hyper
+  ports:
+    - name: tf
+      port: 2222
+      targetPort: 2222
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ml-hyper
+spec:
+  serviceName: ml-hyper
+  replicas: 4
+  selector:
+    matchLabels:
+      app: ml-hyper
+  template:
+    metadata:
+      labels:
+        app: ml-hyper
+    spec:
+      containers:
+        - name: ml-hyper
+          image: ghcr.io/2425-4bhitm-itp/ml:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 2222
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: REPLICAS
+              value: "4"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              INDEX=$(echo "${POD_NAME}" | awk -F'-' '{print $NF}')
+
+              WORKERS=""
+              i=0
+              while [ $i -lt ${REPLICAS} ]; do
+                WORKERS="${WORKERS}\"ml-hyper-${i}.ml-hyper:2222\","
+                i=$((i+1))
+              done
+              WORKERS=$(echo ${WORKERS} | sed 's/,$//')
+
+              export TF_CONFIG=$(cat <<EOF
+              {
+                "cluster": {
+                  "worker": [ ${WORKERS} ]
+                },
+                "task": {
+                  "type": "worker",
+                  "index": ${INDEX}
+                }
+              }
+              EOF
+              )
+
+              echo "TF_CONFIG=${TF_CONFIG}"
+              exec python -m test.test
+          volumeMounts:
+            - name: song-volume
+              mountPath: /app/song-storage
+            - name: model-volume
+              mountPath: /opt/model
+            - name: env-volume
+              mountPath: /env
+      volumes:
+        - name: song-volume
+          persistentVolumeClaim:
+            claimName: song-volume-claim
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: model-volume-claim
+        - name: env-volume
+          persistentVolumeClaim:
+            claimName: env-volume-claim

@@ -26,3 +26,6 @@ FEATURES_CSV = BASE_DIR / "features.csv"
 SONGS_DIR = BASE_DIR / "songs"
 SNIPPETS_DIR = SONGS_DIR / "snippets"
 EVALUATION_RESULTS_DIR = BASE_DIR / "evaluation_results"
+
+# Hyperparameter search space file
+HYPER_ENV_PATH = TRAIN_ENV_PATH / "hyperparam"

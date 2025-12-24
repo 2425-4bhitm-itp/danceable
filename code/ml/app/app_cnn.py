@@ -12,7 +12,7 @@ from config.paths import (
     CNN_MODEL_PATH,
     CNN_LABELS_PATH,
     EVALUATION_RESULTS_DIR,
-    TRAIN_ENV_PATH
+    TRAIN_ENV_PATH, HYPER_ENV_PATH
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
@@ -270,6 +270,43 @@ def serve_result_file(filename):
         mimetype = "text/html"
     return Response(data, mimetype=mimetype)
 
+@flask_app.route("/hyperparameter-test", methods=["POST"])
+def hyperparameter_test():
+    data = request.get_json()
+
+    search_space = data.get("search_space")
+    if not search_space:
+        return jsonify({"error": "search_space required"}), 400
+
+    os.makedirs(HYPER_ENV_PATH, exist_ok=True)
+
+    state_file = os.path.join(HYPER_ENV_PATH, "STATE")
+    id_file = os.path.join(HYPER_ENV_PATH, "RUN_ID")
+    space_file = os.path.join(HYPER_ENV_PATH, "SEARCH_SPACE")
+
+    if os.path.exists(state_file):
+        state = open(state_file).read().strip()
+        if state != "idle":
+            return jsonify({"error": "Hyperparameter test already running"}), 409
+
+    with open(state_file, "w") as f:
+        f.write("starting")
+
+    wait_for_all_hyper_workers()
+
+    with open(space_file, "w") as f:
+        json.dump(search_space, f)
+
+    current = int(open(id_file).read().strip()) if os.path.exists(id_file) else 0
+    with open(id_file, "w") as f:
+        f.write(str(current + 1))
+
+    with open(state_file, "w") as f:
+        f.write("running")
+
+    return jsonify({"message": "Hyperparameter test started"}), 200
+
+
 def init_train_env():
     defaults = {
         "BATCH_SIZE": "512",
@@ -277,7 +314,8 @@ def init_train_env():
         "DISABLED_LABELS": "",
         "TEST_SIZE": "0.1",
         "DOWNSAMPLING": "false",
-        "TRAINING_ID": "-1"
+        "TRAINING_ID": "-1",
+        "TRAINING_STATE": "idle"
     }
 
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
@@ -287,6 +325,22 @@ def init_train_env():
         if not os.path.exists(path):
             with open(path, "w") as f:
                 f.write(v)
+
+
+def init_hyper_env():
+    defaults = {
+        "RUN_ID": "-1",
+        "STATE": "idle"
+    }
+
+    os.makedirs(HYPER_ENV_PATH, exist_ok=True)
+
+    for k, v in defaults.items():
+        path = os.path.join(HYPER_ENV_PATH, k)
+        if not os.path.exists(path):
+            with open(path, "w") as f:
+                f.write(v)
+
 
 def wait_for_all_workers():
     ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
@@ -299,6 +353,24 @@ def wait_for_all_workers():
             continue
 
         with open(ready_file, "r") as f:
+            ready = {line.strip() for line in f if line.strip()}
+
+        if expected.issubset(ready):
+            return
+
+        time.sleep(1)
+
+
+def wait_for_all_hyper_workers():
+    ready_file = os.path.join(HYPER_ENV_PATH, "READY_WORKERS")
+    expected = {f"ml-hyper-{i}" for i in range(4)}
+
+    while True:
+        if not os.path.exists(ready_file):
+            time.sleep(1)
+            continue
+
+        with open(ready_file) as f:
             ready = {line.strip() for line in f if line.strip()}
 
         if expected.issubset(ready):
