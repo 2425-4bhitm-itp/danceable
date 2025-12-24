@@ -177,7 +177,7 @@ def is_chief():
 
 def train_model(
         csv_path=CNN_OUTPUT_CSV,
-        batch_size=64,
+        batch_size=128,
         epochs=100,
         test_size=0.2,
         val_from_test=0.5,
@@ -268,9 +268,8 @@ def train_model(
         verbose=1
     )
 
-    if is_chief():
-        print("Chief: saving weights", flush=True)
-        model.save_weights(CNN_WEIGHTS_PATH)
+    print("Chief: saving weights", flush=True)
+    model.save_weights(CNN_WEIGHTS_PATH)
 
 
 # ----------------------- Inference -----------------------
