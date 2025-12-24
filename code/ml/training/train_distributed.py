@@ -101,7 +101,7 @@ while True:
     strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
     with strategy.scope():
-        train_model(
+        weights = train_model(
             batch_size=batch_size,
             epochs=epochs,
             disabled_labels=disabled_labels,
@@ -113,7 +113,7 @@ while True:
 
     if POD_NAME == "ml-train-0":
         print("Chief: starting single-worker evaluation and export")
-        evaluate_and_export()
+        evaluate_and_export(weights)
 
         with open(state_file, "w") as f:
             f.write("idle")

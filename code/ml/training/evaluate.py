@@ -19,7 +19,7 @@ from config.paths import (
 )
 
 
-def evaluate_and_export():
+def evaluate_and_export(weights):
     print("Evaluator: loading artifacts", flush=True)
 
     df = load_dataset(Path(CNN_OUTPUT_CSV))
@@ -52,7 +52,8 @@ def evaluate_and_export():
 
     print("Evaluator: building model", flush=True)
     model = build_cnn(input_shape, num_classes)
-    model.load_weights(CNN_WEIGHTS_PATH)
+    model.set_weights(weights)
+    model.save_weights(CNN_WEIGHTS_PATH)
 
     print("Evaluator: running evaluation", flush=True)
     loss, acc = model.evaluate(test_ds, verbose=1)

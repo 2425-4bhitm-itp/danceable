@@ -268,9 +268,12 @@ def train_model(
         verbose=1
     )
 
-    print("Chief: saving weights", flush=True)
-    model.save_weights(CNN_WEIGHTS_PATH)
+    weights = None
+    if is_chief():
+        print("Chief: setting weights", flush=True)
+        weights = model.get_weights()
 
+    return weights
 
 # ----------------------- Inference -----------------------
 
