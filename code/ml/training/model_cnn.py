@@ -147,12 +147,25 @@ def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes,
             tf.TensorSpec(shape=(), dtype=tf.int32)
         )
     )
-    ds = ds.map(lambda x, y: (x, tf.one_hot(y, depth=num_classes)), num_parallel_calls=tf.data.AUTOTUNE)
+
+    ds = ds.map(
+        lambda x, y: (x, tf.one_hot(y, depth=num_classes)),
+        num_parallel_calls=tf.data.AUTOTUNE
+    )
+
     if shuffle:
-        ds = ds.shuffle(buffer_size=min(2048, len(indices)), seed=42)
-    ds = ds.batch(batch_size)
+        ds = ds.shuffle(
+            buffer_size=min(2048, len(indices)),
+            seed=42,
+            reshuffle_each_iteration=True
+        )
+
+    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.repeat()
     ds = ds.prefetch(tf.data.AUTOTUNE)
+
     return ds
+
 
 
 # ----------------------- Training Pipeline -----------------------
