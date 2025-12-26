@@ -284,18 +284,25 @@ def train_model(
                 save_weights_only=True
             )
         )
-    train_steps = len(train_idx)
-    val_steps = len(val_idx)
 
-    if train_steps == 0 or val_steps == 0:
+    effective_train_steps = len(train_idx) // batch_size
+    effective_val_steps = len(val_idx) // batch_size
+
+    print(f"Train samples: {len(train_idx)}")
+    print(f"Val samples: {len(val_idx)}")
+    print(f"Batch size: {batch_size}")
+    print(f"Effective train steps: {effective_train_steps}")
+    print(f"Effective val steps: {effective_val_steps}")
+
+    if effective_train_steps == 0 or effective_val_steps == 0:
         raise ValueError("Batch size too large for dataset")
 
     model.fit(
         train_ds,
         validation_data=val_ds,
         epochs=epochs,
-        steps_per_epoch=train_steps,
-        validation_steps=val_steps,
+        steps_per_epoch=effective_train_steps,
+        validation_steps=effective_val_steps,
         callbacks=callbacks,
         verbose=1
     )
