@@ -19,7 +19,7 @@ from config.paths import (
 )
 
 
-def evaluate_and_export(weights):
+def evaluate_and_export():
     print("Evaluator: loading artifacts", flush=True)
 
     df = load_dataset(Path(CNN_OUTPUT_CSV))
@@ -52,8 +52,7 @@ def evaluate_and_export(weights):
 
     print("Evaluator: building model", flush=True)
     model = build_cnn(input_shape, num_classes)
-    model.set_weights(weights)
-    model.save_weights(CNN_WEIGHTS_PATH)
+    model.load_weights(CNN_WEIGHTS_PATH)
 
     print("Evaluator: running evaluation", flush=True)
     loss, acc = model.evaluate(test_ds, verbose=1)
@@ -71,12 +70,10 @@ def evaluate_and_export(weights):
     )
     cm.save(COREML_PATH)
 
-    metrics = {
+    return {
         "loss": float(loss),
         "accuracy": float(acc),
         "labels": labels,
         "input_shape": input_shape
     }
 
-    print(f"Evaluator: completed successfully {metrics}", flush=True)
-    return metrics

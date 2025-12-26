@@ -254,26 +254,32 @@ def train_model(
         **(model_config or {})
     )
 
-    stopper = EarlyStopping(
-        monitor="val_loss",
-        patience=12,
-        restore_best_weights=True
-    )
+    callbacks = [
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_loss",
+            patience=12,
+            restore_best_weights=True
+        )
+    ]
+
+    if is_chief():
+        callbacks.append(
+            tf.keras.callbacks.ModelCheckpoint(
+                filepath=CNN_WEIGHTS_PATH,
+                monitor="val_loss",
+                save_best_only=True,
+                save_weights_only=True
+            )
+        )
 
     model.fit(
         train_ds,
         validation_data=val_ds,
         epochs=epochs,
-        callbacks=[stopper],
+        callbacks=callbacks,
         verbose=1
     )
 
-    weights = None
-    if is_chief():
-        print("Chief: setting weights", flush=True)
-        weights = model.get_weights()
-
-    return weights
 
 # ----------------------- Inference -----------------------
 

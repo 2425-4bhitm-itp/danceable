@@ -1,7 +1,7 @@
 import os
 import time
 import tensorflow as tf
-from training.model_cnn import train_model
+from training.model_cnn import train_model, is_chief
 from training.evaluate import evaluate_and_export
 from config.paths import TRAIN_ENV_PATH
 
@@ -101,7 +101,7 @@ while True:
     strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
     with strategy.scope():
-        weights = train_model(
+        train_model(
             batch_size=batch_size,
             epochs=epochs,
             disabled_labels=disabled_labels,
@@ -111,9 +111,9 @@ while True:
 
     print(f"{POD_NAME} finished training run {current_id}")
 
-    if POD_NAME == "ml-train-0":
-        print("Chief: starting single-worker evaluation and export")
-        evaluate_and_export(weights)
+    if is_chief():
+        print("Chief: starting evaluation and export")
+        evaluate_and_export()
 
         with open(state_file, "w") as f:
             f.write("idle")
