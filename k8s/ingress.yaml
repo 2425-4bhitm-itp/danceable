@@ -10,16 +10,16 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: it210190.cloud.htl-leonding.ac.at
+    - host: it210192.cloud.htl-leonding.ac.at
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: ml-api
+                name: backend
                 port:
-                  number: 5001
+                  number: 8080
 #          - path: /api
 #            pathType: Prefix
 #            backend:
