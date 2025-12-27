@@ -161,7 +161,6 @@ def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes,
         )
 
     ds = ds.batch(batch_size, drop_remainder=True)
-    ds = ds.repeat()
     ds = ds.prefetch(tf.data.AUTOTUNE)
 
     return ds
