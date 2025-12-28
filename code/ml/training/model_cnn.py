@@ -139,33 +139,30 @@ def dataset_generator(indices, df, scaler, label_to_idx):
         yield arr, label
 
 
-def make_tf_dataset(indices, df, scaler, label_to_idx, input_shape, num_classes, batch_size=64, shuffle=True):
-    ds = tf.data.Dataset.from_generator(
-        lambda: dataset_generator(indices, df, scaler, label_to_idx),
-        output_signature=(
-            tf.TensorSpec(shape=input_shape, dtype=tf.float32),
-            tf.TensorSpec(shape=(), dtype=tf.int32)
-        )
-    )
-
-    ds = ds.map(
-        lambda x, y: (x, tf.one_hot(y, depth=num_classes)),
-        num_parallel_calls=tf.data.AUTOTUNE
-    )
+def make_tf_dataset(paths, labels, input_shape, num_classes, batch_size, shuffle):
+    ds = tf.data.Dataset.from_tensor_slices((paths, labels))
 
     if shuffle:
-        ds = ds.shuffle(
-            buffer_size=min(2048, len(indices)),
-            seed=42,
-            reshuffle_each_iteration=True
-        )
+        ds = ds.shuffle(buffer_size=len(paths), seed=42)
 
+    def _map_fn(path, label):
+        x = tf.numpy_function(load_npy, [path], tf.float32)
+        x.set_shape(input_shape)
+        y = tf.one_hot(label, depth=num_classes)
+        return x, y
+
+    ds = ds.map(_map_fn, num_parallel_calls=tf.data.AUTOTUNE)
     ds = ds.batch(batch_size, drop_remainder=True)
     ds = ds.prefetch(tf.data.AUTOTUNE)
-
     return ds
 
-
+def load_npy(path):
+    data = np.load(path.decode())["input"].astype(np.float32)
+    while data.ndim > 3:
+        data = data.squeeze(0)
+    if data.ndim == 2:
+        data = data[..., np.newaxis]
+    return data
 
 # ----------------------- Training Pipeline -----------------------
 
@@ -214,6 +211,12 @@ def train_model(
 
     train_idx, val_idx, test_idx = song_wise_split(df, test_size, val_from_test)
 
+    train_paths = df.iloc[train_idx]["npy_path"].astype(str).tolist()
+    train_labels = [label_to_idx[l] for l in df.iloc[train_idx]["label"]]
+
+    val_paths = df.iloc[val_idx]["npy_path"].astype(str).tolist()
+    val_labels = [label_to_idx[l] for l in df.iloc[val_idx]["label"]]
+
     if is_chief():
         Path(CNN_DATASET_PATH).mkdir(parents=True, exist_ok=True)
         json.dump(_labels, open(CNN_LABELS_PATH, "w"))
@@ -244,15 +247,21 @@ def train_model(
     num_classes = len(_labels)
 
     train_ds = make_tf_dataset(
-        train_idx, df, scaler, label_to_idx,
-        input_shape, num_classes,
-        batch_size=batch_size, shuffle=True
+        train_paths,
+        train_labels,
+        input_shape,
+        num_classes,
+        batch_size=batch_size,
+        shuffle=True
     )
 
     val_ds = make_tf_dataset(
-        val_idx, df, scaler, label_to_idx,
-        input_shape, num_classes,
-        batch_size=batch_size, shuffle=False
+        val_paths,
+        val_labels,
+        input_shape,
+        num_classes,
+        batch_size=batch_size,
+        shuffle=False
     )
 
     options = tf.data.Options()
