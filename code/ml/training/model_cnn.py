@@ -56,11 +56,9 @@ def song_wise_split(df: pd.DataFrame, test_size=0.2, val_from_test=0.5):
     y = df["label"].values
     groups = df["song_id"].values
 
-    # First split: train vs temp (val+test)
     gss = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=42)
     train_idx, temp_idx = next(gss.split(X_idx, y, groups=groups))
 
-    # Second split: val vs test, maintain stratification
     temp_y = y[temp_idx]
     sss = StratifiedShuffleSplit(n_splits=1, test_size=val_from_test, random_state=42)
     val_rel_idx, test_rel_idx = next(sss.split(temp_idx.reshape(-1, 1), temp_y))
@@ -99,7 +97,6 @@ def build_cnn(
         learning_rate=1e-3
 ) -> tf.keras.Model:
     model = Sequential()
-
     for i, f in enumerate(filters):
         if i == 0:
             model.add(Conv2D(f, kernel_size, activation="relu", padding="same", input_shape=input_shape))
@@ -107,7 +104,6 @@ def build_cnn(
             model.add(Conv2D(f, kernel_size, activation="relu", padding="same"))
         model.add(BatchNormalization())
         model.add(MaxPooling2D((2, 2)))
-
     model.add(Flatten())
     model.add(Dense(dense_units, activation="relu"))
     model.add(Dropout(dropout_rate))
@@ -126,21 +122,19 @@ def build_cnn(
 
 # ----------------------- Dataset Generator -----------------------
 
-def dataset_generator(indices, df, scaler, label_to_idx):
-    for i in indices:
-        arr = np.load(df.iloc[i]["npy_path"])["input"].astype(np.float32)
-        while arr.ndim > 3:
-            arr = arr.squeeze(0)
-        if arr.ndim == 2:
-            arr = arr[..., np.newaxis]
-        arr = (arr - scaler["mean"]) / (scaler["std"] + 1e-8)
-        label = label_to_idx[df.iloc[i]["label"]]
-        yield arr, label
+
+def load_npy(path, input_shape):
+    data = np.load(path.decode())["input"].astype(np.float32)
+    while data.ndim > len(input_shape):
+        data = np.squeeze(data, axis=0)
+    while data.ndim < len(input_shape):
+        data = np.expand_dims(data, axis=-1)
+    data = data.reshape(input_shape)
+    return data
 
 
 def make_tf_dataset(paths, labels, input_shape, num_classes, batch_size, shuffle):
     ds = tf.data.Dataset.from_tensor_slices((paths, labels))
-
     if shuffle:
         ds = ds.shuffle(buffer_size=len(paths), seed=42)
 
@@ -156,23 +150,8 @@ def make_tf_dataset(paths, labels, input_shape, num_classes, batch_size, shuffle
     return ds
 
 
-def load_npy(path, input_shape):
-    data = np.load(path.decode())["input"].astype(np.float32)
-
-    while data.ndim > len(input_shape):
-        data = np.squeeze(data, axis=0)
-
-    while data.ndim < len(input_shape):
-        data = np.expand_dims(data, axis=-1)
-
-    data = data.reshape(input_shape)
-
-    return data
-
-
 def check_npy_shapes(paths, expected_ndim=None):
-    good_paths = []
-    bad_paths = []
+    good_paths, bad_paths = [], []
     for path in paths:
         arr = np.load(path)["input"]
         if expected_ndim is None:
@@ -182,22 +161,11 @@ def check_npy_shapes(paths, expected_ndim=None):
         else:
             good_paths.append(path)
     if bad_paths:
-        print("Bad files:", bad_paths)
+        print("Bad files (will be removed only on chief):", bad_paths)
     return good_paths
 
 
 # ----------------------- Training Pipeline -----------------------
-
-def collect_dataset(tf_dataset):
-    X_list = []
-    y_list = []
-    for X_batch, y_batch in tf_dataset:
-        X_list.append(X_batch.numpy())
-        y_list.append(y_batch.numpy())
-
-    X_full = np.concatenate(X_list, axis=0)
-    y_full = np.concatenate(y_list, axis=0)
-    return X_full, y_full
 
 
 def is_chief():
@@ -219,49 +187,36 @@ def train_model(
     global _labels
 
     df = load_dataset(Path(csv_path))
-
     if disabled_labels:
         df = df[~df["label"].isin(disabled_labels)]
         if df.empty:
             raise ValueError("All labels removed by disabled_labels")
 
-    if downsampling:
+    if is_chief() and downsampling:
         df = balanced_downsample(df)
 
     _labels = sorted(df["label"].unique())
     label_to_idx = {l: i for i, l in enumerate(_labels)}
 
     train_idx, val_idx, test_idx = song_wise_split(df, test_size, val_from_test)
-
     train_paths = df.iloc[train_idx]["npy_path"].astype(str).tolist()
-    train_labels = [label_to_idx[l] for l in df.iloc[train_idx]["label"]]
-
     val_paths = df.iloc[val_idx]["npy_path"].astype(str).tolist()
+    train_labels = [label_to_idx[l] for l in df.iloc[train_idx]["label"]]
     val_labels = [label_to_idx[l] for l in df.iloc[val_idx]["label"]]
 
-    train_paths = check_npy_shapes(train_paths)
-    val_paths = check_npy_shapes(val_paths)
-
-    train_labels = [label_to_idx[df[df["npy_path"] == p]["label"].values[0]] for p in train_paths]
-    val_labels = [label_to_idx[df[df["npy_path"] == p]["label"].values[0]] for p in val_paths]
+    if is_chief():
+        train_paths = check_npy_shapes(train_paths)
+        val_paths = check_npy_shapes(val_paths)
+        train_labels = [label_to_idx[df[df["npy_path"] == p]["label"].values[0]] for p in train_paths]
+        val_labels = [label_to_idx[df[df["npy_path"] == p]["label"].values[0]] for p in val_paths]
 
     if is_chief():
         Path(CNN_DATASET_PATH).mkdir(parents=True, exist_ok=True)
         json.dump(_labels, open(CNN_LABELS_PATH, "w"))
-        json.dump(
-            {
-                "train_idx": train_idx.tolist(),
-                "val_idx": val_idx.tolist(),
-                "test_idx": test_idx.tolist(),
-            },
-            open(Path(CNN_DATASET_PATH) / "splits.json", "w")
-        )
+        json.dump({"train_idx": train_idx.tolist(), "val_idx": val_idx.tolist(), "test_idx": test_idx.tolist()},
+                  open(Path(CNN_DATASET_PATH) / "splits.json", "w"))
 
-    scaler = compute_global_mean_std(
-        df.iloc[train_idx]["npy_path"].tolist(),
-        sample_limit=4000
-    )
-
+    scaler = compute_global_mean_std(df.iloc[train_idx]["npy_path"].tolist(), sample_limit=4000)
     if is_chief():
         joblib.dump(scaler, SCALER_PATH)
 
@@ -270,62 +225,30 @@ def train_model(
         sample_arr = sample_arr.squeeze(0)
     if sample_arr.ndim == 2:
         sample_arr = sample_arr[..., np.newaxis]
-
     input_shape = sample_arr.shape
     num_classes = len(_labels)
 
-    train_ds = make_tf_dataset(
-        train_paths,
-        train_labels,
-        input_shape,
-        num_classes,
-        batch_size=batch_size,
-        shuffle=True
-    )
-
-    val_ds = make_tf_dataset(
-        val_paths,
-        val_labels,
-        input_shape,
-        num_classes,
-        batch_size=batch_size,
-        shuffle=False
-    )
-
+    train_ds = make_tf_dataset(train_paths, train_labels, input_shape, num_classes, batch_size, shuffle=True)
+    val_ds = make_tf_dataset(val_paths, val_labels, input_shape, num_classes, batch_size, shuffle=False)
     options = tf.data.Options()
     options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
     train_ds = train_ds.with_options(options)
     val_ds = val_ds.with_options(options)
 
-    model = build_cnn(
-        input_shape=input_shape,
-        num_classes=num_classes,
-        **(model_config or {})
-    )
+    model = build_cnn(input_shape=input_shape, num_classes=num_classes, **(model_config or {}))
 
-    callbacks = [
-        tf.keras.callbacks.EarlyStopping(
-            monitor="val_loss",
-            patience=12,
-            restore_best_weights=True
-        )
-    ]
-
+    callbacks = [tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True)]
     if is_chief():
-        callbacks.append(
-            tf.keras.callbacks.ModelCheckpoint(
-                filepath=CNN_WEIGHTS_PATH,
-                monitor="val_loss",
-                save_best_only=True,
-                save_weights_only=True
-            )
-        )
+        callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath=CNN_WEIGHTS_PATH,
+                                                            monitor="val_loss",
+                                                            save_best_only=True,
+                                                            save_weights_only=True))
 
-    effective_train_steps = len(train_idx) // batch_size
-    effective_val_steps = len(val_idx) // batch_size
+    effective_train_steps = len(train_paths) // batch_size
+    effective_val_steps = len(val_paths) // batch_size
 
-    print(f"Train samples: {len(train_idx)}")
-    print(f"Val samples: {len(val_idx)}")
+    print(f"Train samples: {len(train_paths)}")
+    print(f"Val samples: {len(val_paths)}")
     print(f"Batch size: {batch_size}")
     print(f"Effective train steps: {effective_train_steps}")
     print(f"Effective val steps: {effective_val_steps}")
@@ -333,15 +256,13 @@ def train_model(
     if effective_train_steps == 0 or effective_val_steps == 0:
         raise ValueError("Batch size too large for dataset")
 
-    model.fit(
-        train_ds,
-        validation_data=val_ds,
-        epochs=epochs,
-        steps_per_epoch=effective_train_steps,
-        validation_steps=effective_val_steps,
-        callbacks=callbacks,
-        verbose=1
-    )
+    model.fit(train_ds,
+              validation_data=val_ds,
+              epochs=epochs,
+              steps_per_epoch=effective_train_steps,
+              validation_steps=effective_val_steps,
+              callbacks=callbacks,
+              verbose=1)
 
 
 # ----------------------- Inference -----------------------
