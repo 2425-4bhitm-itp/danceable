@@ -141,7 +141,8 @@ def make_tf_dataset(paths, labels, input_shape, num_classes, batch_size, shuffle
     def _map_fn(path, label):
         x = tf.numpy_function(load_npy, [path, input_shape], tf.float32)
         x.set_shape(input_shape)
-        y = tf.one_hot(label, depth=num_classes)
+        y = tf.one_hot(tf.cast(label, tf.int32), depth=num_classes)
+        y = tf.cast(y, tf.float32)
         return x, y
 
     ds = ds.map(_map_fn, num_parallel_calls=tf.data.AUTOTUNE)
