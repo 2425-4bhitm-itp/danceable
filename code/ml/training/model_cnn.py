@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
-from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 from tensorflow.keras.models import Sequential
 
@@ -146,7 +145,7 @@ def make_tf_dataset(paths, labels, input_shape, num_classes, batch_size, shuffle
         ds = ds.shuffle(buffer_size=len(paths), seed=42)
 
     def _map_fn(path, label):
-        x = tf.numpy_function(load_npy, [path], tf.float32)
+        x = tf.numpy_function(load_npy, [path, input_shape], tf.float32)
         x.set_shape(input_shape)
         y = tf.one_hot(label, depth=num_classes)
         return x, y
@@ -156,13 +155,36 @@ def make_tf_dataset(paths, labels, input_shape, num_classes, batch_size, shuffle
     ds = ds.prefetch(tf.data.AUTOTUNE)
     return ds
 
-def load_npy(path):
+
+def load_npy(path, input_shape):
     data = np.load(path.decode())["input"].astype(np.float32)
-    while data.ndim > 3:
-        data = data.squeeze(0)
-    if data.ndim == 2:
-        data = data[..., np.newaxis]
+
+    while data.ndim > len(input_shape):
+        data = np.squeeze(data, axis=0)
+
+    while data.ndim < len(input_shape):
+        data = np.expand_dims(data, axis=-1)
+
+    data = data.reshape(input_shape)
+
     return data
+
+
+def check_npy_shapes(paths, expected_ndim=None):
+    good_paths = []
+    bad_paths = []
+    for path in paths:
+        arr = np.load(path)["input"]
+        if expected_ndim is None:
+            expected_ndim = arr.ndim
+        if arr.ndim != expected_ndim:
+            bad_paths.append(path)
+        else:
+            good_paths.append(path)
+    if bad_paths:
+        print("Bad files:", bad_paths)
+    return good_paths
+
 
 # ----------------------- Training Pipeline -----------------------
 
@@ -217,6 +239,12 @@ def train_model(
     val_paths = df.iloc[val_idx]["npy_path"].astype(str).tolist()
     val_labels = [label_to_idx[l] for l in df.iloc[val_idx]["label"]]
 
+    train_paths = check_npy_shapes(train_paths)
+    val_paths = check_npy_shapes(val_paths)
+
+    train_labels = [label_to_idx[df[df["npy_path"] == p]["label"].values[0]] for p in train_paths]
+    val_labels = [label_to_idx[df[df["npy_path"] == p]["label"].values[0]] for p in val_paths]
+
     if is_chief():
         Path(CNN_DATASET_PATH).mkdir(parents=True, exist_ok=True)
         json.dump(_labels, open(CNN_LABELS_PATH, "w"))
@@ -237,7 +265,7 @@ def train_model(
     if is_chief():
         joblib.dump(scaler, SCALER_PATH)
 
-    sample_arr = np.load(df.iloc[train_idx[0]]["npy_path"])["input"].astype(np.float32)
+    sample_arr = np.load(train_paths[0])["input"].astype(np.float32)
     while sample_arr.ndim > 3:
         sample_arr = sample_arr.squeeze(0)
     if sample_arr.ndim == 2:
