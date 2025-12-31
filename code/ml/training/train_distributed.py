@@ -1,56 +1,28 @@
 import os
 import time
 import tensorflow as tf
-from training.model_cnn import train_model, is_chief
+
+from training.model_cnn import train_model
 from training.evaluate import evaluate_and_export
 from config.paths import TRAIN_ENV_PATH
 
-POD_NAME = os.environ["POD_NAME"]
-REPLICAS = int(os.environ["REPLICAS"])
+
+POD_NAME = os.environ.get("POD_NAME", "unknown-pod")
 
 training_id_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_ID")
 state_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_STATE")
 ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
-reset_lock_file = os.path.join(TRAIN_ENV_PATH, "RESET_LOCK")
+eval_lock_file = os.path.join(TRAIN_ENV_PATH, "EVAL_LOCK")
 
 last_seen_id = -1
-
-print(f"{POD_NAME} started")
 
 
 def read_env_file(name, default=None):
     try:
-        return open(os.path.join(TRAIN_ENV_PATH, name)).read().strip()
+        with open(os.path.join(TRAIN_ENV_PATH, name)) as f:
+            return f.read().strip()
     except Exception:
         return default
-
-
-def acquire_reset_lock():
-    os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
-    try:
-        fd = os.open(reset_lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        os.write(fd, POD_NAME.encode())
-        os.close(fd)
-        return True
-    except FileExistsError:
-        return False
-
-
-def wait_for_reset_completion():
-    while os.path.exists(reset_lock_file):
-        time.sleep(0.5)
-
-
-def initialize_training_files():
-    if acquire_reset_lock():
-        with open(training_id_file, "w") as f:
-            f.write("-1")
-        with open(state_file, "w") as f:
-            f.write("idle")
-        print(f"{POD_NAME} performed training reset")
-        os.remove(reset_lock_file)
-    else:
-        wait_for_reset_completion()
 
 
 def register_ready():
@@ -59,8 +31,8 @@ def register_ready():
         try:
             workers = set()
             if os.path.exists(ready_file):
-                with open(ready_file, "r") as f:
-                    workers = {line.strip() for line in f if line.strip()}
+                with open(ready_file) as f:
+                    workers = {l.strip() for l in f if l.strip()}
 
             if POD_NAME not in workers:
                 workers.add(POD_NAME)
@@ -72,17 +44,31 @@ def register_ready():
             time.sleep(1)
 
 
-initialize_training_files()
+def acquire_eval_lock():
+    try:
+        fd = os.open(eval_lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, POD_NAME.encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
+
+
+print(f"{POD_NAME} starting")
 register_ready()
 print(f"{POD_NAME} registered as ready")
 
 
 while True:
-    if not os.path.isfile(training_id_file):
+    if not os.path.exists(training_id_file):
         time.sleep(1)
         continue
 
-    current_id = int(open(training_id_file).read().strip())
+    try:
+        current_id = int(open(training_id_file).read().strip())
+    except Exception:
+        time.sleep(1)
+        continue
 
     if current_id <= last_seen_id:
         time.sleep(1)
@@ -91,12 +77,8 @@ while True:
     last_seen_id = current_id
     print(f"{POD_NAME} starting training run {current_id}")
 
-    batch_size = int(read_env_file("BATCH_SIZE", "64"))
+    batch_size = int(read_env_file("BATCH_SIZE", "128"))
     epochs = int(read_env_file("EPOCHS", "100"))
-    disabled_labels = read_env_file("DISABLED_LABELS", "")
-    disabled_labels = disabled_labels.split(",") if disabled_labels else None
-    test_size = float(read_env_file("TEST_SIZE", "0.1"))
-    downsampling = read_env_file("DOWNSAMPLING", "false").lower() == "true"
 
     strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
@@ -104,16 +86,15 @@ while True:
         train_model(
             batch_size=batch_size,
             epochs=epochs,
-            disabled_labels=disabled_labels,
-            test_size=test_size,
-            downsampling=downsampling
         )
 
     print(f"{POD_NAME} finished training run {current_id}")
 
-    if is_chief():
-        print("Chief: starting evaluation and export")
-        evaluate_and_export()
-
-        with open(state_file, "w") as f:
-            f.write("idle")
+    if acquire_eval_lock():
+        print(f"{POD_NAME} acquired evaluation lock")
+        try:
+            evaluate_and_export()
+            with open(state_file, "w") as f:
+                f.write("idle")
+        finally:
+            os.remove(eval_lock_file)

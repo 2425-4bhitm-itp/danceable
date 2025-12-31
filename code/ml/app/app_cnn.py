@@ -139,8 +139,8 @@ def train():
     batch_size = str(data.get("batch_size", 512))
     epochs = str(data.get("epochs", 100))
     disabled_labels = data.get("disabled_labels", [])
-    test_size = str(data.get("test_size", 0.1))
-    downsampling = str(data.get("downsampling", False)).lower()
+    test_size = float(data.get("test_size", 0.1))
+    downsampling = bool(data.get("downsampling", False))
 
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
 
@@ -148,25 +148,23 @@ def train():
     id_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_ID")
 
     if os.path.exists(state_file):
-        state = open(state_file).read().strip()
-        if state != "idle":
+        if open(state_file).read().strip() != "idle":
             return jsonify({"error": "Training already running"}), 409
 
     with open(state_file, "w") as f:
-        f.write("starting")
+        f.write("preparing")
 
-    wait_for_all_workers()
+    dataset_creator.prepare_dataset_once(
+        disabled_labels=disabled_labels,
+        downsampling=downsampling,
+        test_size=test_size,
+        val_from_test=0.5
+    )
 
     with open(os.path.join(TRAIN_ENV_PATH, "BATCH_SIZE"), "w") as f:
         f.write(batch_size)
     with open(os.path.join(TRAIN_ENV_PATH, "EPOCHS"), "w") as f:
         f.write(epochs)
-    with open(os.path.join(TRAIN_ENV_PATH, "DISABLED_LABELS"), "w") as f:
-        f.write(",".join(disabled_labels))
-    with open(os.path.join(TRAIN_ENV_PATH, "TEST_SIZE"), "w") as f:
-        f.write(test_size)
-    with open(os.path.join(TRAIN_ENV_PATH, "DOWNSAMPLING"), "w") as f:
-        f.write(downsampling)
 
     current = int(open(id_file).read().strip()) if os.path.exists(id_file) else 0
     with open(id_file, "w") as f:
@@ -176,7 +174,6 @@ def train():
         f.write("running")
 
     return jsonify({"message": "Training started"}), 200
-
 
 
 @flask_app.route("/evaluate", methods=["GET"])
@@ -269,6 +266,7 @@ def serve_result_file(filename):
     else:
         mimetype = "text/html"
     return Response(data, mimetype=mimetype)
+
 
 @flask_app.route("/hyperparameter-test", methods=["POST"])
 def hyperparameter_test():
