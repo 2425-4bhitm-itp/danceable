@@ -1,4 +1,5 @@
 import concurrent.futures
+import json
 import os
 import time
 import uuid
@@ -12,7 +13,7 @@ from config.paths import (
     CNN_MODEL_PATH,
     CNN_LABELS_PATH,
     EVALUATION_RESULTS_DIR,
-    TRAIN_ENV_PATH, HYPER_ENV_PATH
+    TRAIN_ENV_PATH, HYPER_ENV_PATH, CNN_DATASET_PATH
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
@@ -180,8 +181,8 @@ def train():
 def evaluate():
     evaluator = DanceModelEvaluator(
         model_path=CNN_MODEL_PATH,
-        labels_path=CNN_LABELS_PATH,
-        output_dir=EVALUATION_RESULTS_DIR
+        output_dir=EVALUATION_RESULTS_DIR,
+        meta_path=CNN_DATASET_PATH  / "meta.json",
     )
 
     evaluator.load_resources()

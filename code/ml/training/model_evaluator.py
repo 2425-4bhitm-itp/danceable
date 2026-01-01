@@ -5,30 +5,35 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import seaborn as sns
+from coremltools.converters.mil.testing_reqs import tf
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.interpolate import griddata
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from tensorflow.keras.models import load_model
-import plotly.graph_objects as go
 
 from config.paths import CNN_DATASET_PATH
 
 
 class DanceModelEvaluator:
-    def __init__(self, model_path, labels_path, output_dir="evaluation_results"):
+    def __init__(self, model_path, meta_path, output_dir="evaluation_results", disabled_labels=None):
         self.model_path = model_path
-        self.labels_path = labels_path
+        self.meta_path = meta_path
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.model = None
         self.labels = None
+        self.disabled_labels = disabled_labels or []
 
     def load_resources(self):
-        self.model = load_model(self.model_path)
-        with open(self.labels_path, "r") as f:
-            self.labels = json.load(f)
+        self.model = tf.keras.models.load_model(self.model_path)
+
+        with open(self.meta_path, "r") as f:
+            meta = json.load(f)
+
+        self.labels = [l for l in meta["labels"] if l not in self.disabled_labels]
+        self.label_to_idx = {l: i for i, l in enumerate(self.labels)}
 
     def load_preprocessed_data(self):
         base = Path(CNN_DATASET_PATH)
@@ -36,7 +41,14 @@ class DanceModelEvaluator:
         for split in ["train", "val", "test"]:
             p = base / f"{split}_data.npz"
             arr = np.load(p, allow_pickle=True)
-            sets[split] = (arr["X"], arr["y"])
+            X = arr["X"]
+            y = arr["y"]
+
+            mask = np.array([yi not in self.disabled_labels if isinstance(yi, str) else True for yi in y])
+            X = X[mask]
+            y = y[mask]
+
+            sets[split] = (X, y)
         return sets
 
     def _plot_confusion_matrix(self, cm_df, set_name):
@@ -138,27 +150,32 @@ class DanceModelEvaluator:
     def evaluate_split(self, X, y, set_name):
         y_prob = self.model.predict(X, verbose=0)
         y_pred = np.argmax(y_prob, axis=1)
+
         if isinstance(y[0], str):
-            map_i = {label: i for i, label in enumerate(self.labels)}
-            y_true = np.array([map_i[a] for a in y])
+            y_true = np.array([self.label_to_idx[a] for a in y])
         elif y.ndim == 2 and y.shape[1] > 1:
             y_true = np.argmax(y, axis=1)
         else:
             y_true = y.reshape(-1)
-        cm = confusion_matrix(y_true, y_pred)
-        cm_norm = cm / cm.sum(axis=1, keepdims=True)
+
+        cm = confusion_matrix(y_true, y_pred, labels=range(len(self.labels)))
+        cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
         cm_df = pd.DataFrame(cm_norm, index=self.labels, columns=self.labels)
         cm_df.to_csv(os.path.join(self.output_dir, f"confusion_matrix_{set_name}.csv"))
-        report = classification_report(y_true, y_pred, target_names=self.labels, output_dict=True, zero_division=0)
+
+        report = classification_report(
+            y_true, y_pred, target_names=self.labels, output_dict=True, zero_division=0
+        )
         report_df = pd.DataFrame(report).transpose()
         report_df.to_csv(os.path.join(self.output_dir, f"class_metrics_{set_name}.csv"))
+
         self._plot_confusion_matrix(cm_df, set_name)
         self._plot_3d_landscape(cm_df, set_name)
         self._plot_3d_landscape_interactive(cm_df, set_name)
         self._plot_class_f1(report_df)
         self._plot_precision_recall(report_df)
-        accuracy = report["accuracy"]
-        return accuracy
+
+        return report["accuracy"]
 
     def evaluate_all(self):
         datasets = self.load_preprocessed_data()

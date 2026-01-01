@@ -17,7 +17,6 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.models import Sequential
 
 from config.paths import (
-    CNN_OUTPUT_CSV,
     CNN_DATASET_PATH,
     CNN_WEIGHTS_PATH,
     SCALER_PATH, CNN_MODEL_PATH, CNN_LABELS_PATH,
@@ -203,7 +202,6 @@ def load_prepared_dataset():
 # ---------------------------------------------------------------------
 
 def train_model(
-        csv_path: Path = Path(CNN_OUTPUT_CSV),
         batch_size: int = 128,
         epochs: int = 100,
         model_config: dict | None = None,
