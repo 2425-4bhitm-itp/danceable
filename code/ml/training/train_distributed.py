@@ -1,20 +1,24 @@
 import os
 import time
+
 import tensorflow as tf
 
-from training.model_cnn import train_model
-from training.evaluate import evaluate_and_export
 from config.paths import TRAIN_ENV_PATH
-
+from training.evaluate import evaluate_and_export
+from training.model_cnn import train_model
 
 POD_NAME = os.environ.get("POD_NAME", "unknown-pod")
 
 training_id_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_ID")
 state_file = os.path.join(TRAIN_ENV_PATH, "TRAINING_STATE")
 ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
+
+reset_lock_file = os.path.join(TRAIN_ENV_PATH, "RESET_LOCK")
 eval_lock_file = os.path.join(TRAIN_ENV_PATH, "EVAL_LOCK")
 
 last_seen_id = -1
+
+print(f"{POD_NAME} started")
 
 
 def read_env_file(name, default=None):
@@ -24,6 +28,44 @@ def read_env_file(name, default=None):
     except Exception:
         return default
 
+
+# -----------------------
+# Reset handling (PVC-safe)
+# -----------------------
+
+def acquire_reset_lock():
+    os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
+    try:
+        fd = os.open(reset_lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, POD_NAME.encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
+
+
+def wait_for_reset_completion():
+    while os.path.exists(reset_lock_file):
+        time.sleep(0.5)
+
+
+def initialize_training_files():
+    if acquire_reset_lock():
+        with open(training_id_file, "w") as f:
+            f.write("-1")
+        with open(state_file, "w") as f:
+            f.write("idle")
+        if os.path.exists(ready_file):
+            os.remove(ready_file)
+        print(f"{POD_NAME} performed training reset")
+        os.remove(reset_lock_file)
+    else:
+        wait_for_reset_completion()
+
+
+# -----------------------
+# Worker registration
+# -----------------------
 
 def register_ready():
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
@@ -44,6 +86,10 @@ def register_ready():
             time.sleep(1)
 
 
+# -----------------------
+# Evaluation lock
+# -----------------------
+
 def acquire_eval_lock():
     try:
         fd = os.open(eval_lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -54,10 +100,18 @@ def acquire_eval_lock():
         return False
 
 
-print(f"{POD_NAME} starting")
+# -----------------------
+# Startup sequence
+# -----------------------
+
+initialize_training_files()
 register_ready()
+
 print(f"{POD_NAME} registered as ready")
 
+# -----------------------
+# Main loop
+# -----------------------
 
 while True:
     if not os.path.exists(training_id_file):
