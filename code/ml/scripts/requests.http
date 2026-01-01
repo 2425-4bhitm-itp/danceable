@@ -56,20 +56,19 @@ Content-Type: application/json
 
 {
   "train": {
-    "batch_size": [128, 256, 512],
+    "batch_size": [64, 128, 256, 512],
     "epochs": [100],
     "test_size": [0.1],
     "downsampling": [true, false],
     "disabled_labels": [
-        "foxtrott",
-        "tango"
+        "foxtrott"
     ]
   },
   "model": {
     "filters": [[32, 64, 128], [32, 64], [64, 128, 256]],
-    "dense_units": [128, 256, 512],
+    "dense_units": [64, 128, 256, 512],
     "dropout_rate": [0.2, 0.3, 0.5],
-    "learning_rate": [0.001, 0.0003, 0.0001],
-    "kernel_size": [[3, 3], [5, 5]]
+    "learning_rate": [0.01, 0.001, 0.0003, 0.0001],
+    "kernel_size": [[3, 3], [5, 5], [7, 7]]
   }
 }
