@@ -215,7 +215,7 @@ def train_model(
         val_labels,
         meta,
         scaler,
-    ) = load_prepared_dataset(csv_path)
+    ) = load_prepared_dataset()
 
     num_classes = len(meta["labels"])
 
