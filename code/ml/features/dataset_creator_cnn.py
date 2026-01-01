@@ -138,12 +138,16 @@ class AudioDatasetCreatorCNN:
             sample_limit=scaler_sample_limit,
         )
 
+        filtered_csv_path = Path(CNN_DATASET_PATH) / "filtered_dataset.csv"
+        df.to_csv(filtered_csv_path, index=False)
+
         meta = {
             "labels": labels,
             "label_to_idx": label_to_idx,
             "train_idx": train_idx.tolist(),
             "val_idx": val_idx.tolist(),
             "test_idx": test_idx.tolist(),
+            "filtered_csv": str(filtered_csv_path)
         }
 
         dataset_path = Path(CNN_DATASET_PATH)

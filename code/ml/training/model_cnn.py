@@ -165,7 +165,8 @@ def load_prepared_dataset(csv_path):
     with open(meta_path) as f:
         meta = json.load(f)
 
-    df = pd.read_csv(csv_path)
+    filtered_csv = meta["filtered_csv"]
+    df = pd.read_csv(filtered_csv)
 
     label_to_idx = meta["label_to_idx"]
 
