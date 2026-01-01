@@ -159,7 +159,7 @@ def make_tf_dataset(
 # Prepared dataset loader
 # ---------------------------------------------------------------------
 
-def load_prepared_dataset(csv_path):
+def load_prepared_dataset():
     meta_path = Path(CNN_DATASET_PATH) / "meta.json"
 
     with open(meta_path) as f:

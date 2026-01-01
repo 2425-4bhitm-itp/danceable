@@ -4,6 +4,8 @@ import numpy as np
 import coremltools as ct
 from pathlib import Path
 
+import pandas as pd
+
 from training.model_cnn import (
     build_cnn,
     make_tf_dataset,
@@ -28,7 +30,7 @@ def evaluate_and_export():
         val_labels,
         meta,
         scaler,
-    ) = load_prepared_dataset(Path(CNN_OUTPUT_CSV))
+    ) = load_prepared_dataset()
 
     labels = meta["labels"]
     num_classes = len(labels)
@@ -41,21 +43,17 @@ def evaluate_and_export():
 
     input_shape = sample.shape
 
-    test_paths = [meta["test_idx"][i] for i in range(len(meta["test_idx"]))]
+    df = pd.read_csv(meta["filtered_csv"])
 
-    df_test_paths = []
-    df_test_labels = []
-
-    import pandas as pd
-    df = pd.read_csv(CNN_OUTPUT_CSV)
-
-    for idx in meta["test_idx"]:
-        df_test_paths.append(df.iloc[idx]["npy_path"])
-        df_test_labels.append(meta["label_to_idx"][df.iloc[idx]["label"]])
+    test_paths = df.iloc[meta["test_idx"]]["npy_path"].astype(str).tolist()
+    test_labels = [
+        meta["label_to_idx"][df.iloc[i]["label"]]
+        for i in meta["test_idx"]
+    ]
 
     test_ds = make_tf_dataset(
-        df_test_paths,
-        df_test_labels,
+        test_paths,
+        test_labels,
         input_shape,
         num_classes,
         batch_size=64,
