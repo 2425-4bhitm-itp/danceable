@@ -1,26 +1,63 @@
+import itertools
+import json
 import os
 import time
-import json
-import itertools
-from pathlib import Path
+import traceback
 from datetime import datetime
+from pathlib import Path
 
 import tensorflow as tf
 
-from training.model_cnn import train_model
 from config.paths import HYPER_ENV_PATH
+from training.model_cnn import train_model
 
 POD_NAME = os.environ["POD_NAME"]
+REPLICAS = int(os.environ["REPLICAS"])
 
-run_id_file = os.path.join(HYPER_ENV_PATH, "RUN_ID")
-state_file = os.path.join(HYPER_ENV_PATH, "STATE")
-ready_file = os.path.join(HYPER_ENV_PATH, "READY_WORKERS")
+RUN_ID_FILE = Path(HYPER_ENV_PATH) / "RUN_ID"
+STATE_FILE = Path(HYPER_ENV_PATH) / "STATE"
+READY_FILE = Path(HYPER_ENV_PATH) / "READY_WORKERS"
+RESET_LOCK_FILE = Path(HYPER_ENV_PATH) / "RESET_LOCK"
 
-last_seen = -1
+HYPER_RESULTS_DIR = Path("/app/song-storage/hyper_runs")
+
+last_seen_run = -1
+
+print(f"{POD_NAME} started")
 
 
 def is_chief():
-    return POD_NAME.endswith("-0")
+    tf_config = json.loads(os.environ.get("TF_CONFIG", "{}"))
+    task = tf_config.get("task", {})
+    return task.get("type") == "worker" and task.get("index") == 0
+
+
+def acquire_reset_lock():
+    os.makedirs(HYPER_ENV_PATH, exist_ok=True)
+    try:
+        fd = os.open(RESET_LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, POD_NAME.encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
+
+
+def wait_for_reset_completion():
+    while RESET_LOCK_FILE.exists():
+        time.sleep(0.5)
+
+
+def initialize_hyper_files():
+    if acquire_reset_lock():
+        with open(RUN_ID_FILE, "w") as f:
+            f.write("-1")
+        with open(STATE_FILE, "w") as f:
+            f.write("idle")
+        print(f"{POD_NAME} performed hyper reset")
+        os.remove(RESET_LOCK_FILE)
+    else:
+        wait_for_reset_completion()
 
 
 def register_ready():
@@ -28,13 +65,13 @@ def register_ready():
     while True:
         try:
             workers = set()
-            if os.path.exists(ready_file):
-                with open(ready_file) as f:
-                    workers = {l.strip() for l in f if l.strip()}
+            if READY_FILE.exists():
+                with open(READY_FILE, "r") as f:
+                    workers = {line.strip() for line in f if line.strip()}
 
             if POD_NAME not in workers:
                 workers.add(POD_NAME)
-                with open(ready_file, "w") as f:
+                with open(READY_FILE, "w") as f:
                     for w in sorted(workers):
                         f.write(w + "\n")
             return
@@ -42,75 +79,95 @@ def register_ready():
             time.sleep(1)
 
 
-register_ready()
-print(f"{POD_NAME} hyper worker ready")
+def run_hyperparameter_search():
+    global last_seen_run
 
-while True:
-    if not os.path.exists(run_id_file):
-        time.sleep(1)
-        continue
+    while True:
+        if not RUN_ID_FILE.exists():
+            time.sleep(1)
+            continue
 
-    current = int(open(run_id_file).read().strip())
-    if current <= last_seen:
-        time.sleep(1)
-        continue
+        current_run = int(RUN_ID_FILE.read_text().strip())
+        if current_run <= last_seen_run:
+            time.sleep(1)
+            continue
 
-    last_seen = current
-    print(f"{POD_NAME} starting hyper run {current}")
+        last_seen_run = current_run
+        print(f"{POD_NAME} starting hyper run {current_run}")
 
-    search_space = json.load(open(os.path.join(HYPER_ENV_PATH, "SEARCH_SPACE")))
+        try:
+            search_space_file = Path(HYPER_ENV_PATH) / "SEARCH_SPACE"
+            search_space = json.load(open(search_space_file))
 
-    train_space = search_space.get("train", {})
-    model_space = search_space.get("model", {})
+            train_space = search_space.get("train", {})
+            model_space = search_space.get("model", {})
 
-    train_keys = list(train_space.keys())
-    model_keys = list(model_space.keys())
+            train_keys = list(train_space.keys())
+            model_keys = list(model_space.keys())
 
-    train_runs = list(itertools.product(*train_space.values())) or [()]
-    model_runs = list(itertools.product(*model_space.values())) or [()]
+            train_runs = list(itertools.product(*train_space.values())) or [()]
+            model_runs = list(itertools.product(*model_space.values())) or [()]
 
-    strategy = tf.distribute.MultiWorkerMirroredStrategy()
+            strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
-    results = []
-    out_dir = Path("/opt/model/hyper_runs")
-    if is_chief():
-        out_dir.mkdir(parents=True, exist_ok=True)
-
-    for train_vals in train_runs:
-        train_cfg = dict(zip(train_keys, train_vals))
-
-        for model_vals in model_runs:
-            model_cfg = dict(zip(model_keys, model_vals))
-
-            run_tag = f"{current}_{hash(tuple(train_vals) + tuple(model_vals)) & 0xffff:x}"
-
-            with strategy.scope():
-                metrics = train_model(
-                    batch_size=train_cfg.get("batch_size", 128),
-                    epochs=train_cfg.get("epochs", 100),
-                    test_size=train_cfg.get("test_size", 0.2),
-                    downsampling=train_cfg.get("downsampling", True),
-                    disabled_labels=train_cfg.get("disabled_labels"),
-                    model_config=model_cfg
-                )
+            run_results = []
 
             if is_chief():
-                results.append({
-                    "run": run_tag,
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "train": train_cfg,
-                    "model": model_cfg,
-                    "loss": metrics["loss"],
-                    "accuracy": metrics["accuracy"]
-                })
+                HYPER_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    if is_chief():
-        json.dump(
-            results,
-            open(out_dir / f"summary_{current}.json", "w"),
-            indent=2
-        )
-        with open(state_file, "w") as f:
-            f.write("idle")
+            for train_vals in train_runs:
+                train_cfg = dict(zip(train_keys, train_vals))
 
-    print(f"{POD_NAME} finished hyper run {current}")
+                for model_vals in model_runs:
+                    model_cfg = dict(zip(model_keys, model_vals))
+                    run_tag = f"{current_run}_{hash(tuple(train_vals) + tuple(model_vals)) & 0xffff:x}"
+                    print(f"{POD_NAME} running config {run_tag}")
+
+                    start_time = time.time()
+                    history = {}
+                    with strategy.scope():
+                        # add callback to capture metrics per epoch
+                        class CaptureHistory(tf.keras.callbacks.Callback):
+                            def on_epoch_end(self, epoch, logs=None):
+                                logs = logs or {}
+                                for k, v in logs.items():
+                                    history.setdefault(k, []).append(float(v))
+
+                        metrics = train_model(
+                            batch_size=train_cfg.get("batch_size", 128),
+                            epochs=train_cfg.get("epochs", 100),
+                            test_size=train_cfg.get("test_size", 0.2),
+                            downsampling=train_cfg.get("downsampling", True),
+                            disabled_labels=train_cfg.get("disabled_labels"),
+                            model_config=model_cfg,
+                        )
+
+                    elapsed_time = time.time() - start_time
+
+                    if is_chief():
+                        run_results.append({
+                            "run_tag": run_tag,
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "train_config": train_cfg,
+                            "model_config": model_cfg,
+                            "metrics": history,
+                            "elapsed_seconds": elapsed_time
+                        })
+
+            if is_chief():
+                summary_file = HYPER_RESULTS_DIR / f"summary_{current_run}.json"
+                json.dump(run_results, open(summary_file, "w"), indent=2)
+                with open(STATE_FILE, "w") as f:
+                    f.write("idle")
+
+            print(f"{POD_NAME} finished hyper run {current_run}")
+
+        except Exception:
+            print(f"Error during hyper run {current_run}:\n{traceback.format_exc()}")
+            time.sleep(1)
+
+
+initialize_hyper_files()
+register_ready()
+print(f"{POD_NAME} registered as ready")
+run_hyperparameter_search()
