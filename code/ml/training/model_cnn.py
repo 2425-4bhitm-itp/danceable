@@ -4,6 +4,7 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.layers import (
     Conv2D,
@@ -19,12 +20,8 @@ from config.paths import (
     CNN_OUTPUT_CSV,
     CNN_DATASET_PATH,
     CNN_WEIGHTS_PATH,
-    SCALER_PATH,
+    SCALER_PATH, CNN_MODEL_PATH, CNN_LABELS_PATH,
 )
-
-from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
-import pandas as pd
-
 
 # ---------------------------------------------------------------------
 # CPU / threading configuration
@@ -42,13 +39,13 @@ tf.config.threading.set_inter_op_parallelism_threads(os.cpu_count())
 # ---------------------------------------------------------------------
 
 def build_cnn(
-    input_shape: tuple,
-    num_classes: int,
-    filters=(32, 64, 128),
-    kernel_size=(3, 3),
-    dense_units=256,
-    dropout_rate=0.5,
-    learning_rate=1e-3,
+        input_shape: tuple,
+        num_classes: int,
+        filters=(32, 64, 128),
+        kernel_size=(3, 3),
+        dense_units=256,
+        dropout_rate=0.5,
+        learning_rate=1e-3,
 ) -> tf.keras.Model:
     model = Sequential()
 
@@ -123,12 +120,12 @@ def load_npy(path, input_shape):
 
 
 def make_tf_dataset(
-    paths,
-    labels,
-    input_shape,
-    num_classes,
-    batch_size,
-    shuffle,
+        paths,
+        labels,
+        input_shape,
+        num_classes,
+        batch_size,
+        shuffle,
 ):
     ds = tf.data.Dataset.from_tensor_slices((paths, labels))
 
@@ -162,30 +159,42 @@ def make_tf_dataset(
 # Prepared dataset loader
 # ---------------------------------------------------------------------
 
-def load_prepared_dataset(csv_path: Path):
+def load_prepared_dataset(csv_path):
     meta_path = Path(CNN_DATASET_PATH) / "meta.json"
-    if not meta_path.exists():
-        raise FileNotFoundError("meta.json not found, run prepare_dataset_once first")
 
-    with open(meta_path, "r", encoding="utf-8") as f:
+    with open(meta_path) as f:
         meta = json.load(f)
 
-    df = load_dataset_csv(csv_path)
+    df = pd.read_csv(csv_path)
 
     label_to_idx = meta["label_to_idx"]
 
-    train_df = df.iloc[meta["train_idx"]]
-    val_df = df.iloc[meta["val_idx"]]
+    train_idx = meta["train_idx"]
+    val_idx = meta["val_idx"]
 
-    train_paths = train_df["npy_path"].astype(str).tolist()
-    val_paths = val_df["npy_path"].astype(str).tolist()
+    train_paths = df.iloc[train_idx]["npy_path"].astype(str).tolist()
+    val_paths = df.iloc[val_idx]["npy_path"].astype(str).tolist()
 
-    train_labels = [label_to_idx[l] for l in train_df["label"]]
-    val_labels = [label_to_idx[l] for l in val_df["label"]]
+    train_labels = [
+        label_to_idx[df.iloc[i]["label"]]
+        for i in train_idx
+    ]
+
+    val_labels = [
+        label_to_idx[df.iloc[i]["label"]]
+        for i in val_idx
+    ]
 
     scaler = joblib.load(SCALER_PATH)
 
-    return train_paths, train_labels, val_paths, val_labels, meta, scaler
+    return (
+        train_paths,
+        train_labels,
+        val_paths,
+        val_labels,
+        meta,
+        scaler,
+    )
 
 
 # ---------------------------------------------------------------------
@@ -193,10 +202,10 @@ def load_prepared_dataset(csv_path: Path):
 # ---------------------------------------------------------------------
 
 def train_model(
-    csv_path: Path = Path(CNN_OUTPUT_CSV),
-    batch_size: int = 128,
-    epochs: int = 100,
-    model_config: dict | None = None,
+        csv_path: Path = Path(CNN_OUTPUT_CSV),
+        batch_size: int = 128,
+        epochs: int = 100,
+        model_config: dict | None = None,
 ):
     (
         train_paths,
