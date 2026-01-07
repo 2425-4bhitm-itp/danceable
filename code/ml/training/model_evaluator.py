@@ -1,7 +1,7 @@
 import json
 import os
-from pathlib import Path
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -13,11 +13,17 @@ from scipy.interpolate import griddata
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
-from config.paths import CNN_DATASET_PATH
+from config.paths import SCALER_PATH
 
 
 class DanceModelEvaluator:
     def __init__(self, model_path, meta_path, output_dir="evaluation_results", disabled_labels=None):
+        self.scaler = None
+        self.test_idx = None
+        self.val_idx = None
+        self.dataset_df = None
+        self.label_to_idx = None
+        self.train_idx = None
         self.model_path = model_path
         self.meta_path = meta_path
         self.output_dir = output_dir
@@ -29,26 +35,55 @@ class DanceModelEvaluator:
     def load_resources(self):
         self.model = tf.keras.models.load_model(self.model_path)
 
-        with open(self.meta_path, "r") as f:
+        with open(self.meta_path, "r", encoding="utf-8") as f:
             meta = json.load(f)
 
-        self.labels = [l for l in meta["labels"] if l not in self.disabled_labels]
-        self.label_to_idx = {l: i for i, l in enumerate(self.labels)}
+        self.labels = meta["labels"]
+        self.label_to_idx = meta["label_to_idx"]
+        self.disabled_labels = self.disabled_labels or []
+
+        filtered_csv_path = meta["filtered_csv"]
+        self.dataset_df = pd.read_csv(filtered_csv_path)
+
+        self.train_idx = np.array(meta["train_idx"])
+        self.val_idx = np.array(meta["val_idx"])
+        self.test_idx = np.array(meta["test_idx"])
+
+        self.scaler = joblib.load(SCALER_PATH)
 
     def load_preprocessed_data(self):
-        base = Path(CNN_DATASET_PATH)
-        sets = {}
-        for split in ["train", "val", "test"]:
-            p = base / f"{split}_data.npz"
-            arr = np.load(p, allow_pickle=True)
-            X = arr["X"]
-            y = arr["y"]
+        df = self.dataset_df
 
-            mask = np.array([yi not in self.disabled_labels if isinstance(yi, str) else True for yi in y])
-            X = X[mask]
-            y = y[mask]
+        def load_split(indices):
+            subset = df.iloc[indices]
+            X_list = []
+            y_list = []
 
-            sets[split] = (X, y)
+            for _, row in subset.iterrows():
+                label = row["label"]
+                if label in self.disabled_labels:
+                    continue
+
+                arr = np.load(row["npy_path"])["input"].astype(np.float32)
+                # Apply normalization
+                arr = (arr - self.scaler["mean"]) / self.scaler["std"]
+
+                X_list.append(arr)
+                y_list.append(self.label_to_idx[label])
+
+            if not X_list:
+                raise ValueError("No samples left after applying disabled_labels")
+
+            X = np.stack(X_list, axis=0)
+            y = np.array(y_list, dtype=np.int64)
+            return X, y
+
+        sets = {
+            "train": load_split(self.train_idx),
+            "val": load_split(self.val_idx),
+            "test": load_split(self.test_idx),
+        }
+
         return sets
 
     def _plot_confusion_matrix(self, cm_df, set_name):
@@ -147,16 +182,17 @@ class DanceModelEvaluator:
         plt.savefig(out_path, dpi=200, bbox_inches="tight")
         plt.close()
 
-    def evaluate_split(self, X, y, set_name):
-        y_prob = self.model.predict(X, verbose=0)
-        y_pred = np.argmax(y_prob, axis=1)
+    def evaluate_split(self, X, y, set_name, batch_size=128):
+        y_pred = []
 
-        if isinstance(y[0], str):
-            y_true = np.array([self.label_to_idx[a] for a in y])
-        elif y.ndim == 2 and y.shape[1] > 1:
-            y_true = np.argmax(y, axis=1)
-        else:
-            y_true = y.reshape(-1)
+        for i in range(0, len(X), batch_size):
+            batch = X[i:i + batch_size]
+            y_prob = self.model.predict(batch, verbose=0)
+            y_pred.append(np.argmax(y_prob, axis=1))
+
+        y_pred = np.concatenate(y_pred, axis=0)
+
+        y_true = y
 
         cm = confusion_matrix(y_true, y_pred, labels=range(len(self.labels)))
         cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
@@ -175,7 +211,10 @@ class DanceModelEvaluator:
         self._plot_class_f1(report_df)
         self._plot_precision_recall(report_df)
 
-        return report["accuracy"]
+        acc = report.get("accuracy")
+        if isinstance(acc, dict):
+            acc = acc.get("accuracy")
+        return acc
 
     def evaluate_all(self):
         datasets = self.load_preprocessed_data()
