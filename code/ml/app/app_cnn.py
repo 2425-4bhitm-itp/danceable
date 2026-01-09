@@ -6,6 +6,7 @@ import uuid
 
 import numpy as np
 from flask import Flask, request, jsonify, Response
+from sympy import false
 
 from config.paths import (
     SNIPPETS_DIR,
@@ -289,7 +290,14 @@ def hyperparameter_test():
             return jsonify({"error": "Hyperparameter test already running"}), 409
 
     with open(state_file, "w") as f:
-        f.write("starting")
+        f.write("preparing")
+
+    dataset_creator.prepare_dataset_once(
+        disabled_labels=search_space.get("disabled_labels", []),
+        downsampling=search_space.get("downsampling", false),
+        test_size=search_space.get("test_size", 0.2),
+        val_from_test=0.5
+    )
 
     wait_for_all_hyper_workers()
 

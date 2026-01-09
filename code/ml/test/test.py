@@ -78,6 +78,13 @@ def register_ready():
         except Exception:
             time.sleep(1)
 
+def make_hashable(x):
+    if isinstance(x, list):
+        return tuple(make_hashable(i) for i in x)
+    if isinstance(x, dict):
+        return tuple(sorted((k, make_hashable(v)) for k, v in x.items()))
+    return x
+
 
 def run_hyperparameter_search():
     global last_seen_run
@@ -120,25 +127,20 @@ def run_hyperparameter_search():
 
                 for model_vals in model_runs:
                     model_cfg = dict(zip(model_keys, model_vals))
-                    run_tag = f"{current_run}_{hash(tuple(train_vals) + tuple(model_vals)) & 0xffff:x}"
+                    hashable_train = tuple(make_hashable(v) for v in train_vals)
+                    hashable_model = tuple(make_hashable(v) for v in model_vals)
+                    config_hash = hash(hashable_train + hashable_model) & 0xffff
+
+                    run_tag = f"{current_run}_{config_hash:x}"
+
                     print(f"{POD_NAME} running config {run_tag}")
 
                     start_time = time.time()
                     history = {}
                     with strategy.scope():
-                        # add callback to capture metrics per epoch
-                        class CaptureHistory(tf.keras.callbacks.Callback):
-                            def on_epoch_end(self, epoch, logs=None):
-                                logs = logs or {}
-                                for k, v in logs.items():
-                                    history.setdefault(k, []).append(float(v))
-
-                        metrics = train_model(
+                        model = train_model(
                             batch_size=train_cfg.get("batch_size", 128),
                             epochs=train_cfg.get("epochs", 100),
-                            test_size=train_cfg.get("test_size", 0.2),
-                            downsampling=train_cfg.get("downsampling", True),
-                            disabled_labels=train_cfg.get("disabled_labels"),
                             model_config=model_cfg,
                         )
 
