@@ -9,6 +9,7 @@ from pathlib import Path
 import tensorflow as tf
 
 from config.paths import HYPER_ENV_PATH
+from training.evaluate import evaluate_and_export
 from training.model_cnn import train_model
 
 POD_NAME = os.environ["POD_NAME"]
@@ -18,6 +19,7 @@ RUN_ID_FILE = Path(HYPER_ENV_PATH) / "RUN_ID"
 STATE_FILE = Path(HYPER_ENV_PATH) / "STATE"
 READY_FILE = Path(HYPER_ENV_PATH) / "READY_WORKERS"
 RESET_LOCK_FILE = Path(HYPER_ENV_PATH) / "RESET_LOCK"
+EVAL_LOCK_FILE = Path(HYPER_ENV_PATH) / "HYPER_LOCK"
 
 HYPER_RESULTS_DIR = Path("/app/song-storage/hyper_runs")
 
@@ -59,6 +61,14 @@ def initialize_hyper_files():
     else:
         wait_for_reset_completion()
 
+def acquire_eval_lock():
+    try:
+        fd = os.open(EVAL_LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, POD_NAME.encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
 
 def register_ready():
     os.makedirs(HYPER_ENV_PATH, exist_ok=True)
@@ -118,8 +128,6 @@ def run_hyperparameter_search():
 
             strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
-            run_results = []
-
             if is_chief():
                 HYPER_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -153,20 +161,44 @@ def run_hyperparameter_search():
 
                     elapsed_time = time.time() - start_time
 
-                    if is_chief():
-                        run_results.append({
-                            "run_tag": run_tag,
+                    if acquire_eval_lock():
+                        print(f"{POD_NAME} acquired evaluation lock")
+                        try:
+                            loss, accuracy, labels, input_shape = evaluate_and_export()
+                        finally:
+                            os.remove(EVAL_LOCK_FILE)
+
+                        results = ({
                             "timestamp": datetime.utcnow().isoformat(),
                             "train_config": train_cfg,
                             "model_config": model_cfg,
-                            "elapsed_seconds": elapsed_time
+                            "elapsed_seconds": elapsed_time,
+                            "loss": loss,
+                            "accuracy": accuracy,
+                            "labels": labels,
+                            "input_shape": input_shape
                         })
-                        print("appending results: " + str(run_results))
+                        print("appending results: " + str(results))
+
+                        summary_file = HYPER_RESULTS_DIR / f"results_{run_tag}.json"
+                        json.dump(results, open(summary_file, "w"), indent=2)
 
             if is_chief():
-                print("saving summary")
-                summary_file = HYPER_RESULTS_DIR / f"summary_{current_run}.json"
-                json.dump(run_results, open(summary_file, "w"), indent=2)
+                result_files = sorted(HYPER_RESULTS_DIR.glob(f"results_*.json"))
+                merged = []
+                for fpath in result_files:
+                    try:
+                        merged.append(json.load(open(fpath)))
+                    except:
+                        continue
+                summary_path = HYPER_RESULTS_DIR / f"summary.json"
+                json.dump(merged, open(summary_path, "w"), indent=2)
+                for fpath in result_files:
+                    try:
+                        fpath.unlink()
+                    except:
+                        pass
+
                 with open(STATE_FILE, "w") as f:
                     f.write("idle")
 
