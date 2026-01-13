@@ -6,6 +6,7 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
 
 from config.paths import HYPER_ENV_PATH
@@ -61,6 +62,7 @@ def initialize_hyper_files():
     else:
         wait_for_reset_completion()
 
+
 def acquire_eval_lock():
     try:
         fd = os.open(EVAL_LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -69,6 +71,7 @@ def acquire_eval_lock():
         return True
     except FileExistsError:
         return False
+
 
 def register_ready():
     os.makedirs(HYPER_ENV_PATH, exist_ok=True)
@@ -87,6 +90,7 @@ def register_ready():
             return
         except Exception:
             time.sleep(1)
+
 
 def make_hashable(x):
     if isinstance(x, list):
