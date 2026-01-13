@@ -101,6 +101,7 @@ def run_hyperparameter_search():
 
         last_seen_run = current_run
         print(f"{POD_NAME} starting hyper run {current_run}")
+        print(f"is chief: {is_chief()}")
 
         try:
             search_space_file = Path(HYPER_ENV_PATH) / "SEARCH_SPACE"
@@ -122,8 +123,12 @@ def run_hyperparameter_search():
             if is_chief():
                 HYPER_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+            total_runs = len(train_runs) * len(model_runs)
+            current_index = 0
+
             for train_vals in train_runs:
                 train_cfg = dict(zip(train_keys, train_vals))
+                print("train run: " + str(train_vals))
 
                 for model_vals in model_runs:
                     model_cfg = dict(zip(model_keys, model_vals))
@@ -133,15 +138,17 @@ def run_hyperparameter_search():
 
                     run_tag = f"{current_run}_{config_hash:x}"
 
-                    print(f"{POD_NAME} running config {run_tag}")
+                    current_index += 1
+                    print("model run: " + str(model_vals))
+                    print(str(current_index) + "/" + str(total_runs))
 
                     start_time = time.time()
-                    history = {}
                     with strategy.scope():
-                        model = train_model(
+                        train_model(
                             batch_size=train_cfg.get("batch_size", 128),
                             epochs=train_cfg.get("epochs", 100),
                             model_config=model_cfg,
+                            verbose=0
                         )
 
                     elapsed_time = time.time() - start_time
@@ -152,11 +159,12 @@ def run_hyperparameter_search():
                             "timestamp": datetime.utcnow().isoformat(),
                             "train_config": train_cfg,
                             "model_config": model_cfg,
-                            "metrics": history,
                             "elapsed_seconds": elapsed_time
                         })
+                        print("appending results: " + str(run_results))
 
             if is_chief():
+                print("saving summary")
                 summary_file = HYPER_RESULTS_DIR / f"summary_{current_run}.json"
                 json.dump(run_results, open(summary_file, "w"), indent=2)
                 with open(STATE_FILE, "w") as f:

@@ -205,6 +205,7 @@ def train_model(
         batch_size: int = 128,
         epochs: int = 100,
         model_config: dict | None = None,
+        verbose: int = 1
 ):
     (
         train_paths,
@@ -268,7 +269,7 @@ def train_model(
         validation_data=val_ds,
         epochs=epochs,
         callbacks=callbacks,
-        verbose=1,
+        verbose=verbose,
     )
 
     return model
