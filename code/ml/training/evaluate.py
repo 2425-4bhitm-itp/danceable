@@ -12,15 +12,13 @@ from training.model_cnn import (
     load_prepared_dataset,
 )
 from config.paths import (
-    CNN_OUTPUT_CSV,
-    CNN_DATASET_PATH,
     CNN_WEIGHTS_PATH,
     CNN_MODEL_PATH,
     COREML_PATH,
 )
 
 
-def evaluate_and_export():
+def evaluate_and_export(model_config):
     print("Evaluator: loading prepared dataset")
 
     (
@@ -64,7 +62,9 @@ def evaluate_and_export():
     model = build_cnn(
         input_shape=input_shape,
         num_classes=num_classes,
+        **(model_config or {}),
     )
+
     model.load_weights(CNN_WEIGHTS_PATH)
 
     print("Evaluator: evaluating")
@@ -87,5 +87,5 @@ def evaluate_and_export():
         "loss": float(loss),
         "accuracy": float(acc),
         "labels": labels,
-        "input_shape": input_shape,
+        "input_shape": input_shape
     }

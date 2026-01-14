@@ -168,7 +168,7 @@ def run_hyperparameter_search():
                     if acquire_eval_lock():
                         print(f"{POD_NAME} acquired evaluation lock")
                         try:
-                            loss, accuracy, labels, input_shape = evaluate_and_export()
+                            loss, accuracy, labels, input_shape = evaluate_and_export(model_cfg)
                         finally:
                             os.remove(EVAL_LOCK_FILE)
 
