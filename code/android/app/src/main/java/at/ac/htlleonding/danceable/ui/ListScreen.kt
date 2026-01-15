@@ -47,19 +47,7 @@ fun ListScreen(
                 Text("No Dances Found", fontFamily = Inter, fontWeight = FontWeight.SemiBold)
             } else {
                 dances.forEach { dance ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().background(Color(0x1A000000)),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-
-                    ) {
-
-                        Text(String.format("%-15s", dance.name),
-                            fontFamily = Inter,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFFFFFFF)
-                        )
-                    }
+                    DanceView(dance)
                 }
             }
         }
