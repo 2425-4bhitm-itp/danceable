@@ -5,6 +5,6 @@ import retrofit2.http.GET
 
 interface DanceApiService {
 
-    @GET
+    @GET("dances")
     suspend fun getDances(): List<Dance>
 }

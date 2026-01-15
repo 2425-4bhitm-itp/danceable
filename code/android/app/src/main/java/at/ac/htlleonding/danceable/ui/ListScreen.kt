@@ -29,6 +29,7 @@ fun ListScreen(
     viewModel: ViewModel = viewModel(),
 ) {
     val dances by viewModel.dances.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
