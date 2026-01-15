@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-class AudioController: AudioControllerProtocol {
+class AudioController: ObservableObject, AudioControllerProtocol {
     private let recorder: AudioRecorder
     private let uploader = AudioUploader()
     

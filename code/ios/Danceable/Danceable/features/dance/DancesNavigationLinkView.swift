@@ -3,7 +3,7 @@ import SwiftUI
 struct DancesNavigationLinkView: View {
     var viewModel: ViewModel
     @Binding var showPredictionsSheet: Bool
-    @Binding var hasPredicted: Bool
+    var hasPredicted: Bool
     @Binding var isInDancesView: Bool
     
     var body: some View {
@@ -29,11 +29,11 @@ struct DancesNavigationLinkView: View {
 
 #Preview {
     @Previewable @State var isSheetPresent = false
-    @Previewable @State var hasPredicted = false
+    @Previewable var hasPredicted = false
     @Previewable @State var isInDancesView = false
 
     let model = Model()
     let viewModel = ViewModel(model: model)
     
-    DancesNavigationLinkView(viewModel: viewModel, showPredictionsSheet: $isSheetPresent, hasPredicted: $hasPredicted, isInDancesView: $isInDancesView)
+    DancesNavigationLinkView(viewModel: viewModel, showPredictionsSheet: $isSheetPresent, hasPredicted: hasPredicted, isInDancesView: $isInDancesView)
 }

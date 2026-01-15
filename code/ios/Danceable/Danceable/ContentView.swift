@@ -9,17 +9,20 @@ struct ContentView: View {
     
     var strategy: RecordButtonStrategy
     
-    var audioController: AudioController
+    @StateObject var audioController: AudioController
     
     var haptics: HapticsStrategy
     
     init(viewModel: ViewModel) {
         self.viewModel = viewModel
-        
-        self.haptics = iOSHapticsStrategy()
-        self.audioController = AudioController(hapticsStrategy: haptics)
+
+        let haptics = iOSHapticsStrategy()
+        self.haptics = haptics
         self.strategy = iOSRecordButtonStrategy()
-    var supportedInterfaceOrientations: UIInterfaceOrientationMask {.allButUpsideDown}
+
+        _audioController = StateObject(
+            wrappedValue: AudioController(hapticsStrategy: haptics)
+        )
     }
 
     @StateObject private var orientationObserver = OrientationObserver()
@@ -28,11 +31,12 @@ struct ContentView: View {
     @State private var showPredictionsSheetLandscape = false
     @State private var sheetSize: PresentationDetent = .fraction(MIN_SHEET_FRACTION)
 
-    @State private var error: Error?
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
 
-    @State private var hasPredicted = false
+    var hasPredicted: Bool {
+        !viewModel.predictions.isEmpty
+    }
     @State private var isInDancesView: Bool = false
     @State private var isServerReachable = false
 
@@ -63,7 +67,7 @@ struct ContentView: View {
                 Spacer()
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        DancesNavigationLinkView(viewModel: viewModel, showPredictionsSheet: $showPredictionsSheet, hasPredicted: $hasPredicted, isInDancesView: $isInDancesView)
+                        DancesNavigationLinkView(viewModel: viewModel, showPredictionsSheet: $showPredictionsSheet, hasPredicted: hasPredicted, isInDancesView: $isInDancesView)
                     }
                 }
             }
@@ -95,7 +99,6 @@ struct ContentView: View {
             await MainActor.run {
                 viewModel.predictions = predictions
                 pullPredictionsSheet()
-                hasPredicted = true
             }
         } catch {
             print("Failed to record and classify audio: \(error.localizedDescription)")
@@ -104,7 +107,6 @@ struct ContentView: View {
                 showError(error.localizedDescription)
 
                 closePredictionsSheet()
-                hasPredicted = false
             }
         }
     }
