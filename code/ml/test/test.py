@@ -9,7 +9,7 @@ from pathlib import Path
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
 
-from config.paths import HYPER_ENV_PATH
+from config.paths import HYPER_ENV_PATH, BASE_MODEL_DIR
 from training.evaluate import evaluate_and_export
 from training.model_cnn import train_model
 
@@ -154,13 +154,15 @@ def run_hyperparameter_search():
                     print("model run: " + str(model_vals))
                     print(str(current_index) + "/" + str(total_runs))
 
+                    checkpoint_directory = BASE_MODEL_DIR / f"hyper/{run_tag}_weights.h5"
                     start_time = time.time()
                     with strategy.scope():
                         train_model(
                             batch_size=train_cfg.get("batch_size", 128),
                             epochs=train_cfg.get("epochs", 100),
                             model_config=model_cfg,
-                            verbose=0
+                            verbose=0,
+                            checkpoint_dir=checkpoint_directory
                         )
 
                     elapsed_time = time.time() - start_time
@@ -168,7 +170,7 @@ def run_hyperparameter_search():
                     if acquire_eval_lock():
                         print(f"{POD_NAME} acquired evaluation lock")
                         try:
-                            loss, accuracy, labels, input_shape = evaluate_and_export(model_cfg)
+                            loss, accuracy, labels, input_shape = evaluate_and_export(model_cfg, checkpoint_directory)
                         finally:
                             os.remove(EVAL_LOCK_FILE)
 

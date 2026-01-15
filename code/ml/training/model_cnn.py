@@ -205,7 +205,8 @@ def train_model(
         batch_size: int = 128,
         epochs: int = 100,
         model_config: dict | None = None,
-        verbose: int = 1
+        verbose: int = 1,
+        checkpoint_dir: Path = CNN_WEIGHTS_PATH
 ):
     (
         train_paths,
@@ -257,7 +258,7 @@ def train_model(
             restore_best_weights=True,
         ),
         tf.keras.callbacks.ModelCheckpoint(
-            filepath=CNN_WEIGHTS_PATH,
+            filepath=checkpoint_dir,
             monitor="val_loss",
             save_best_only=True,
             save_weights_only=True,

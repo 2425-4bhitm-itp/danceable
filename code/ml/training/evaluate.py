@@ -18,7 +18,7 @@ from config.paths import (
 )
 
 
-def evaluate_and_export(model_config):
+def evaluate_and_export(model_config, checkpoint_dir: Path = CNN_WEIGHTS_PATH):
     print("Evaluator: loading prepared dataset")
 
     (
@@ -65,7 +65,7 @@ def evaluate_and_export(model_config):
         **(model_config or {}),
     )
 
-    model.load_weights(CNN_WEIGHTS_PATH)
+    model.load_weights(checkpoint_dir)
 
     print("Evaluator: evaluating")
     loss, acc = model.evaluate(test_ds, verbose=1)
