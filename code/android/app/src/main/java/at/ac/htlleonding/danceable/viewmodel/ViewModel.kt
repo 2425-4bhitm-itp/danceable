@@ -3,7 +3,7 @@ package at.ac.htlleonding.danceable.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.ac.htlleonding.danceable.data.model.Dance
-import at.htl.runnerzeigs.data.remote.RetrofitInstance
+import at.ac.htlleonding.danceable.data.remote.RetrofitInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

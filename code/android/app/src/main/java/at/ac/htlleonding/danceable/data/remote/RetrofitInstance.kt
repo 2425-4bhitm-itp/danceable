@@ -1,6 +1,5 @@
-package at.htl.runnerzeigs.data.remote
+package at.ac.htlleonding.danceable.data.remote
 
-import at.ac.htlleonding.danceable.data.remote.DanceApiService
 import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

@@ -1,4 +1,4 @@
-package at.htl.runnerzeigs.ui
+package at.ac.htlleonding.danceable.ui
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
