@@ -278,7 +278,7 @@ def hyperparameter_test():
     if not search_space:
         return jsonify({"error": "search_space required"}), 400
 
-    replicas = int(os.environ.get("HYPER_REPLICAS", "1"))
+    replicas = int(data.get("replicas"))
 
     run_id = int(time.time())
     run_dir = Path(HYPER_ENV_PATH) / f"run_{run_id}"
