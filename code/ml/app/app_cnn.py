@@ -3,6 +3,7 @@ import json
 import os
 import time
 import uuid
+from pathlib import Path
 
 import numpy as np
 from flask import Flask, request, jsonify, Response
@@ -273,45 +274,40 @@ def serve_result_file(filename):
 @flask_app.route("/hyperparameter-test", methods=["POST"])
 def hyperparameter_test():
     data = request.get_json()
-
     search_space = data.get("search_space")
     if not search_space:
         return jsonify({"error": "search_space required"}), 400
 
-    os.makedirs(HYPER_ENV_PATH, exist_ok=True)
+    replicas = int(os.environ.get("HYPER_REPLICAS", "1"))
 
-    state_file = os.path.join(HYPER_ENV_PATH, "STATE")
-    id_file = os.path.join(HYPER_ENV_PATH, "RUN_ID")
-    space_file = os.path.join(HYPER_ENV_PATH, "SEARCH_SPACE")
+    run_id = int(time.time())
+    run_dir = Path(HYPER_ENV_PATH) / f"run_{run_id}"
+    run_dir.mkdir(parents=True, exist_ok=True)
 
-    if os.path.exists(state_file):
-        state = open(state_file).read().strip()
-        if state != "idle":
-            return jsonify({"error": "Hyperparameter test already running"}), 409
-
-    with open(state_file, "w") as f:
-        f.write("preparing")
+    json.dump(search_space, open(run_dir / "search_space.json", "w"), indent=2)
 
     dataset_creator.prepare_dataset_once(
         disabled_labels=search_space.get("disabled_labels", []),
-        downsampling=search_space.get("downsampling", false),
+        downsampling=search_space.get("downsampling", False),
         test_size=search_space.get("test_size", 0.2),
-        val_from_test=0.5
+        val_from_test=0.5,
     )
 
-    wait_for_all_hyper_workers()
+    runs = expand_search_space(search_space)
+    shards = split_runs(runs, replicas)
 
-    with open(space_file, "w") as f:
-        json.dump(search_space, f)
+    for i, shard in enumerate(shards):
+        json.dump(
+            shard,
+            open(run_dir / f"runs_{i}.json", "w"),
+            indent=2,
+        )
 
-    current = int(open(id_file).read().strip()) if os.path.exists(id_file) else 0
-    with open(id_file, "w") as f:
-        f.write(str(current + 1))
-
-    with open(state_file, "w") as f:
-        f.write("running")
-
-    return jsonify({"message": "Hyperparameter test started"}), 200
+    return jsonify({
+        "run_id": run_id,
+        "total_runs": len(runs),
+        "replicas": replicas,
+    }), 200
 
 
 def init_train_env():
@@ -333,57 +329,33 @@ def init_train_env():
             with open(path, "w") as f:
                 f.write(v)
 
+def split_runs(runs: list[dict], replicas: int) -> list[list[dict]]:
+    shards = [[] for _ in range(replicas)]
+    for i, run in enumerate(runs):
+        shards[i % replicas].append(run)
+    return shards
 
-def init_hyper_env():
-    defaults = {
-        "RUN_ID": "-1",
-        "STATE": "idle"
-    }
+def expand_search_space(search_space: dict) -> list[dict]:
+    import itertools
 
-    os.makedirs(HYPER_ENV_PATH, exist_ok=True)
+    train_space = search_space.get("train", {})
+    model_space = search_space.get("model", {})
 
-    for k, v in defaults.items():
-        path = os.path.join(HYPER_ENV_PATH, k)
-        if not os.path.exists(path):
-            with open(path, "w") as f:
-                f.write(v)
+    train_keys = list(train_space.keys())
+    model_keys = list(model_space.keys())
 
+    train_runs = list(itertools.product(*train_space.values())) or [()]
+    model_runs = list(itertools.product(*model_space.values())) or [()]
 
-def wait_for_all_workers():
-    ready_file = os.path.join(TRAIN_ENV_PATH, "READY_WORKERS")
+    runs = []
+    for t_vals in train_runs:
+        for m_vals in model_runs:
+            runs.append({
+                "train": dict(zip(train_keys, t_vals)),
+                "model": dict(zip(model_keys, m_vals)),
+            })
 
-    expected = {f"ml-train-{i}" for i in range(4)}
-
-    while True:
-        if not os.path.exists(ready_file):
-            time.sleep(1)
-            continue
-
-        with open(ready_file, "r") as f:
-            ready = {line.strip() for line in f if line.strip()}
-
-        if expected.issubset(ready):
-            return
-
-        time.sleep(1)
-
-
-def wait_for_all_hyper_workers():
-    ready_file = os.path.join(HYPER_ENV_PATH, "READY_WORKERS")
-    expected = {f"ml-hyper-{i}" for i in range(4)}
-
-    while True:
-        if not os.path.exists(ready_file):
-            time.sleep(1)
-            continue
-
-        with open(ready_file) as f:
-            ready = {line.strip() for line in f if line.strip()}
-
-        if expected.issubset(ready):
-            return
-
-        time.sleep(1)
+    return runs
 
 
 if __name__ == "__main__":

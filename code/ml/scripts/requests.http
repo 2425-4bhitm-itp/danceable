@@ -28,11 +28,10 @@ Content-Type: application/json
 
 {
     "disabled_labels": [
-        "foxtrott",
-        "tango"
+        "foxtrott"
     ],
     "test_size": 0.2,
-    "batch_size": 128,
+    "batch_size": 64,
     "epochs": 100,
     "downsampling": false
 }
@@ -57,14 +56,14 @@ Content-Type: application/json
 {
   "search_space": {
     "train": {
-      "batch_size": [64, 128, 256, 512],
+      "batch_size": [64, 128, 256],
       "epochs": [100],
       "test_size": [0.2],
-      "downsampling": [true, false],
+      "downsampling": [false],
       "disabled_labels": ["foxtrott"]
     },
     "model": {
-      "filters": [[32, 64, 128], [32, 64], [64, 128, 256]],
+      "filters": [[32, 64, 128], [64, 128, 256]],
       "dense_units": [64, 128, 256, 512],
       "dropout_rate": [0.2, 0.3, 0.5],
       "learning_rate": [0.01, 0.001, 0.0003, 0.0001],

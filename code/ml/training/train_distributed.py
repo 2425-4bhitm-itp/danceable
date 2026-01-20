@@ -140,6 +140,7 @@ while True:
         train_model(
             batch_size=batch_size,
             epochs=epochs,
+            verbose=1
         )
 
     print(f"{POD_NAME} finished training run {current_id}")

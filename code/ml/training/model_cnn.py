@@ -15,6 +15,7 @@ from tensorflow.keras.layers import (
     BatchNormalization,
 )
 from tensorflow.keras.models import Sequential
+from tensorflow.python.data.ops.options import AutoShardPolicy
 
 from config.paths import (
     CNN_DATASET_PATH,
@@ -148,7 +149,13 @@ def make_tf_dataset(
         return x, y
 
     ds = ds.map(map_fn, num_parallel_calls=tf.data.AUTOTUNE)
+
     ds = ds.batch(batch_size, drop_remainder=True)
+
+    options = tf.data.Options()
+    options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA
+    ds = ds.with_options(options)
+
     ds = ds.prefetch(tf.data.AUTOTUNE)
 
     return ds
