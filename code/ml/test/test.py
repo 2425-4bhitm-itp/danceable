@@ -19,23 +19,6 @@ is_cleared = False
 
 print(f"Hyper worker started: pod={POD_NAME}, index={POD_INDEX}")
 
-def clear_hyper_env():
-    global is_cleared
-    base = Path(HYPER_ENV_PATH)
-    if not base.exists():
-        return
-    if not is_cleared:
-        for item in base.iterdir():
-            try:
-                if item.is_dir():
-                    shutil.rmtree(item)
-                else:
-                    item.unlink()
-            except Exception as e:
-                print(f"Failed to remove {item}: {e}")
-        is_cleared = True
-        print("Cleared ENV")
-
 def wait_for_run():
     base = Path(HYPER_ENV_PATH)
     while True:
@@ -108,7 +91,6 @@ def run_hyper(run_dir: Path):
 
 
 if __name__ == "__main__":
-    clear_hyper_env()
     run_dir = wait_for_run()
     print(f"Found run directory: {run_dir}")
     run_hyper(run_dir)
