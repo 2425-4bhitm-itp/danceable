@@ -5,6 +5,7 @@ import coremltools as ct
 from pathlib import Path
 
 import pandas as pd
+from sympy.parsing.sympy_parser import null
 
 from training.model_cnn import (
     build_cnn,
@@ -18,7 +19,7 @@ from config.paths import (
 )
 
 
-def evaluate_and_export(model_config, checkpoint_dir: Path = CNN_WEIGHTS_PATH):
+def evaluate_and_export(model_config = null, checkpoint_dir: Path = CNN_WEIGHTS_PATH):
     print("Evaluator: loading prepared dataset")
 
     (
