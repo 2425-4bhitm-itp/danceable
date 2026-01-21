@@ -16,6 +16,7 @@ from pathlib import Path
 POD_NAME = os.environ["POD_NAME"]
 POD_INDEX = int(os.environ["POD_INDEX"])
 
+print(f"Hyper worker started: pod={POD_NAME}, index={POD_INDEX}")
 
 def clear_hyper_env():
     base = Path(HYPER_ENV_PATH)
@@ -30,12 +31,7 @@ def clear_hyper_env():
                 item.unlink()
         except Exception as e:
             print(f"Failed to remove {item}: {e}")
-
-
-clear_hyper_env()
-
-print(f"Hyper worker started: pod={POD_NAME}, index={POD_INDEX}")
-
+    print("Cleared ENV")
 
 def wait_for_run():
     base = Path(HYPER_ENV_PATH)
@@ -109,6 +105,7 @@ def run_hyper(run_dir: Path):
 
 
 if __name__ == "__main__":
+    clear_hyper_env()
     run_dir = wait_for_run()
     print(f"Found run directory: {run_dir}")
     run_hyper(run_dir)
