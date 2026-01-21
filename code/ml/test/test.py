@@ -15,23 +15,26 @@ from pathlib import Path
 
 POD_NAME = os.environ["POD_NAME"]
 POD_INDEX = int(os.environ["POD_INDEX"])
+is_cleared = False
 
 print(f"Hyper worker started: pod={POD_NAME}, index={POD_INDEX}")
 
 def clear_hyper_env():
+    global is_cleared
     base = Path(HYPER_ENV_PATH)
     if not base.exists():
         return
-
-    for item in base.iterdir():
-        try:
-            if item.is_dir():
-                shutil.rmtree(item)
-            else:
-                item.unlink()
-        except Exception as e:
-            print(f"Failed to remove {item}: {e}")
-    print("Cleared ENV")
+    if not is_cleared:
+        for item in base.iterdir():
+            try:
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+            except Exception as e:
+                print(f"Failed to remove {item}: {e}")
+        is_cleared = True
+        print("Cleared ENV")
 
 def wait_for_run():
     base = Path(HYPER_ENV_PATH)
