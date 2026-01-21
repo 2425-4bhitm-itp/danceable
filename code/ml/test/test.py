@@ -1,19 +1,38 @@
 import gc
 import json
 import os
+import shutil
 import time
-from pathlib import Path
 from datetime import datetime
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
 
-from config.paths import HYPER_ENV_PATH, BASE_MODEL_DIR, RESULTS_DIR
+from config.paths import HYPER_ENV_PATH, RESULTS_DIR
 from training.evaluate import evaluate_and_export
 from training.model_cnn import train_model
+from pathlib import Path
 
 POD_NAME = os.environ["POD_NAME"]
 POD_INDEX = int(os.environ["POD_INDEX"])
+
+
+def clear_hyper_env():
+    base = Path(HYPER_ENV_PATH)
+    if not base.exists():
+        return
+
+    for item in base.iterdir():
+        try:
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+        except Exception as e:
+            print(f"Failed to remove {item}: {e}")
+
+
+clear_hyper_env()
 
 print(f"Hyper worker started: pod={POD_NAME}, index={POD_INDEX}")
 
@@ -40,12 +59,15 @@ def run_hyper(run_dir: Path):
     out_dir = RESULTS_DIR / "jsons"
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    checkpoint_dir = RESULTS_DIR / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
     for idx, cfg in enumerate(runs):
         train_cfg = cfg["train"]
         model_cfg = cfg["model"]
 
         tag = f"{run_id}_{POD_INDEX}_{idx}"
-        checkpoint_path = RESULTS_DIR / f"checkpoints/{tag}.h5"
+        checkpoint_path = checkpoint_dir / f"{tag}.h5"
 
         print(f"Running {tag}")
 
