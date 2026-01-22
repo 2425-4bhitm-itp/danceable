@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import seaborn as sns
-from coremltools.converters.mil.testing_reqs import tf
+import tensorflow as tf
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.interpolate import griddata
 from sklearn.metrics import classification_report
@@ -65,8 +65,6 @@ class DanceModelEvaluator:
                     continue
 
                 arr = np.load(row["npy_path"])["input"].astype(np.float32)
-                # Apply normalization
-                arr = (arr - self.scaler["mean"]) / self.scaler["std"]
 
                 X_list.append(arr)
                 y_list.append(self.label_to_idx[label])
