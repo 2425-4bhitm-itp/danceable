@@ -13,11 +13,16 @@ fun MainScreen(viewModel: ViewModel = viewModel()) {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "list_screen"
+        startDestination = "recording_screen"
     ) {
         composable("list_screen") {
             ListScreen(
                 viewModel = viewModel,
+            )
+        }
+        composable("recording_screen"){
+            RecordingScreen(
+                viewModel = viewModel
             )
         }
     }
