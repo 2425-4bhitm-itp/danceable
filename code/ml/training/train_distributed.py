@@ -130,6 +130,7 @@ while True:
 
     last_seen_id = current_id
     print(f"{POD_NAME} starting training run {current_id}")
+    start_time = time.time()
 
     batch_size = int(read_env_file("BATCH_SIZE", "128"))
     epochs = int(read_env_file("EPOCHS", "100"))
@@ -144,7 +145,7 @@ while True:
         )
 
     print(f"{POD_NAME} finished training run {current_id}")
-
+    print(f"Time taken: {start_time - time.time()}")
     if acquire_eval_lock():
         print(f"{POD_NAME} acquired evaluation lock")
         try:

@@ -28,7 +28,7 @@ Content-Type: application/json
 
 {
     "disabled_labels": [
-        "foxtrott"
+      "foxtrott"
     ],
     "test_size": 0.2,
     "batch_size": 64,
