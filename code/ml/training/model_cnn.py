@@ -33,7 +33,8 @@ os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
 tf.config.threading.set_intra_op_parallelism_threads(os.cpu_count())
 tf.config.threading.set_inter_op_parallelism_threads(os.cpu_count())
 
-
+_scaler = None
+_labels = None
 # ---------------------------------------------------------------------
 # Model definition
 # ---------------------------------------------------------------------
@@ -224,6 +225,9 @@ def train_model(
         scaler,
     ) = load_prepared_dataset()
 
+    _scaler = scaler
+    _labels = meta["labels"]
+
     num_classes = len(meta["labels"])
 
     sample = np.load(train_paths[0])["input"].astype(np.float32)
@@ -287,8 +291,8 @@ def train_model(
 
 def classify_audio(file_path: str, extractor) -> dict:
     global _model, _scaler, _labels
-    if _model is None:
-        _model = tf.keras.models.load_model(CNN_MODEL_PATH)
+
+    _model = tf.keras.models.load_model(CNN_MODEL_PATH)
     if _scaler is None:
         _scaler = joblib.load(SCALER_PATH)
     if _labels is None:
