@@ -25,6 +25,7 @@ public class InitBean {
                     new Dance("Discofox", 112, 120),
                     new Dance("Jive", 168, 184),
                     new Dance("Quickstep", 200, 208),
+                    new Dance("Tango", 200, 208),
                     new Dance("Rumba", 100, 108),
                     new Dance("Salsa", 180, 300),
                     new Dance("Samba", 96, 104),
