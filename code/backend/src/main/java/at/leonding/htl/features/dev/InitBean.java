@@ -21,16 +21,15 @@ public class InitBean {
             Log.info("Do not use InitBean in prod!!!");
 
             danceRepository.persist(
-                    new Dance("Discofox", 112, 120),
-                    new Dance("Slowwaltz", 84, 90),
-                    new Dance("Viennawaltz", 174, 180),
                     new Dance("Chacha", 120, 128),
-                    new Dance("Foxtrott", 112, 120),
+                    new Dance("Discofox", 112, 120),
+                    new Dance("Jive", 168, 184),
                     new Dance("Quickstep", 200, 208),
-                    new Dance("Salsa", 180, 300),
                     new Dance("Rumba", 100, 108),
+                    new Dance("Salsa", 180, 300),
                     new Dance("Samba", 96, 104),
-                    new Dance("Jive", 168, 184)
+                    new Dance("Slowwaltz", 84, 90),
+                    new Dance("Viennawaltz", 174, 180)
             );
         }
     }
