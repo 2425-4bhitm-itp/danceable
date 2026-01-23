@@ -16,6 +16,7 @@ kubectl delete pods -l app=ml-hyper
 # re-apply everything
 kubectl apply -f ./ml.yaml
 kubectl apply -f ./ml-hyper.yaml
+kubectl apply -f ./ml-train.yaml
 
 # watching pods
 kubectl get pods -w
