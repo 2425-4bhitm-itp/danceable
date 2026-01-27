@@ -24,7 +24,14 @@ class AudioFeatureExtractorCNN:
         self.target_height = target_height
 
     def load_audio(self, file_path):
-        y, _ = librosa.load(file_path, sr=self.sr)
+        y, sr = librosa.load(file_path, sr=self.sr)
+
+        if y is None or len(y) == 0:
+            raise ValueError("Audio decode failed")
+
+        duration = len(y) / sr
+        print("AUDIO DURATION:", duration)
+
         return librosa.util.normalize(y)
 
     def slice_into_windows(self, y):
@@ -81,6 +88,8 @@ class AudioFeatureExtractorCNN:
         y = self.load_audio(path)
         windows = self.slice_into_windows(y)
         outputs = []
+        if len(y) < len(windows):
+            raise ValueError("Audio too short for feature extraction")
 
         for w in windows:
             mel = self._extract_mel(w)

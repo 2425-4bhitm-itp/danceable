@@ -6,9 +6,6 @@ import uuid
 from pathlib import Path
 
 import numpy as np
-from flask import Flask, request, jsonify, Response
-from sympy import false
-
 from config.paths import (
     SNIPPETS_DIR,
     SONGS_DIR,
@@ -19,6 +16,7 @@ from config.paths import (
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
+from flask import Flask, request, jsonify, Response
 from training.model_cnn import (
     classify_audio
 )
@@ -184,7 +182,7 @@ def evaluate():
     evaluator = DanceModelEvaluator(
         model_path=CNN_MODEL_PATH,
         output_dir=EVALUATION_RESULTS_DIR,
-        meta_path=CNN_DATASET_PATH  / "meta.json",
+        meta_path=CNN_DATASET_PATH / "meta.json",
     )
 
     evaluator.load_resources()
@@ -329,11 +327,13 @@ def init_train_env():
             with open(path, "w") as f:
                 f.write(v)
 
+
 def split_runs(runs: list[dict], replicas: int) -> list[list[dict]]:
     shards = [[] for _ in range(replicas)]
     for i, run in enumerate(runs):
         shards[i % replicas].append(run)
     return shards
+
 
 def expand_search_space(search_space: dict) -> list[dict]:
     import itertools

@@ -31,10 +31,14 @@ def wait_for_run():
 def run_hyper(run_dir: Path):
     run_id = run_dir.name
     runs_file = run_dir / f"runs_{POD_INDEX}.json"
+    print(f"{runs_file} for pod {POD_INDEX} in run {run_id}")
 
-    if not runs_file.exists():
-        print(f"No shard for pod {POD_INDEX}")
-        return
+    timeout = time.time() + 30
+    while not runs_file.exists():
+        if time.time() > timeout:
+            print(f"Shard still missing after timeout: {runs_file}")
+            return
+        time.sleep(0.5)
 
     runs = json.load(open(runs_file))
 
