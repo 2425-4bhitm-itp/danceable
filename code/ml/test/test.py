@@ -48,6 +48,8 @@ def run_hyper(run_dir: Path):
     checkpoint_dir = RESULTS_DIR / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
+    verbose = 1 if POD_INDEX == 0 else 0
+
     for idx, cfg in enumerate(runs):
         train_cfg = cfg["train"]
         model_cfg = cfg["model"]
@@ -63,7 +65,7 @@ def run_hyper(run_dir: Path):
             batch_size=train_cfg.get("batch_size", 128),
             epochs=train_cfg.get("epochs", 100),
             model_config=model_cfg,
-            verbose=0,
+            verbose=verbose,
             checkpoint_dir=checkpoint_path,
         )
 
