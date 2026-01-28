@@ -87,6 +87,8 @@ def run_hyper(run_dir: Path):
             "input_shape": input_shape,
         }
 
+        print(result)
+
         with open(out_dir / f"result_{tag}.json", "w") as f:
             json.dump(result, f, indent=2)
 
