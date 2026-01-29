@@ -34,18 +34,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-
-            - name: POD_INDEX
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
           command:
-            - /bin/sh
-            - -c
-            - |
-              export POD_INDEX=$(echo "${POD_NAME}" | awk -F'-' '{print $NF}')
-              exec python -m test.test
-
+          - /bin/sh
+          - -c
+          - |
+            INDEX=$(echo "${POD_NAME}" | awk -F'-' '{print $NF}')
+            export POD_INDEX=$INDEX
+            echo "POD_NAME=$POD_NAME POD_INDEX=$POD_INDEX"
+            exec python -m test.test
           volumeMounts:
             - name: song-volume
               mountPath: /app/song-storage

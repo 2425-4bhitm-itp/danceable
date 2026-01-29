@@ -6,7 +6,6 @@ kubectl delete statefulsets.apps ml-hyper
 # deleting all services
 kubectl delete service ml-api
 kubectl delete service ml-train
-kubectl delete service ml-hyper
 
 # deleting all pods
 kubectl delete pods -l app=ml-api
