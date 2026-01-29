@@ -71,12 +71,17 @@ def run_hyper(run_dir: Path):
 
         elapsed = time.time() - start
 
-        loss, accuracy, labels, input_shape = evaluate_and_export(
+        results = evaluate_and_export(
             model_cfg,
             checkpoint_path,
         )
 
-        result = {
+        loss = results["loss"]
+        accuracy = results["accuracy"]
+        labels = results["labels"]
+        input_shape = results["input_shape"]
+
+        train_result = {
             "timestamp": datetime.utcnow().isoformat(),
             "pod": POD_INDEX,
             "index": idx,
@@ -89,10 +94,10 @@ def run_hyper(run_dir: Path):
             "input_shape": input_shape,
         }
 
-        print(result)
+        print(train_result)
 
         with open(out_dir / f"result_{tag}.json", "w") as f:
-            json.dump(result, f, indent=2)
+            json.dump(train_result, f, indent=2)
 
         tf.keras.backend.clear_session()
         gc.collect()
