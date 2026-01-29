@@ -9,17 +9,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-
 class AudioRecorder(private val context: Context) {
 
     private var recorder: MediaRecorder? = null
     private val scope = CoroutineScope(Dispatchers.IO)
+    private var isRecording = false
 
     fun startRecording(
         durationMs: Long = 3_000,
         onFinished: () -> Unit = {}
     ) {
-        val outputFile = File(context.filesDir, "recording.m4a")
+        if (isRecording) return
+        isRecording = true
+
+        val outputFile = File(
+            context.filesDir,
+            "recording_${System.currentTimeMillis()}.m4a"
+        )
 
         recorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -34,6 +40,7 @@ class AudioRecorder(private val context: Context) {
             delay(durationMs)
             stopRecording()
             withContext(Dispatchers.Main) {
+                isRecording = false
                 onFinished()
             }
         }
@@ -42,9 +49,9 @@ class AudioRecorder(private val context: Context) {
     private fun stopRecording() {
         try {
             recorder?.stop()
-            recorder?.release()
         } catch (_: Exception) {
         } finally {
+            recorder?.release()
             recorder = null
         }
     }
