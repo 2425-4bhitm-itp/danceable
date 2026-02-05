@@ -11,4 +11,10 @@ public interface ClassifyMlClient {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     ClassifyResponse classify(@QueryParam("file_path") String filePath);
+
+    @POST
+    @Path("classify_webm_audio")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    ClassifyResponse classifyWebm(@QueryParam("file_path") String filePath);
 }

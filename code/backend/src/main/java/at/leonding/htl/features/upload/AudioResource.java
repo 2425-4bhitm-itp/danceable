@@ -41,9 +41,45 @@ public class AudioResource {
     @Path("uploadStream")
     @Consumes("audio/wave")
     public Response uploadAudioStream(InputStream inputStream) throws IOException {
-        String absolutePath = saveAudioFile(inputStream);
+        String absolutePath = saveAudioFile(inputStream, "wav");
 
         ClassifyResponse classifyResponseDto = classifyMlClient.classify(
+                absolutePath
+        );
+
+        Log.info("Classify file: ");
+        Log.info(absolutePath);
+        Log.info(classifyResponseDto);
+
+        Log.info("");
+
+        List<Dance> dances = danceRepository.findAll().list();
+
+        if (classifyResponseDto.predictions != null) {
+            Set<PredictionDto> predictions = classifyResponseDto.predictions.stream()
+                    .map(p -> new PredictionDto(dances.stream()
+                            .filter(d -> d.getName().equalsIgnoreCase(p.danceName()))
+                            .map(Dance::getId)
+                            .findFirst()
+                            .orElse(null),
+                            p.confidence(),
+                            p.speedCategory())
+                    ).filter(p -> p.danceId() != null)
+                    .collect(Collectors.toSet());
+
+            return Response.ok().entity(predictions).build();
+        }
+
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("uploadWebmStream")
+    @Consumes("audio/*")
+    public Response uploadWebm(InputStream inputStream) throws IOException {
+        String absolutePath = saveAudioFile(inputStream, "webm");
+
+        ClassifyResponse classifyResponseDto = classifyMlClient.classifyWebm(
                 absolutePath
         );
 
@@ -77,15 +113,23 @@ public class AudioResource {
     @Path("features")
     @Consumes("audio/wave")
     public Response extractFeatures(InputStream inputStream) throws IOException {
-        String absolutePath = saveAudioFile(inputStream);
+        String absolutePath = saveAudioFile(inputStream, "wav");
 
         return Response.ok().entity(
                 audioFeatureClient.extractFeatures(absolutePath)
         ).build();
     }
 
-    private String saveAudioFile(InputStream inputStream) throws IOException {
-        String audioFileLocation = songStoragePath + "/uploadedAudio_" + System.currentTimeMillis() + ".wav";
+    private String saveAudioFile(InputStream inputStream, String fileType) throws IOException {
+
+        String audioFileLocation = "";
+
+        if(fileType == "wav"){
+            audioFileLocation = songStoragePath + "/uploadedAudio_" + System.currentTimeMillis() + ".wav";
+        }else if(fileType == "webm"){
+            audioFileLocation = songStoragePath + "/uploadedAudio_" + System.currentTimeMillis() + ".webm";
+        }
+
         java.nio.file.Path audioFilePath = java.nio.file.Path.of(
                 audioFileLocation);
 
