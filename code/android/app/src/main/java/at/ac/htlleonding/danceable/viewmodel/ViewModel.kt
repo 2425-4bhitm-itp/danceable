@@ -11,21 +11,27 @@ import kotlinx.coroutines.launch
 
 class ViewModel : ViewModel() {
     private val _dances = MutableStateFlow<List<Dance>>(emptyList())
-    private val _predictions = MutableStateFlow<List<Prediction>>(emptyList())
+    private val _predictions = MutableStateFlow<List<Prediction>>(
+        listOf(
+            Prediction(9, 0.80f, "Slow"),
+            Prediction(6, 0.20f, "Medium"),
+            Prediction(5, 0.10f, "Fast")
+        )
+    )
 
     val dances: StateFlow<List<Dance>> get() = _dances
     val predictions: StateFlow<List<Prediction>> get() = _predictions
 
-    init{
+    init {
         fetchDances()
     }
 
-    private fun fetchDances(){
-        viewModelScope.launch{
-            try{
+    private fun fetchDances() {
+        viewModelScope.launch {
+            try {
                 val response = RetrofitInstance.api.getDances()
                 _dances.value = response;
-            } catch(e:Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }

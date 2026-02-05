@@ -29,6 +29,8 @@ fun PredictionsView(
     viewModel: ViewModel = viewModel(),
 ) {
     val predictions by viewModel.predictions.collectAsState()
+    val dances by viewModel.dances.collectAsState()
+
 
     Column(
         modifier = Modifier
@@ -47,7 +49,8 @@ fun PredictionsView(
                 Text("No Predictions Found", fontFamily = Inter, fontWeight = FontWeight.SemiBold)
             } else {
                 predictions.forEach { prediction ->
-                    PredictionView(prediction)
+                    PredictionView(prediction, dances)
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
