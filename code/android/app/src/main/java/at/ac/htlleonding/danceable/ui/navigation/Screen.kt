@@ -12,7 +12,7 @@ sealed class Screen(
     object List : Screen(
         route = "list",
         labelRes = R.string.nav_list,
-        icon = R.drawable.microphone
+        icon = R.drawable.library
     )
 
     object Recording : Screen(
