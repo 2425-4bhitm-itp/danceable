@@ -82,8 +82,13 @@ fun AudioRecorderButton(
                 .clip(CircleShape)
                 .clickable(enabled = !isRecording) {
                     isRecording = true
-                    recorder.startRecording {
+                    recorder.startRecording { result ->
                         isRecording = false
+                        result.onSuccess {
+                            println("Predictions: $it")
+                        }.onFailure {
+                            println("Error: ${it.message}")
+                        }
                     }
                 }
         ) {
