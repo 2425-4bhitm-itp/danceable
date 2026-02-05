@@ -8,6 +8,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,9 +34,32 @@ fun MainScreen(viewModel: ViewModel = viewModel()) {
                     navController.currentBackStackEntryAsState().value?.destination
 
                 items.forEach { screen ->
+//                    NavigationBarItem(
+//                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+//                        label = { Text(screen.label) },
+//                        selected = currentDestination?.route == screen.route,
+//                        onClick = {
+//                            navController.navigate(screen.route) {
+//                                popUpTo(navController.graph.startDestinationId) {
+//                                    saveState = true
+//                                }
+//                                launchSingleTop = true
+//                                restoreState = true
+//                            }
+//                        }
+//                    )
+//                    import androidx.compose.ui.res.stringResource
+
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.label) },
-                        label = { Text(screen.label) },
+                        icon = {
+                            Icon(
+                                screen.icon,
+                                contentDescription = stringResource(screen.labelRes)
+                            )
+                        },
+                        label = {
+                            Text(stringResource(screen.labelRes))
+                        },
                         selected = currentDestination?.route == screen.route,
                         onClick = {
                             navController.navigate(screen.route) {
