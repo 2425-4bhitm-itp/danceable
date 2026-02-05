@@ -1,9 +1,6 @@
 package at.ac.htlleonding.danceable.ui
 
 import android.Manifest
-import android.media.MediaRecorder
-import android.os.Handler
-import android.os.Looper
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background

@@ -24,33 +24,35 @@ import at.ac.htlleonding.danceable.ui.theme.Inter
 import at.ac.htlleonding.danceable.viewmodel.ViewModel
 
 
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+
 @Composable
 fun ListScreen(
     viewModel: ViewModel = viewModel(),
 ) {
     val dances by viewModel.dances.collectAsState()
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFFFFF))
+            .background(Color.White)
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Column (
-            modifier = Modifier.padding(8.dp)
-        ) {
-            if (dances.isEmpty()) {
-                Text("No Dances Found", fontFamily = Inter, fontWeight = FontWeight.SemiBold)
-            } else {
-                dances.forEach { dance ->
-                    DanceView(dance)
-                }
+        if (dances.isEmpty()) {
+            item {
+                Text(
+                    "No Dances Found",
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        } else {
+            items(dances) { dance ->
+                DanceView(dance)
             }
         }
-
     }
 }

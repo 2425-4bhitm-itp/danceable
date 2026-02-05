@@ -5,7 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    private const val BASE_URL = "https://it210192.cloud.htl-leonding.ac.at"
+    private const val BASE_URL = "https://it210190.cloud.htl-leonding.ac.at"
     private val gson = GsonBuilder()
         .serializeNulls()
         .create()

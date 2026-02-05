@@ -1,8 +1,8 @@
 package at.ac.htlleonding.danceable.data.model
 
 data class Dance(
-    val id: Integer,
+    val id: Int,
     val name: String,
-    val minBpm: Integer,
-    val maxBpm: Integer
+    val minBpm: Int,
+    val maxBpm: Int
 )
