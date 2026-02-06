@@ -9,7 +9,6 @@ import at.leonding.htl.features.ml.features.AudioFeatureClient;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
@@ -121,12 +120,11 @@ public class AudioResource {
     }
 
     private String saveAudioFile(InputStream inputStream, String fileType) throws IOException {
-
         String audioFileLocation = "";
 
-        if(fileType == "wav"){
+        if (fileType.equals("wav")) {
             audioFileLocation = songStoragePath + "/uploadedAudio_" + System.currentTimeMillis() + ".wav";
-        }else if(fileType == "webm"){
+        } else if (fileType.equals("webm")) {
             audioFileLocation = songStoragePath + "/uploadedAudio_" + System.currentTimeMillis() + ".webm";
         }
 
