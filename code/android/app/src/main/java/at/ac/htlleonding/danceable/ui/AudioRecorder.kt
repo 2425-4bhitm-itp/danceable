@@ -3,6 +3,7 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
 import at.ac.htlleonding.danceable.data.model.Dance
+import at.ac.htlleonding.danceable.data.model.Prediction
 import at.ac.htlleonding.danceable.data.remote.DanceApiService
 import at.ac.htlleonding.danceable.data.remote.RetrofitInstance
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +22,7 @@ class AudioRecorder(private val context: Context) {
 
     fun startRecording(
         durationMs: Long = 3_000,
-        onResult: (Result<List<Dance>>) -> Unit
+        onResult: (Result<List<Prediction>>) -> Unit
     ) {
         if (isRecording) return
         isRecording = true
@@ -65,7 +66,7 @@ class AudioRecorder(private val context: Context) {
         }
     }
 
-    private suspend fun uploadAudio(file: File): Result<List<Dance>> {
+    private suspend fun uploadAudio(file: File): Result<List<Prediction>> {
         return try {
             val requestBody = file.asRequestBody("audio/webm".toMediaType())
             val response = RetrofitInstance.api.uploadWebm(requestBody)

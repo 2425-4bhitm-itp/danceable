@@ -1,0 +1,5 @@
+### Upload WebM audio
+POST https://it210190.cloud.htl-leonding.ac.at/uploadWebm
+Content-Type: audio/webm
+
+< ./sample.webm

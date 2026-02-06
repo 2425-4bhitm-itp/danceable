@@ -1,6 +1,7 @@
 package at.ac.htlleonding.danceable.data.remote
 
 import at.ac.htlleonding.danceable.data.model.Dance
+import at.ac.htlleonding.danceable.data.model.Prediction
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -15,6 +16,6 @@ interface DanceApiService {
     @POST("audio/uploadWebm")
     suspend fun uploadWebm(
         @Body body: RequestBody
-    ): Response<List<Dance>>
+    ): Response<List<Prediction>>
 }
 
