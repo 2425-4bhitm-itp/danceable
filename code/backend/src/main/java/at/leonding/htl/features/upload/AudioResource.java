@@ -5,6 +5,7 @@ import at.leonding.htl.features.library.dance.DanceRepository;
 import at.leonding.htl.features.ml.classify.ClassifyMlClient;
 import at.leonding.htl.features.ml.classify.ClassifyResponse;
 import at.leonding.htl.features.ml.classify.PredictionDto;
+import at.leonding.htl.features.ml.classify.SpeedCategory;
 import at.leonding.htl.features.ml.features.AudioFeatureClient;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -106,6 +108,48 @@ public class AudioResource {
         }
 
         return Response.ok().build();
+    }
+
+    @POST
+    @Path("uploadWebmStream/tmp")
+    @Consumes("audio/*")
+    public Response uploadWebmTmp(InputStream inputStream) throws IOException {
+        String absolutePath = saveAudioFile(inputStream, "webm");
+
+//        ClassifyResponse classifyResponseDto = classifyMlClient.classifyWebm(
+//                absolutePath
+//        );
+
+//        Log.info("Classify file: ");
+//        Log.info(absolutePath);
+//        Log.info(classifyResponseDto);
+
+//        Log.info("");
+
+//        List<Dance> dances = danceRepository.findAll().list();
+//
+//        if (classifyResponseDto.predictions != null) {
+//            Set<PredictionDto> predictions = classifyResponseDto.predictions.stream()
+//                    .map(p -> new PredictionDto(dances.stream()
+//                            .filter(d -> d.getName().equalsIgnoreCase(p.danceName()))
+//                            .map(Dance::getId)
+//                            .findFirst()
+//                            .orElse(null),
+//                            p.confidence(),
+//                            p.speedCategory())
+//                    ).filter(p -> p.danceId() != null)
+//                    .collect(Collectors.toSet());
+        Log.info(absolutePath);
+        Set<PredictionDto> predictions = new HashSet<>(Set.of(
+                new PredictionDto(1L, 0.92, SpeedCategory.slow),
+                new PredictionDto(2L, 0.78, SpeedCategory.medium),
+                new PredictionDto(3L, 0.64, SpeedCategory.fast)
+        ));
+
+        return Response.ok().entity(predictions).build();
+//        }
+//
+//        return Response.ok().build();
     }
 
     @POST

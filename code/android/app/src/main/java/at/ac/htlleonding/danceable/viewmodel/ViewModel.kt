@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ViewModel : ViewModel() {
+
+    private val _isSheetOpen = MutableStateFlow(false)
     private val _dances = MutableStateFlow<List<Dance>>(emptyList())
     private val _predictions = MutableStateFlow<List<Prediction>>(
         listOf(
@@ -21,6 +23,16 @@ class ViewModel : ViewModel() {
 
     val dances: StateFlow<List<Dance>> get() = _dances
     val predictions: StateFlow<List<Prediction>> get() = _predictions
+
+    val isSheetOpen: StateFlow<Boolean> = _isSheetOpen
+
+    fun openSheet() {
+        _isSheetOpen.value = true
+    }
+
+    fun closeSheet() {
+        _isSheetOpen.value = false
+    }
 
     init {
         fetchDances()

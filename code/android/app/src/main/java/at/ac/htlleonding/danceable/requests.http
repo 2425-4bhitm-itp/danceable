@@ -1,5 +1,9 @@
-### Upload WebM audio
-POST https://it210190.cloud.htl-leonding.ac.at/uploadWebm
+###
+GET https://it210190.cloud.htl-leonding.ac.at/dances
+
+### Upload WEBM audio stream for classification
+POST http://localhost:8080/audio/uploadWebmStream/tmp
 Content-Type: audio/webm
 
 < ./sample.webm
+

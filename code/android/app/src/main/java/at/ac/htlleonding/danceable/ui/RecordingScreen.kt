@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,8 +31,8 @@ import at.ac.htlleonding.danceable.viewmodel.ViewModel
 fun RecordingScreen(
     viewModel: ViewModel = viewModel(),
 ){
-    val sheetState = rememberModalBottomSheetState();
-    var showBottomSheet by remember{mutableStateOf(false)}
+    val sheetState = rememberModalBottomSheetState()
+    val isSheetOpen by viewModel.isSheetOpen.collectAsState()
 
     val permissionLauncher =
         rememberLauncherForActivityResult(
@@ -45,16 +46,23 @@ fun RecordingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFFFFF))
+            .background(Color.White)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AudioRecorderButton()
-        Button(onClick = {showBottomSheet = true}){Text("Show last Prediction")}
-        if(showBottomSheet){
-            ModalBottomSheet(onDismissRequest = {showBottomSheet = false}, sheetState = sheetState){
-                PredictionsView(viewModel)
-            }
+
+        Button(onClick = { viewModel.openSheet() }) {
+            Text("Show last Prediction")
+        }
+    }
+
+    if (isSheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.closeSheet() },
+            sheetState = sheetState
+        ) {
+            PredictionsView(viewModel)
         }
     }
 }

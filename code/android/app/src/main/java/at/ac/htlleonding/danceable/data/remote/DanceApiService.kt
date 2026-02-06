@@ -13,7 +13,7 @@ interface DanceApiService {
     @GET("dances")
     suspend fun getDances(): List<Dance>
 
-    @POST("audio/uploadWebm")
+    @POST("audio/uploadWebmStream/tmp")
     suspend fun uploadWebm(
         @Body body: RequestBody
     ): Response<List<Prediction>>

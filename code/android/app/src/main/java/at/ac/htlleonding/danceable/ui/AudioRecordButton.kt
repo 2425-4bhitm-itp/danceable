@@ -86,6 +86,7 @@ fun AudioRecorderButton(
                         isRecording = false
                         result.onSuccess {
                             println("Predictions: $it")
+
                         }.onFailure {
                             println("Error: ${it.message}")
                         }
