@@ -31,9 +31,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import at.ac.htlleonding.danceable.R
+import at.ac.htlleonding.danceable.viewmodel.ViewModel
 
 @Composable
 fun AudioRecorderButton(
+    viewModel: ViewModel,
     size: Dp = 240.dp
 ) {
     val context = LocalContext.current
@@ -84,9 +86,9 @@ fun AudioRecorderButton(
                     isRecording = true
                     recorder.startRecording { result ->
                         isRecording = false
-                        result.onSuccess {
-                            println("Predictions: $it")
-
+                        result.onSuccess { predictions ->
+                            viewModel.updatePrediction(predictions)
+                            viewModel.openSheet()
                         }.onFailure {
                             println("Error: ${it.message}")
                         }

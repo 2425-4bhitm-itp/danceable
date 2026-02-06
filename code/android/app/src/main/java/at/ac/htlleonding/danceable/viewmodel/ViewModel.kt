@@ -13,13 +13,15 @@ class ViewModel : ViewModel() {
 
     private val _isSheetOpen = MutableStateFlow(false)
     private val _dances = MutableStateFlow<List<Dance>>(emptyList())
-    private val _predictions = MutableStateFlow<List<Prediction>>(
-        listOf(
-            Prediction(9, 0.80f, "Slow"),
-            Prediction(6, 0.20f, "Medium"),
-            Prediction(5, 0.10f, "Fast")
-        )
-    )
+//    private val _predictions = MutableStateFlow<List<Prediction>>(
+//        listOf(
+//            Prediction(9, 0.80f, "Slow"),
+//            Prediction(6, 0.20f, "Medium"),
+//            Prediction(5, 0.10f, "Fast")
+//        )
+//    )
+
+    private val _predictions = MutableStateFlow<List<Prediction>>(emptyList())
 
     val dances: StateFlow<List<Dance>> get() = _dances
     val predictions: StateFlow<List<Prediction>> get() = _predictions
@@ -32,6 +34,10 @@ class ViewModel : ViewModel() {
 
     fun closeSheet() {
         _isSheetOpen.value = false
+    }
+
+    fun updatePrediction(predictions: List<Prediction>) {
+        _predictions.value = predictions
     }
 
     init {

@@ -50,7 +50,7 @@ fun RecordingScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AudioRecorderButton()
+        AudioRecorderButton(viewModel)
 
         Button(onClick = { viewModel.openSheet() }) {
             Text("Show last Prediction")
