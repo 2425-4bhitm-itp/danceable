@@ -28,6 +28,24 @@ class AudioDatasetCreatorCNN:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.output_csv.parent.mkdir(parents=True, exist_ok=True)
 
+    def clear_files(self) -> None:
+        if self.output_dir.exists():
+            for p in self.output_dir.glob("*.npz"):
+                p.unlink()
+
+        if self.output_csv.exists():
+            self.output_csv.unlink()
+
+    def load_existing(self) -> set[str]:
+        if not self.output_csv.exists():
+            return set()
+
+        df = pd.read_csv(self.output_csv)
+        if df.empty:
+            return set()
+
+        return set(df["filename"].astype(str))
+
     def load_existing_window_ids(self) -> set[str]:
         if not self.output_csv.exists():
             return set()
@@ -42,7 +60,7 @@ class AudioDatasetCreatorCNN:
 
     def process_folder(self, folder_path: str | Path, label: str) -> None:
         folder_path = Path(folder_path)
-        existing_ids = self.load_existing_window_ids()
+        existing_files = self.load_existing()
 
         rows = []
 
@@ -50,15 +68,14 @@ class AudioDatasetCreatorCNN:
             if wav_path.suffix.lower() != ".wav":
                 continue
 
+            if wav_path.name in existing_files:
+                continue
+
             patches = self.extractor.extract_features_from_file(str(wav_path))
 
             for patch in patches:
                 patch = self._ensure_hwc(patch)
-
                 window_id = str(uuid.uuid4())
-                if window_id in existing_ids:
-                    continue
-
                 save_path = self.output_dir / f"{window_id}.npz"
                 np.savez(save_path, input=patch)
 
@@ -81,7 +98,6 @@ class AudioDatasetCreatorCNN:
         for patch in patches:
             patch = self._ensure_hwc(patch)
             window_id = str(uuid.uuid4())
-
             save_path = self.output_dir / f"{window_id}.npz"
             np.savez(save_path, input=patch)
 
@@ -107,12 +123,12 @@ class AudioDatasetCreatorCNN:
             writer.writerows(rows)
 
     def prepare_dataset_once(
-            self,
-            disabled_labels: list[str] | None,
-            downsampling: bool,
-            test_size: float,
-            val_from_test: float,
-            scaler_sample_limit: int = 4000,
+        self,
+        disabled_labels: list[str] | None,
+        downsampling: bool,
+        test_size: float,
+        val_from_test: float,
+        scaler_sample_limit: int = 4000,
     ) -> None:
         df = self._load_dataset_csv(self.output_csv)
 
@@ -138,7 +154,10 @@ class AudioDatasetCreatorCNN:
             sample_limit=scaler_sample_limit,
         )
 
-        filtered_csv_path = Path(CNN_DATASET_PATH) / "filtered_dataset.csv"
+        dataset_path = Path(CNN_DATASET_PATH)
+        dataset_path.mkdir(parents=True, exist_ok=True)
+
+        filtered_csv_path = dataset_path / "filtered_dataset.csv"
         df.to_csv(filtered_csv_path, index=False)
 
         meta = {
@@ -147,11 +166,8 @@ class AudioDatasetCreatorCNN:
             "train_idx": train_idx.tolist(),
             "val_idx": val_idx.tolist(),
             "test_idx": test_idx.tolist(),
-            "filtered_csv": str(filtered_csv_path)
+            "filtered_csv": str(filtered_csv_path),
         }
-
-        dataset_path = Path(CNN_DATASET_PATH)
-        dataset_path.mkdir(parents=True, exist_ok=True)
 
         with open(dataset_path / "meta.json", "w", encoding="utf-8") as f:
             json.dump(meta, f)
@@ -206,9 +222,9 @@ class AudioDatasetCreatorCNN:
 
     @staticmethod
     def _song_wise_split(
-            df: pd.DataFrame,
-            test_size: float,
-            val_from_test: float,
+        df: pd.DataFrame,
+        test_size: float,
+        val_from_test: float,
     ):
         df = df.copy()
         df["song_id"] = df["filename"].astype(str).str.split("_part").str[0]
@@ -242,8 +258,8 @@ class AudioDatasetCreatorCNN:
 
     @staticmethod
     def _compute_global_mean_std(
-            npy_paths: list[str],
-            sample_limit: int,
+        npy_paths: list[str],
+        sample_limit: int,
     ) -> dict:
         if len(npy_paths) > sample_limit:
             rng = np.random.default_rng(42)
