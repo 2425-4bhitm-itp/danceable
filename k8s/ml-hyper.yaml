@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: ml-hyper
 spec:
-  replicas: 30
+  replicas: 8
   serviceName: ml-hyper
   selector:
     matchLabels:
@@ -24,7 +24,16 @@ spec:
           volumeMounts:
             - name: env-volume
               mountPath: /env
-              
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: cpu-extensions
+                  operator: In
+                  values:
+                    - avx
+
       containers:
         - name: ml-hyper
           image: ghcr.io/2425-4bhitm-itp/ml:latest

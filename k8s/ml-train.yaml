@@ -75,6 +75,15 @@ spec:
               mountPath: /opt/model
             - name: env-volume
               mountPath: /env
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: cpu-extensions
+                  operator: In
+                  values:
+                    - avx
       volumes:
         - name: song-volume
           persistentVolumeClaim:
