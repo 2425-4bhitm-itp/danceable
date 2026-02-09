@@ -46,6 +46,13 @@ class AudioDatasetCreatorCNN:
 
         return set(df["filename"].astype(str))
 
+    def save_csv(self) -> None:
+        if not self.output_csv.exists():
+            return
+
+        df = pd.read_csv(self.output_csv)
+        df.to_csv(self.output_csv, index=False)
+
     def load_existing_window_ids(self) -> set[str]:
         if not self.output_csv.exists():
             return set()
