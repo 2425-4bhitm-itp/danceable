@@ -36,22 +36,26 @@ class AudioDatasetCreatorCNN:
         if self.output_csv.exists():
             self.output_csv.unlink()
 
-    def load_existing(self) -> set[str]:
-        if not self.output_csv.exists():
-            return set()
+    def load_existing(self):
+        if self.output_csv.exists() and self.output_csv.stat().st_size > 0:
+            df = pd.read_csv(self.output_csv)
+            return set(df.loc[df["npy_path"].map(os.path.exists), "window_id"].astype(str))
+        return set()
 
-        df = pd.read_csv(self.output_csv)
-        if df.empty:
-            return set()
+    def save_csv(self, new_rows):
+        csv_file = self.output_csv
+        fieldnames = ["window_id", "filename", "label", "npy_path"]
 
-        return set(df["filename"].astype(str))
+        file_exists = csv_file.exists()
 
-    def save_csv(self) -> None:
-        if not self.output_csv.exists():
-            return
+        with open(csv_file, "a", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
 
-        df = pd.read_csv(self.output_csv)
-        df.to_csv(self.output_csv, index=False)
+            if not file_exists:
+                writer.writeheader()
+
+            for row in new_rows:
+                writer.writerow(row)
 
     def load_existing_window_ids(self) -> set[str]:
         if not self.output_csv.exists():

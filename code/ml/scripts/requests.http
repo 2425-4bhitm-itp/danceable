@@ -1,8 +1,8 @@
-### shorten
+### split all files in /app/song-storage/songs
 
 POST https://it210190.cloud.htl-leonding.ac.at/split_files
 
-### aufbereiten
+### split all files in /app/song-storage/songs and sort them into their respective class
 
 POST https://it210190.cloud.htl-leonding.ac.at/split_and_sort
 content-type: application/json
@@ -11,7 +11,7 @@ content-type: application/json
   "segment_length": 3000
 }
 
-### process all audio
+### eextract features from all files
 
 POST https://it210190.cloud.htl-leonding.ac.at/process_all_audio
 content-type: application/json
@@ -21,7 +21,7 @@ content-type: application/json
   "worker_count": 16
 }
 
-### train
+### start training
 
 POST https://it210190.cloud.htl-leonding.ac.at/train
 Content-Type: application/json
@@ -36,15 +36,15 @@ Content-Type: application/json
     "downsampling": false
 }
 
-### evaluate
+### evaluate the newest model
 
 GET https://it210190.cloud.htl-leonding.ac.at/evaluate
 
-### classify
+### classify local file
 
 POST https://it210190.cloud.htl-leonding.ac.at/classify_audio?file_path=/opt/application/data/Sway_Michael_Buble_Handy.wav
 
-### is proccessing
+### check if pods are processing
 
 GET https://it210190.cloud.htl-leonding.ac.at/processing
 
