@@ -6,6 +6,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sympy import true
 from tensorflow.keras.layers import (
     Conv2D,
     MaxPooling2D,
@@ -301,7 +302,7 @@ def classify_audio(file_path: str, extractor) -> dict:
         with open(CNN_LABELS_PATH) as f:
             _labels = json.load(f)
 
-    patches = extractor.extract_features_from_file(file_path)
+    patches = extractor.extract_features_from_file(file_path, true)
     if not patches:
         raise ValueError("No patches extracted")
 

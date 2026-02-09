@@ -23,14 +23,15 @@ class AudioFeatureExtractorCNN:
         self.target_time_bins = target_time_bins
         self.target_height = target_height
 
-    def load_audio(self, file_path):
+    def load_audio(self, file_path, should_print_duration=False):
         y, sr = librosa.load(file_path, sr=self.sr)
 
         if y is None or len(y) == 0:
             raise ValueError("Audio decode failed")
 
-        duration = len(y) / sr
-        print("AUDIO DURATION:", duration)
+        if should_print_duration:
+            duration = len(y) / sr
+            print("AUDIO DURATION:", duration)
 
         return librosa.util.normalize(y)
 
@@ -84,8 +85,8 @@ class AudioFeatureExtractorCNN:
         # stack along channel axis: H x W x C
         return np.stack(feats, axis=-1)
 
-    def extract_features_from_file(self, path):
-        y = self.load_audio(path)
+    def extract_features_from_file(self, path, should_print_duration=False):
+        y = self.load_audio(path, should_print_duration)
         windows = self.slice_into_windows(y)
         outputs = []
         if len(y) < len(windows):
