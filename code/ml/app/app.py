@@ -103,9 +103,13 @@ def classify_audio_api():
 
 @flask_app.route("/classify_webm_audio", methods=["POST"])
 def upload_webm_file():
-    data = request.get_json()
-    file_path = data["file_path"]
+    file_path = request.args.get("file_path")
 
+
+    if not file_path:
+        return jsonify({"error": "Missing 'file_path' in request query parameters"}), 400
+
+    print(file_path)
     wav_file = file_path.replace(".webm", ".wav")
     wav_file_path = file_converter.convert_webm_to_wav(file_path, wav_file)
 
