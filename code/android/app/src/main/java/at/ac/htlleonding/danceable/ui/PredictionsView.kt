@@ -46,7 +46,7 @@ fun PredictionsView(
             modifier = Modifier.padding(8.dp)
         ) {
             if (predictions.isEmpty()) {
-                Text("No Predictions Found", fontFamily = Inter, fontWeight = FontWeight.SemiBold)
+                Text("You have not predicted yet. Navigate to Recognition to predict!", fontFamily = Inter, fontWeight = FontWeight.SemiBold)
             } else {
                 predictions.forEach { prediction ->
                     PredictionView(prediction, dances)

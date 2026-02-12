@@ -9,7 +9,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -18,7 +17,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import at.ac.htlleonding.danceable.ui.ListScreen
 import at.ac.htlleonding.danceable.ui.navigation.Screen
 import at.ac.htlleonding.danceable.viewmodel.ViewModel
 
@@ -28,7 +26,8 @@ fun MainScreen(viewModel: ViewModel = viewModel()) {
 
     val items = listOf(
         Screen.Recording,
-        Screen.List
+        Screen.Prediction,
+        Screen.Dances
     )
 
     Scaffold(
@@ -66,11 +65,14 @@ fun MainScreen(viewModel: ViewModel = viewModel()) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.List.route,
+            startDestination = Screen.Dances.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Screen.List.route) {
-                ListScreen(viewModel = viewModel)
+            composable(Screen.Dances.route) {
+                DancesScreen(viewModel = viewModel)
+            }
+            composable(Screen.Prediction.route) {
+                PredictionsView(viewModel = viewModel)
             }
             composable(Screen.Recording.route) {
                 RecordingScreen(viewModel = viewModel)

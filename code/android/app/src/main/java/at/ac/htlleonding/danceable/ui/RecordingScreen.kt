@@ -31,8 +31,8 @@ import at.ac.htlleonding.danceable.viewmodel.ViewModel
 fun RecordingScreen(
     viewModel: ViewModel = viewModel(),
 ){
-    val sheetState = rememberModalBottomSheetState()
-    val isSheetOpen by viewModel.isSheetOpen.collectAsState()
+//    val sheetState = rememberModalBottomSheetState()
+//    val isSheetOpen by viewModel.isSheetOpen.collectAsState()
 
     val permissionLauncher =
         rememberLauncherForActivityResult(
@@ -52,17 +52,17 @@ fun RecordingScreen(
     ) {
         AudioRecorderButton(viewModel)
 
-        Button(onClick = { viewModel.openSheet() }) {
-            Text("Show last Prediction")
-        }
+//        Button(onClick = { viewModel.openSheet() }) {
+//            Text("Show last Prediction")
+//        }
     }
 
-    if (isSheetOpen) {
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.closeSheet() },
-            sheetState = sheetState
-        ) {
-            PredictionsView(viewModel)
-        }
-    }
+//    if (isSheetOpen) {
+//        ModalBottomSheet(
+//            onDismissRequest = { viewModel.closeSheet() },
+//            sheetState = sheetState
+//        ) {
+//            PredictionsView(viewModel)
+//        }
+//    }
 }
