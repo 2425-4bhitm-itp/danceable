@@ -13,6 +13,7 @@ public class Dance implements Comparable<Dance> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique=true)
     private String name;
     private int minBpm;
     private int maxBpm;
