@@ -17,7 +17,7 @@ public class InitBean {
 
     @Transactional
     void startup(@Observes StartupEvent startupEvent) {
-        if (LaunchMode.current() == LaunchMode.DEVELOPMENT && LaunchMode.current() == LaunchMode.NORMAL) {
+        if (LaunchMode.current() == LaunchMode.DEVELOPMENT) {
             Log.info("Do not use InitBean in prod!!!");
 
             danceRepository.persist(
