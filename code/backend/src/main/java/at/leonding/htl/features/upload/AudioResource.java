@@ -158,12 +158,12 @@ public class AudioResource {
     public Response classifyIosMock(InputStream inputStream) throws IOException {
         Long viennaWaltzId = danceRepository.findDanceByName("viennawaltz").getId();
         Long slowWaltzId = danceRepository.findDanceByName("Slowwaltz").getId();
-        Long quickstepId = danceRepository.findDanceByName("Quickstep").getId();
+        Long tangoId = danceRepository.findDanceByName("Tango").getId();
 
         List<PredictionDto> predictions = List.of(
-                new PredictionDto(viennaWaltzId, 0.7, SpeedCategory.medium),
-                new PredictionDto(slowWaltzId, 0.25, SpeedCategory.slow),
-                new PredictionDto(quickstepId, 0.05, SpeedCategory.fast)
+                new PredictionDto(viennaWaltzId, 0.86, SpeedCategory.medium),
+                new PredictionDto(slowWaltzId, 0.13, SpeedCategory.slow),
+                new PredictionDto(tangoId, 0.01, SpeedCategory.fast)
         );
 
         return Response.ok().entity(predictions).build();
