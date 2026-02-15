@@ -15,7 +15,6 @@ public class Song {
     @Id
     private Long id;
 
-    @Column(unique = true)
     private String title;
 
     @ManyToOne(cascade = CascadeType.MERGE)
