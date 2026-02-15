@@ -1,4 +1,4 @@
-POST http://localhost:8080/audio/uploadStream
+POST http://localhost:8080/audio/ios/mock
 Content-Type: audio/wave
 
 < ./audiofile.wav

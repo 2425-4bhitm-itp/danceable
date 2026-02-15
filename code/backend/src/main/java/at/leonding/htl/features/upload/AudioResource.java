@@ -153,6 +153,23 @@ public class AudioResource {
     }
 
     @POST
+    @Path("ios/mock")
+    @Consumes("audio/wave")
+    public Response classifyIosMock(InputStream inputStream) throws IOException {
+        Long viennaWaltzId = danceRepository.findDanceByName("viennawaltz").getId();
+        Long slowWaltzId = danceRepository.findDanceByName("Slowwaltz").getId();
+        Long quickstepId = danceRepository.findDanceByName("Viennawaltz").getId();
+
+        List<PredictionDto> predictions = List.of(
+                new PredictionDto(viennaWaltzId, 0.7, SpeedCategory.medium),
+                new PredictionDto(slowWaltzId, 0.25, SpeedCategory.slow),
+                new PredictionDto(quickstepId, 0.05, SpeedCategory.fast)
+        );
+
+        return Response.ok().entity(predictions).build();
+    }
+
+    @POST
     @Path("features")
     @Consumes("audio/wave")
     public Response extractFeatures(InputStream inputStream) throws IOException {

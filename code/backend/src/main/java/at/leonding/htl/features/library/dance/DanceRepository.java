@@ -6,7 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class DanceRepository implements PanacheRepository<Dance> {
     public Dance findDanceByName(String name) {
-        return find("name", name.toLowerCase()).firstResult();
+        return find("LOWER(name)", name.toLowerCase()).firstResult();
     }
 
     public Dance persistOrUpdateSong(String danceName) {
