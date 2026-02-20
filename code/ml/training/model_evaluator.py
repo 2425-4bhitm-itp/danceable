@@ -57,9 +57,6 @@ class DanceModelEvaluator:
         if self.apply_scaler:
             self.scaler = joblib.load(SCALER_PATH)
 
-        print("Loaded model input shape:", self.model.input_shape)
-        print("Labels:", self.labels)
-
 
     def load_preprocessed_data(self):
         df = self.dataset_df
@@ -97,10 +94,6 @@ class DanceModelEvaluator:
             "val": load_split(self.val_idx),
             "test": load_split(self.test_idx),
         }
-
-
-        print(result)
-
         return result
 
 

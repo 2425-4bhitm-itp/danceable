@@ -189,6 +189,8 @@ def evaluate():
 
     results = evaluator.evaluate_all()
 
+    print(results)
+
     return jsonify({
         "message": "Evaluation completed",
         "train_accuracy": results.get("train"),
