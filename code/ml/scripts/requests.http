@@ -31,7 +31,7 @@ Content-Type: application/json
       "foxtrott"
     ],
     "test_size": 0.2,
-    "batch_size": 64,
+    "batch_size": 128,
     "epochs": 100,
     "downsampling": false
 }

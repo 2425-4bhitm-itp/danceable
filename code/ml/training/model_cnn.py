@@ -44,11 +44,11 @@ _model = None
 def build_cnn(
         input_shape: tuple,
         num_classes: int,
-        filters=(32, 64, 128),
-        kernel_size=(3, 3),
-        dense_units=256,
-        dropout_rate=0.5,
-        learning_rate=1e-3,
+        filters=(64, 128, 256),
+        kernel_size=(7, 7),
+        dense_units=512,
+        dropout_rate=0.3,
+        learning_rate=0.0001,
 ) -> tf.keras.Model:
     model = Sequential()
 
