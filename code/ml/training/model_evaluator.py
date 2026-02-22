@@ -10,8 +10,10 @@ import plotly.graph_objects as go
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.interpolate import griddata
 from sklearn.metrics import classification_report, confusion_matrix
-from model.model_cnn import build_cnn
+
 from config.paths import SCALER_PATH
+
+from training.model_cnn import build_cnn
 
 
 class DanceModelEvaluator:
