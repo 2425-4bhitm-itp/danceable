@@ -6,13 +6,17 @@ import uuid
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from config.paths import (
     SNIPPETS_DIR,
     SONGS_DIR,
     CNN_MODEL_PATH,
     CNN_LABELS_PATH,
     EVALUATION_RESULTS_DIR,
-    TRAIN_ENV_PATH, HYPER_ENV_PATH, CNN_DATASET_PATH
+    TRAIN_ENV_PATH,
+    HYPER_ENV_PATH,
+    CNN_DATASET_PATH,
+    CNN_WEIGHTS_PATH
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
@@ -142,6 +146,7 @@ def train():
     disabled_labels = data.get("disabled_labels", [])
     test_size = float(data.get("test_size", 0.1))
     downsampling = bool(data.get("downsampling", False))
+    model_config = data.get("model_config", {})
 
     os.makedirs(TRAIN_ENV_PATH, exist_ok=True)
 
@@ -162,6 +167,30 @@ def train():
         val_from_test=0.5
     )
 
+    meta_path = CNN_DATASET_PATH / "meta.json"
+    with open(meta_path, "r") as f:
+        meta = json.load(f)
+
+    sample_path = meta["filtered_csv"]
+    df = pd.read_csv(sample_path)
+    sample = np.load(df.iloc[0]["npy_path"])["input"].astype(np.float32)
+    while sample.ndim > 3:
+        sample = sample.squeeze(0)
+    if sample.ndim == 2:
+        sample = sample[..., np.newaxis]
+
+    meta["model_config"] = {
+        "input_shape": list(sample.shape),
+        "num_classes": len(meta["labels"]),
+        **model_config,
+    }
+
+    with open(meta_path, "w") as f:
+        json.dump(meta, f)
+
+    with open(os.path.join(TRAIN_ENV_PATH, "MODEL_CONFIG"), "w") as f:
+        json.dump(model_config, f)  # writes {} if not provided
+
     with open(os.path.join(TRAIN_ENV_PATH, "BATCH_SIZE"), "w") as f:
         f.write(batch_size)
     with open(os.path.join(TRAIN_ENV_PATH, "EPOCHS"), "w") as f:
@@ -180,16 +209,13 @@ def train():
 @flask_app.route("/evaluate", methods=["GET"])
 def evaluate():
     evaluator = DanceModelEvaluator(
-        model_path=CNN_MODEL_PATH,
+        model_path=CNN_WEIGHTS_PATH,
         output_dir=EVALUATION_RESULTS_DIR,
         meta_path=CNN_DATASET_PATH / "meta.json",
     )
 
     evaluator.load_resources()
-
     results = evaluator.evaluate_all()
-
-    print(results)
 
     return jsonify({
         "message": "Evaluation completed",

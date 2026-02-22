@@ -227,9 +227,6 @@ def train_model(
         scaler,
     ) = load_prepared_dataset()
 
-    _scaler = scaler
-    _labels = meta["labels"]
-
     num_classes = len(meta["labels"])
 
     sample = np.load(train_paths[0])["input"].astype(np.float32)
@@ -241,27 +238,18 @@ def train_model(
     input_shape = sample.shape
 
     train_ds = make_tf_dataset(
-        train_paths,
-        train_labels,
-        input_shape,
-        num_classes,
-        batch_size,
-        shuffle=True,
+        train_paths, train_labels, input_shape, num_classes, batch_size, shuffle=True,
+    )
+    val_ds = make_tf_dataset(
+        val_paths, val_labels, input_shape, num_classes, batch_size, shuffle=False,
     )
 
-    val_ds = make_tf_dataset(
-        val_paths,
-        val_labels,
-        input_shape,
-        num_classes,
-        batch_size,
-        shuffle=False,
-    )
+    effective_config = model_config or {}
 
     model = build_cnn(
         input_shape=input_shape,
         num_classes=num_classes,
-        **(model_config or {}),
+        **effective_config,
     )
 
     callbacks = [
@@ -271,7 +259,7 @@ def train_model(
             restore_best_weights=True,
         ),
         tf.keras.callbacks.ModelCheckpoint(
-            filepath=checkpoint_dir,
+            filepath=str(checkpoint_dir),
             monitor="val_loss",
             save_best_only=True,
             save_weights_only=True,
@@ -287,7 +275,6 @@ def train_model(
     )
 
     return model
-
 
 # ----------------------- Inference -----------------------
 

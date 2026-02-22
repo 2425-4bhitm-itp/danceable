@@ -1,5 +1,6 @@
 import os
 import time
+import json
 
 import tensorflow as tf
 
@@ -134,6 +135,11 @@ while True:
 
     batch_size = int(read_env_file("BATCH_SIZE", "128"))
     epochs = int(read_env_file("EPOCHS", "100"))
+    model_config_raw = read_env_file("MODEL_CONFIG", "{}")
+    try:
+        model_config = json.loads(model_config_raw)
+    except Exception:
+        model_config = {}
 
     strategy = tf.distribute.MultiWorkerMirroredStrategy()
 
@@ -141,6 +147,7 @@ while True:
         train_model(
             batch_size=batch_size,
             epochs=epochs,
+            model_config=model_config,
             verbose=1
         )
 

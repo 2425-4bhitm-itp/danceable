@@ -6,12 +6,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.graph_objects as go
-import tensorflow as tf
 
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.interpolate import griddata
 from sklearn.metrics import classification_report, confusion_matrix
-
+from model_cnn import build_cnn
 from config.paths import SCALER_PATH
 
 
@@ -36,15 +35,11 @@ class DanceModelEvaluator:
         self.val_idx = None
         self.test_idx = None
 
-
     def load_resources(self):
-        self.model = tf.keras.models.load_model(self.model_path)
-
         with open(self.meta_path, "r", encoding="utf-8") as f:
             meta = json.load(f)
 
         self.label_to_idx = meta["label_to_idx"]
-
         self.labels = sorted(self.label_to_idx.keys(), key=lambda k: self.label_to_idx[k])
 
         filtered_csv_path = meta["filtered_csv"]
@@ -54,9 +49,16 @@ class DanceModelEvaluator:
         self.val_idx = np.array(meta["val_idx"])
         self.test_idx = np.array(meta["test_idx"])
 
+        # Rebuild model from saved config, then load weights
+        model_cfg = dict(meta["model_config"])  # copy so we don't mutate meta
+        input_shape = tuple(model_cfg.pop("input_shape"))
+        num_classes = model_cfg.pop("num_classes")
+
+        self.model = build_cnn(input_shape=input_shape, num_classes=num_classes, **model_cfg)
+        self.model.load_weights(str(self.model_path))
+
         if self.apply_scaler:
             self.scaler = joblib.load(SCALER_PATH)
-
 
     def load_preprocessed_data(self):
         df = self.dataset_df
@@ -84,8 +86,6 @@ class DanceModelEvaluator:
 
             X = np.stack(X_list, axis=0)
             y = np.array(y_list, dtype=np.int64)
-
-            print("Loaded split:", X.shape, "Unique labels:", np.unique(y))
 
             return X, y
 
