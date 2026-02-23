@@ -217,6 +217,8 @@ def evaluate():
     evaluator.load_resources()
     results = evaluator.evaluate_all()
 
+    print(results)
+
     return jsonify({
         "message": "Evaluation completed",
         "train_accuracy": results.get("train"),
