@@ -152,7 +152,7 @@ while True:
         )
 
     print(f"{POD_NAME} finished training run {current_id}")
-    print(f"Time taken: {start_time - time.time()}")
+    print(f"Time taken: {time.time() - start_time}")
     if acquire_eval_lock():
         print(f"{POD_NAME} acquired evaluation lock")
         try:

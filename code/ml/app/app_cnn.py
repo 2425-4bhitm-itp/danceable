@@ -144,7 +144,7 @@ def train():
     batch_size = str(data.get("batch_size", 512))
     epochs = str(data.get("epochs", 100))
     disabled_labels = data.get("disabled_labels", [])
-    test_size = float(data.get("test_size", 0.1))
+    test_size = float(data.get("test_size", 0.2))
     downsampling = bool(data.get("downsampling", False))
     model_config = data.get("model_config", {})
 
@@ -315,9 +315,9 @@ def hyperparameter_test():
     json.dump(search_space, open(run_dir / "search_space.json", "w"), indent=2)
 
     dataset_creator.prepare_dataset_once(
-        disabled_labels=search_space.get("disabled_labels", []),
-        downsampling=search_space.get("downsampling", False),
-        test_size=search_space.get("test_size", 0.2),
+        disabled_labels=search_space.get("train", {}).get("disabled_labels", []),
+        downsampling=search_space.get("train", {}).get("downsampling", False),
+        test_size=search_space.get("train", {}).get("test_size", 0.2),
         val_from_test=0.5,
     )
 
