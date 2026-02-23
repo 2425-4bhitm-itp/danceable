@@ -61,7 +61,7 @@ Content-Type: application/json
 {
   "search_space": {
     "train": {
-      "batch_size": [512],
+      "batch_size": [64, 128],
       "epochs": [100],
       "test_size": [0.2],
       "downsampling": [false],
@@ -69,7 +69,7 @@ Content-Type: application/json
     },
     "model": {
       "filters": [[32, 64, 128], [64, 128, 256]],
-      "dense_units": [64, 128, 256, 512],
+      "dense_units": [512],
       "dropout_rate": [0.2, 0.3, 0.5],
       "learning_rate": [0.0003, 0.0001],
       "kernel_size": [[3, 3], [5, 5], [7, 7]]

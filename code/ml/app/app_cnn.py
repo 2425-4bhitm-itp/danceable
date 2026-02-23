@@ -316,8 +316,8 @@ def hyperparameter_test():
 
     dataset_creator.prepare_dataset_once(
         disabled_labels=search_space.get("train", {}).get("disabled_labels", []),
-        downsampling=search_space.get("train", {}).get("downsampling", False),
-        test_size=search_space.get("train", {}).get("test_size", 0.2),
+        downsampling=search_space.get("train", {}).get("downsampling", [False])[0],
+        test_size=search_space.get("train", {}).get("test_size", [0.2])[0],
         val_from_test=0.5,
     )
 
