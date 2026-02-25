@@ -62,6 +62,8 @@ class DanceModelEvaluator:
         if self.apply_scaler:
             self.scaler = joblib.load(SCALER_PATH)
 
+        print("Loaded model and dataset resources successfully.")
+
     def load_preprocessed_data(self):
         df = self.dataset_df
 
@@ -96,6 +98,8 @@ class DanceModelEvaluator:
             "val": load_split(self.val_idx),
             "test": load_split(self.test_idx),
         }
+
+        print("loaded preprocessed data")
         return result
 
 
@@ -127,6 +131,8 @@ class DanceModelEvaluator:
 
         report_df = pd.DataFrame(report).transpose()
         report_df.to_csv(os.path.join(self.output_dir, f"class_metrics_{set_name}.csv"))
+
+        print("plotting results")
 
         self._plot_confusion_matrix(cm_df, set_name)
         self._plot_3d_landscape(cm_df, set_name)
