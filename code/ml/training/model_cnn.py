@@ -264,6 +264,12 @@ def train_model(
             save_best_only=True,
             save_weights_only=True,
         ),
+        tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss",
+            factor=0.5,
+            patience=5,
+            min_lr=1e-6,
+        ),
     ]
 
     model.fit(

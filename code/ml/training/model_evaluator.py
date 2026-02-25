@@ -201,7 +201,26 @@ class DanceModelEvaluator:
         fig.update_layout(
             title=f"Interactive Confusion Landscape — {set_name}",
             width=1000,
-            height=900
+            height=900,
+            scene=dict(
+                xaxis=dict(
+                    tickmode="array",
+                    tickvals=list(range(10)),
+                    ticktext=["chacha", "discofox", "jive", "quickstep", "rumba",
+                              "salsa", "samba", "slowwaltz", "tango", "viennawaltz"],
+                    title="Predicted"
+                ),
+                yaxis=dict(
+                    tickmode="array",
+                    tickvals=list(range(10)),
+                    ticktext=["chacha", "discofox", "jive", "quickstep", "rumba",
+                              "salsa", "samba", "slowwaltz", "tango", "viennawaltz"],
+                    title="Actual"
+                ),
+                zaxis=dict(
+                    title="Count"
+                )
+            )
         )
 
         out_path = os.path.join(self.output_dir, f"confusion_matrix_3d_{set_name}.html")
