@@ -14,10 +14,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import at.ac.htlleonding.danceable.ui.ListScreen
 import at.ac.htlleonding.danceable.ui.navigation.Screen
 import at.ac.htlleonding.danceable.viewmodel.ViewModel
@@ -70,10 +72,17 @@ fun MainScreen(viewModel: ViewModel = viewModel()) {
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.List.route) {
-                ListScreen(viewModel = viewModel)
+                ListScreen(viewModel = viewModel,
+                    onItemClick = {itemId -> navController.navigate(Screen.Detail.createRoute(itemId))})
             }
             composable(Screen.Recording.route) {
                 RecordingScreen(viewModel = viewModel)
+            }
+            composable(route = Screen.Detail.route, arguments =
+                listOf(navArgument("itemId") {type=NavType.StringType})
+            ){ backStackEntry ->
+                val itemId = backStackEntry.arguments?.getString("itemId")
+                DetailScreen(itemId = itemId, viewModel = viewModel)
             }
         }
     }

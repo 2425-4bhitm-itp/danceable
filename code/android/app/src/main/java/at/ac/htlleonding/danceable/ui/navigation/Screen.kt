@@ -20,4 +20,12 @@ sealed class Screen(
         labelRes = R.string.nav_recording,
         icon = R.drawable.microphone
     )
+
+    object Detail: Screen(
+        route = "detail/{itemId}",
+        labelRes = R.string.nav_detail,
+        icon = R.drawable.library
+    ){
+        fun createRoute(itemId: String) = "detail/$itemId"
+    }
 }

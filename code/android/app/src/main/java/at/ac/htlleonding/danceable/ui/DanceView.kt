@@ -1,10 +1,14 @@
 package at.ac.htlleonding.danceable.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +22,7 @@ import at.ac.htlleonding.danceable.data.model.Dance
 import at.ac.htlleonding.danceable.ui.theme.Inter
 
 @Composable
-fun DanceView(dance: Dance) {
+fun DanceView(dance: Dance, onItemClick: (String) -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -30,7 +34,8 @@ fun DanceView(dance: Dance) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(12.dp)
+                .clickable(onClick = { onItemClick(dance.id.toString()) }),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -42,13 +47,11 @@ fun DanceView(dance: Dance) {
                 color = Color(0xFF000000)
             )
 
-            Text(
-                text = "${dance.minBpm} - ${dance.maxBpm} BPM",
-                fontFamily = Inter,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF555555)
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Open Details"
             )
         }
     }
 }
+

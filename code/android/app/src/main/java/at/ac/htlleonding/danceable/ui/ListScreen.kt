@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 @Composable
 fun ListScreen(
     viewModel: ViewModel = viewModel(),
+    onItemClick: (String) -> Unit
 ) {
     val dances by viewModel.dances.collectAsState()
 
@@ -51,7 +52,7 @@ fun ListScreen(
             }
         } else {
             items(dances) { dance ->
-                DanceView(dance)
+                DanceView(dance, onItemClick = onItemClick)
             }
         }
     }

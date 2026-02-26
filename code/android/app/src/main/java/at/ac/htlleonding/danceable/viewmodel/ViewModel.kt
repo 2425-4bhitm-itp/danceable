@@ -40,6 +40,10 @@ class ViewModel : ViewModel() {
         _predictions.value = predictions
     }
 
+    fun getDanceById(id: Number): Dance? {
+        return _dances.value.find { it.id == id }
+    }
+
     init {
         fetchDances()
     }
