@@ -2,5 +2,56 @@
     <string name="app_name">Danceable</string>
     <string name="nav_list">List</string>
     <string name="nav_recording">Recognition</string>
+
+    <!-- Dance Descriptions -->
+    <string name="dance_cha_cha">
+        Cha Cha / Cha Cha Cha
+        A lively Latin partner dance with syncopated “cha‑cha‑cha” steps, playful hip motion, and rhythm that breaks on the 4th and 1st beats.
+    </string>
+
+    <string name="dance_discofox">
+        Discofox
+        A versatile social partner dance from the disco era, combining simple forward‑and‑back or side steps with turns and wraps; danced to 4/4 music and easy to pick up by beginners.
+    </string>
+
+    <string name="dance_jive">
+        Jive
+        A fast, energetic swing‑influenced dance with quick rock‑step and triple‑step (shuffle) footwork, often danced to upbeat music in social and competitive settings.
+    </string>
+
+    <string name="dance_quickstep">
+        Quickstep
+        A brisk, flowing ballroom dance evolved from foxtrot, featuring running steps, syncopations, and light hops; danced in a smooth style with continuous forward movement.
+    </string>
+
+    <string name="dance_rumba">
+        Rumba
+        A slow, sensual Latin ballroom dance emphasizing hip action and romantic connection, with smooth, deliberate steps and steady rhythm.
+    </string>
+
+    <string name="dance_salsa">
+        Salsa
+        A popular Latin partner dance with energetic footwork, rhythmically syncopated timing, spins, and dynamic lead‑follow patterns; danced in clubs worldwide.
+    </string>
+
+    <string name="dance_samba">
+        Samba
+        A rhythmic Latin dance from Brazil with a distinctive bounce action and forward‑backward steps, often seen in both social and competitive dance scenes.
+    </string>
+
+    <string name="dance_slow_waltz">
+        Slow Waltz (English Waltz / Waltz)
+        A graceful ballroom dance in 3/4 time with smooth, flowing rise‑and‑fall movements and elegant progress around the floor.
+    </string>
+
+    <string name="dance_tango">
+        Tango
+        A dramatic ballroom dance with sharp, staccato movements and purposeful pauses, expressing strong character and musical accents.
+    </string>
+
+    <string name="dance_viennese_waltz">
+        Viennese Waltz
+        A fast, rotating form of waltz in 3/4 time with continuous turns and sweeping movement around the floor; one of the oldest ballroom dances.
+    </string>
     <string name="nav_detail">Detail</string>
 </resources>

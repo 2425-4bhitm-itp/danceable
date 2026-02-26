@@ -2,5 +2,56 @@
     <string name="app_name">Danceable</string>
     <string name="nav_list">Liste</string>
     <string name="nav_recording">Erkennung</string>
+
+    <!-- Dance Descriptions -->
+    <string name="dance_cha_cha">
+        Cha Cha / Cha Cha Cha
+        Ein lebhafter lateinamerikanischer Paartanz mit markanten „cha‑cha‑cha“ Schritten, verspielter Hüftbewegung und rhythmischer Betonung auf dem 4. und 1. Schlag.
+    </string>
+
+    <string name="dance_discofox">
+        Discofox
+        Ein vielseitiger Gesellschaftstanz aus der Disco‑Zeit mit einfachen Schritten vor‑ und rückwärts oder seitwärts sowie Drehungen und Figuren; wird zum 4/4‑Takt getanzt und ist für Anfänger gut erlernbar.
+    </string>
+
+    <string name="dance_jive">
+        Jive
+        Ein schneller, energiegeladener Tanz mit Swing‑Einfluss, mit Rock‑Schritt und Triple‑Step‑(Shuffle‑)Beinarbeit, der häufig zu flotter Musik im Tanzlokal oder im Wettbewerb getanzt wird.
+    </string>
+
+    <string name="dance_quickstep">
+        Quickstep
+        Ein flotter Standardtanz aus dem Foxtrott mit „laufenden“ Schritten, synkopierten Elementen und leichten Sprüngen; elegant und stetig vorwärts getanzt.
+    </string>
+
+    <string name="dance_rumba">
+        Rumba
+        Ein langsamer, sinnlicher lateinamerikanischer Gesellschaftstanz, der Hüftbewegung und romantische Verbindung betont, mit ruhigen, kontrollierten Schritten.
+    </string>
+
+    <string name="dance_salsa">
+        Salsa
+        Ein populärer lateinamerikanischer Paartanz mit energiegeladenen Schrittmustern, rhythmischer Synkopierung, Drehungen und dynamischem Führen und Folgen; weltweit in Clubs beliebt.
+    </string>
+
+    <string name="dance_samba">
+        Samba
+        Ein rhythmischer lateinamerikanischer Tanz aus Brasilien mit charakteristischem „Bounce“ und vor‑ und rückwärts Schritten, sowohl im Gesellschafts‑ als auch im Turniertanz verbreitet.
+    </string>
+
+    <string name="dance_slow_waltz">
+        Slow Waltz (Englischer Walzer / Walzer)
+        Ein eleganter Gesellschaftstanz im 3/4‑Takt mit sanftem Auf‑ und Ab‑Bewegung und geschmeidigem Fortschreiten über die Tanzfläche.
+    </string>
+
+    <string name="dance_tango">
+        Tango
+        Ein dramatischer Gesellschaftstanz mit markanten, stakkato‑artigen Bewegungen und bewusst gesetzten Pausen, der starke Charaktere und musikalische Akzente ausdrückt.
+    </string>
+
+    <string name="dance_viennese_waltz">
+        Wiener Walzer
+        Eine schnelle Form des Walzers im 3/4‑Takt mit stetigen Drehungen und schwungvollem Fortschreiten über die Tanzfläche; einer der ältesten Gesellschaftstänze.
+    </string>
     <string name="nav_detail">Detail</string>
 </resources>
