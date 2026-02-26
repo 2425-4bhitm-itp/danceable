@@ -82,7 +82,7 @@ fun MainScreen(viewModel: ViewModel = viewModel()) {
                 listOf(navArgument("itemId") {type=NavType.StringType})
             ){ backStackEntry ->
                 val itemId = backStackEntry.arguments?.getString("itemId")
-                DetailScreen(itemId = itemId, viewModel = viewModel)
+                DetailScreen(itemId = itemId, viewModel = viewModel, onNavigateBack = {navController.popBackStack()})
             }
         }
     }
