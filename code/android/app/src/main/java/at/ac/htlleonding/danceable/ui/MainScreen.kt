@@ -67,7 +67,7 @@ fun MainScreen(viewModel: ViewModel = viewModel()) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.List.route,
+            startDestination = Screen.Recording.route,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.List.route) {
