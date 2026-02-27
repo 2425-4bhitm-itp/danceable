@@ -20,7 +20,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import at.ac.htlleonding.danceable.ui.ListScreen
 import at.ac.htlleonding.danceable.ui.navigation.Screen
 import at.ac.htlleonding.danceable.viewmodel.ViewModel
 

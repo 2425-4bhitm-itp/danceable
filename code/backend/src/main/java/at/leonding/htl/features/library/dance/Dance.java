@@ -14,6 +14,33 @@ public class Dance implements Comparable<Dance> {
     private String name;
     private int minBpm;
     private int maxBpm;
+    private String description;
+    private String androidImageLink;
+    private String androidImageLinkLady;
+
+    public String getAndroidImageLinkLady() {
+        return androidImageLinkLady;
+    }
+
+    public void setAndroidImageLinkLady(String androidImageLinkLady) {
+        this.androidImageLinkLady = androidImageLinkLady;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getAndroidImageLink() {
+        return androidImageLink;
+    }
+
+    public void setAndroidImageLink(String androidImageLink) {
+        this.androidImageLink = androidImageLink;
+    }
 
     public void setId(Long id) {
         this.id = id;
@@ -69,6 +96,30 @@ public class Dance implements Comparable<Dance> {
         this.name = name;
         this.minBpm = minBpm;
         this.maxBpm = maxBpm;
+    }
+
+    public Dance(String name, int minBpm, int maxBpm, String description) {
+        this.name = name;
+        this.minBpm = minBpm;
+        this.maxBpm = maxBpm;
+        this.description = description;
+    }
+
+    public Dance(String name, int minBpm, int maxBpm, String description, String androidImageLink) {
+        this.name = name;
+        this.minBpm = minBpm;
+        this.maxBpm = maxBpm;
+        this.description = description;
+        this.androidImageLink = androidImageLink;
+    }
+
+    public Dance(String name, int minBpm, int maxBpm, String description, String androidImageLink, String androidImageLinkLady) {
+        this.name = name;
+        this.minBpm = minBpm;
+        this.maxBpm = maxBpm;
+        this.description = description;
+        this.androidImageLink = androidImageLink;
+        this.androidImageLinkLady = androidImageLinkLady;
     }
 
     @Override
