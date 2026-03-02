@@ -156,7 +156,7 @@ while True:
     if acquire_eval_lock():
         print(f"{POD_NAME} acquired evaluation lock")
         try:
-            evaluate_and_export()
+            evaluate_and_export(model_config=model_config)
             with open(state_file, "w") as f:
                 f.write("idle")
         finally:
