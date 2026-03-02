@@ -239,6 +239,9 @@ def classify():
     wav = convert_to_wav_if_needed(file_path)
 
     pred_result = classify_audio(wav, extractor)
+
+    print(pred_result)
+
     return jsonify(pred_result), 200
 
 
