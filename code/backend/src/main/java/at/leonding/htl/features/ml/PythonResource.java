@@ -43,39 +43,39 @@ public class PythonResource {
         try {
             // Process all WAV files
             Response response = client.target(pythonUrl + "processing_wav")
-                                      .request()
-                                      .post(null);
+                    .request()
+                    .post(null);
             if (response.getStatus() != 200) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                               .entity("Error processing WAV files")
-                               .build();
+                        .entity("Error processing WAV files")
+                        .build();
             }
 
             // Create CSV
             response = client.target(pythonUrl + "process_all_audio")
-                             .request()
-                             .post(null);
+                    .request()
+                    .post(null);
             if (response.getStatus() != 200) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                               .entity("Error creating CSV")
-                               .build();
+                        .entity("Error creating CSV")
+                        .build();
             }
 
             // Train model
             response = client.target(pythonUrl + "train")
-                             .request()
-                             .get();
+                    .request()
+                    .get();
             if (response.getStatus() != 200) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                               .entity("Error training model")
-                               .build();
+                        .entity("Error training model")
+                        .build();
             }
 
             return Response.ok("Processing and training completed successfully").build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("An error occurred: " + e.getMessage())
-                           .build();
+                    .entity("An error occurred: " + e.getMessage())
+                    .build();
         }
     }
 
@@ -97,17 +97,12 @@ public class PythonResource {
 
             String json = "{\"file\": \"" + uploadedFileLocation + "\"}";
 
-            Response response = null;
 
-            if (uploadedFileLocation.endsWith(".webm")) {
-                response = client.target(pythonUrl + "classify_webm_audio")
-                        .request()
-                        .post(Entity.entity(json, MediaType.APPLICATION_JSON));
-            } else if (uploadedFileLocation.endsWith(".wav")) {
-                response = client.target(pythonUrl + "classify_audio")
-                        .request()
-                        .post(Entity.entity(json, MediaType.APPLICATION_JSON));
-            }
+            Response response = client
+                    .target(pythonUrl + "classify_audio")
+                    .request()
+                    .post(Entity.entity(json, MediaType.APPLICATION_JSON));
+
 
             Files.delete(target);
 
