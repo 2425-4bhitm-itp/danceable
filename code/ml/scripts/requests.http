@@ -29,12 +29,12 @@ Content-Type: application/json
 {
     "disabled_labels": ["foxtrott"],
     "test_size": 0.2,
-    "batch_size": 32,
+    "batch_size": 128,
     "epochs": 100,
     "downsampling": false,
     "model_config": {
         "filters": [64, 128, 256, 256],
-        "kernel_size": [5, 5],
+        "kernel_size": [7, 7],
         "dense_units": 512,
         "dropout_rate": 0.5,
         "learning_rate": 0.0001
