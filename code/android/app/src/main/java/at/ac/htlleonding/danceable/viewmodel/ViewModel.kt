@@ -38,6 +38,7 @@ class ViewModel : ViewModel() {
 
     fun updatePrediction(predictions: List<Prediction>) {
         _predictions.value = predictions
+        openSheet();
     }
 
     fun getDanceById(id: Number): Dance? {

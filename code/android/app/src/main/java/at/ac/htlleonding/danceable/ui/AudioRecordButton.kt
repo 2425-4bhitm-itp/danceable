@@ -39,15 +39,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import at.ac.htlleonding.danceable.R
+import at.ac.htlleonding.danceable.data.model.Prediction
 import at.ac.htlleonding.danceable.viewmodel.ViewModel
+import java.util.stream.Collector
 
 @Composable
 fun AudioRecorderButtonRaw(viewModel: ViewModel, size: Dp = 240.dp) {
     val context = LocalContext.current
-    val recorder = remember { AudioRecorderRaw(context) }
+    val recorder = remember { AudioRecorder(context) }
 
     var isRecording by remember { mutableStateOf(false) }
-    val soundLevels by recorder.soundLevels.collectAsState()
 
     val permissionLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -63,7 +64,7 @@ fun AudioRecorderButtonRaw(viewModel: ViewModel, size: Dp = 240.dp) {
         if (isRecording) {
             recorder.startRecording { result ->
                 isRecording = false
-                result.onSuccess { file -> println("RAW saved: ${file.absolutePath}") }
+                result.onSuccess { result -> viewModel.updatePrediction(result.sortedByDescending { it.confidence }.take(3)) }
                 result.onFailure { println("Recording error: ${it.message}") }
             }
         }
@@ -90,7 +91,7 @@ fun AudioRecorderButtonRaw(viewModel: ViewModel, size: Dp = 240.dp) {
                     }
                 }
         ) {
-            if (isRecording) RecordingAnimationView(soundLevels)
+            if (isRecording) RecordingAnimationView(emptyList())
             else Icon(painter = painterResource(R.drawable.microphone), contentDescription = null, tint = Color.White, modifier = Modifier.size(72.dp))
         }
     }
