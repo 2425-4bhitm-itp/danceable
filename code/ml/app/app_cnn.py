@@ -43,6 +43,8 @@ def convert_to_wav_if_needed(file_path):
         return file_converter.convert_webm_to_wav(file_path, file_path.replace(".webm", ".wav"))
     if file_path.endswith(".caf"):
         return file_converter.convert_caf_to_wav(file_path, file_path.replace(".caf", ".wav"))
+    if file_path.endswith(".mp3"):
+        return file_converter.convert_mp3_to_wav(file_path, file_path.replace(".mp3", ".wav"))
     return file_path
 
 
