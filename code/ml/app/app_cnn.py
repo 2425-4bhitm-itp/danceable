@@ -20,7 +20,7 @@ from config.paths import (
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
-from flask import Flask, request, jsonify, Response, Blueprint
+from flask import Flask, request, jsonify, Response
 from training.model_cnn import (
     classify_audio,
     set_model_None
@@ -29,7 +29,6 @@ from training.model_evaluator import DanceModelEvaluator
 from utilities import shorten, sort, file_converter
 
 flask_app = Flask(__name__)
-bp  = Blueprint('secret', __name__, url_prefix='/secret/ml')
 
 extractor = AudioFeatureExtractorCNN()
 dataset_creator = AudioDatasetCreatorCNN(extractor)
@@ -68,7 +67,7 @@ def process_single_audio(path, label):
     dataset_creator.save_csv([row])
 
 
-@bp.route("/process_all_audio", methods=["POST"])
+@flask_app.route("/secret/ml/process_all_audio", methods=["POST"])
 def process_all_audio():
     global processing_flag
     processing_flag = True
@@ -134,14 +133,14 @@ def process_all_audio():
     return jsonify({"message": "Processing completed", "total": total, "skipped": skipped}), 200
 
 
-@bp.route("/upload_audio", methods=["POST"])
+@flask_app.route("/upload_audio", methods=["POST"])
 def upload_audio():
     data = request.get_json()
     process_single_audio(data["file_path"], data["label"])
     return jsonify({"message": "File processed"}), 200
 
 
-@bp.route("/train", methods=["POST"])
+@flask_app.route("/secret/ml/train", methods=["POST"])
 def train():
     data = request.get_json()
 
@@ -210,7 +209,7 @@ def train():
     return jsonify({"message": "Training started"}), 200
 
 
-@bp.route("/evaluate", methods=["GET"])
+@flask_app.route("/secret/ml/evaluate", methods=["GET"])
 def evaluate():
     evaluator = DanceModelEvaluator(
         model_path=CNN_WEIGHTS_PATH,
@@ -231,7 +230,7 @@ def evaluate():
     }), 200
 
 
-@bp.route("/classify_audio", methods=["POST"])
+@flask_app.route("/classify_audio", methods=["POST"])
 def classify():
     file_path = request.args.get('file_path')
 
@@ -247,19 +246,19 @@ def classify():
     return jsonify(pred_result), 200
 
 
-@bp.route("/processing", methods=["GET"])
+@flask_app.route("/secret/ml/processing", methods=["GET"])
 def processing():
     return jsonify({"processing": processing_flag}), 200
 
 
-@bp.route("/split_files", methods=["POST"])
+@flask_app.route("/secret/ml/split_files", methods=["POST"])
 def split_files():
     segment_length = request.get_json()["segment_length"]
     shorten.split_wav_files(SONGS_DIR, SNIPPETS_DIR, segment_length)
     return jsonify({"message": "Shortening completed"}), 200
 
 
-@bp.route("/split_and_sort", methods=["POST"])
+@flask_app.route("/secret/ml/split_and_sort", methods=["POST"])
 def split_and_sort():
     segment_length = request.get_json()["segment_length"]
     shorten.split_wav_files(SONGS_DIR, SNIPPETS_DIR, segment_length)
@@ -267,12 +266,12 @@ def split_and_sort():
     return jsonify({"message": "Shortening and sorting completed"}), 200
 
 
-@bp.route("/health", methods=["GET"])
+@flask_app.route("/health", methods=["GET"])
 def health():
     return jsonify(status="healthy", message="CNN service running"), 200
 
 
-@bp.route("/evaluation_results")
+@flask_app.route("/secret/ml/evaluation_results")
 def show_evaluation_results():
     files = os.listdir(EVALUATION_RESULTS_DIR)
 
@@ -285,13 +284,13 @@ def show_evaluation_results():
 
     for f in sorted(files):
         path = os.path.join(EVALUATION_RESULTS_DIR, f)
-        html += f'<li><a href="/evaluation_results/file/{f}">{f}</a></li>'
+        html += f'<li><a href="/secret/ml/evaluation_results/file/{f}">{f}</a></li>'
 
     html += "</ul></body></html>"
     return Response(html, mimetype="text/html")
 
 
-@bp.route("/evaluation_results/file/<filename>")
+@flask_app.route("/secret/ml/evaluation_results/file/<filename>")
 def serve_result_file(filename):
     path = os.path.join(EVALUATION_RESULTS_DIR, filename)
     if not os.path.exists(path):
@@ -306,7 +305,7 @@ def serve_result_file(filename):
     return Response(data, mimetype=mimetype)
 
 
-@bp.route("/hyperparameter-test", methods=["POST"])
+@flask_app.route("/secret/ml/hyperparameter-test", methods=["POST"])
 def hyperparameter_test():
     data = request.get_json()
     search_space = data.get("search_space")
@@ -344,7 +343,7 @@ def hyperparameter_test():
         "replicas": replicas,
     }), 200
 
-@bp.route("/secret-reset", methods=["GET"])
+@flask_app.route("/secret/ml/secret-reset", methods=["GET"])
 def secret_reset():
     set_model_None()
     return "Model reset successfully", 200
@@ -398,7 +397,6 @@ def expand_search_space(search_space: dict) -> list[dict]:
 
     return runs
 
-flask_app.register_blueprint(bp)
 if __name__ == "__main__":
     init_train_env()
     flask_app.run(host="0.0.0.0", port=5001, debug=True)
