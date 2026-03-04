@@ -14,6 +14,7 @@ from config.paths import (
     CNN_TRAIN_DATA_DIR,
     CNN_DATASET_PATH,
     SCALER_PATH,
+    CNN_LABELS_PATH
 )
 
 
@@ -184,6 +185,9 @@ class AudioDatasetCreatorCNN:
             json.dump(meta, f)
 
         joblib.dump(scaler, SCALER_PATH)
+
+        with open(CNN_LABELS_PATH, "w", encoding="utf-8") as f:
+            json.dump(labels, f)
 
     @staticmethod
     def _ensure_hwc(arr: np.ndarray) -> np.ndarray:

@@ -284,16 +284,28 @@ def train_model(
 
 # ----------------------- Inference -----------------------
 
+def set_model_None():
+    global _model, _scaler, _labels
+    _model = None
+    _scaler = None
+    _labels = None
+
 def classify_audio(file_path: str, extractor) -> dict:
     global _model, _scaler, _labels
 
     if _model is None:
         _model = tf.keras.models.load_model(CNN_MODEL_PATH)
+        print("loaded model")
     if _scaler is None:
         _scaler = joblib.load(SCALER_PATH)
     if _labels is None:
         with open(CNN_LABELS_PATH) as f:
             _labels = json.load(f)
+
+    assert len(_labels) == _model.output_shape[-1], (
+        f"Label count {len(_labels)} != model outputs {_model.output_shape[-1]}. "
+        "CNN_LABELS_PATH is out of sync — retrain or fix the label file."
+    )
 
     patches = extractor.extract_features_from_file(file_path, true)
     if not patches:
@@ -317,6 +329,11 @@ def classify_audio(file_path: str, extractor) -> dict:
         key=lambda x: x[1],
         reverse=True
     )
+
+    print("model output shape" + str(_model.output_shape))
+    print("length of labels variable" + len(_labels))
+    print("labels: " + str(_labels))
+    print("pairs: "+ str(pairs))
 
     return {
         "predictions": [

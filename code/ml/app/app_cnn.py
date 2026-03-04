@@ -22,7 +22,8 @@ from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
 from flask import Flask, request, jsonify, Response
 from training.model_cnn import (
-    classify_audio
+    classify_audio,
+    set_model_None
 )
 from training.model_evaluator import DanceModelEvaluator
 from utilities import shorten, sort, file_converter
@@ -270,7 +271,7 @@ def health():
     return jsonify(status="healthy", message="CNN service running"), 200
 
 
-@flask_app.route("/evaluation_results")
+@flask_app.route("/api/evaluation_results")
 def show_evaluation_results():
     files = os.listdir(EVALUATION_RESULTS_DIR)
 
@@ -289,7 +290,7 @@ def show_evaluation_results():
     return Response(html, mimetype="text/html")
 
 
-@flask_app.route("/evaluation_results/file/<filename>")
+@flask_app.route("/api/evaluation_results/file/<filename>")
 def serve_result_file(filename):
     path = os.path.join(EVALUATION_RESULTS_DIR, filename)
     if not os.path.exists(path):
@@ -342,6 +343,10 @@ def hyperparameter_test():
         "replicas": replicas,
     }), 200
 
+@flask_app.route("/api/secret-reset", methods=["GET"])
+def secret_reset():
+    set_model_None()
+    return "Model reset successfully", 200
 
 def init_train_env():
     defaults = {
