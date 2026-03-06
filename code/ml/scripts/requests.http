@@ -87,4 +87,4 @@ Content-Type: audio/wave
 
 ### test with phone data
 
-GET https://it210190.cloud.htl-leonding.ac.at/secret/ml/evaluate_real_world?apply_scaler=true
+GET https://it210190.cloud.htl-leonding.ac.at/secret/ml/evaluate_real_world?apply_scaler=false

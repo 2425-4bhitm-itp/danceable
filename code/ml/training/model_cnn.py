@@ -121,6 +121,31 @@ def load_npy(path, input_shape):
 
     return arr.reshape(input_shape)
 
+def augment(x, y):
+    # Frequency masking — blank out random frequency bands
+    freq_mask_size = tf.random.uniform([], 0, 20, dtype=tf.int32)
+    f0 = tf.random.uniform([], 0, tf.shape(x)[0] - freq_mask_size, dtype=tf.int32)
+    mask = tf.concat([
+        tf.ones([f0, tf.shape(x)[1], tf.shape(x)[2]]),
+        tf.zeros([freq_mask_size, tf.shape(x)[1], tf.shape(x)[2]]),
+        tf.ones([tf.shape(x)[0] - f0 - freq_mask_size, tf.shape(x)[1], tf.shape(x)[2]]),
+    ], axis=0)
+    x = x * mask
+
+    # Time masking — blank out random time steps
+    time_mask_size = tf.random.uniform([], 0, 20, dtype=tf.int32)
+    t0 = tf.random.uniform([], 0, tf.shape(x)[1] - time_mask_size, dtype=tf.int32)
+    mask_t = tf.concat([
+        tf.ones([tf.shape(x)[0], t0, tf.shape(x)[2]]),
+        tf.zeros([tf.shape(x)[0], time_mask_size, tf.shape(x)[2]]),
+        tf.ones([tf.shape(x)[0], tf.shape(x)[1] - t0 - time_mask_size, tf.shape(x)[2]]),
+    ], axis=1)
+    x = x * mask_t
+
+    # Additive Gaussian noise
+    x = x + tf.random.normal(tf.shape(x), stddev=0.05)
+
+    return x, y
 
 def make_tf_dataset(
         paths,
@@ -152,6 +177,9 @@ def make_tf_dataset(
         return x, y
 
     ds = ds.map(map_fn, num_parallel_calls=tf.data.AUTOTUNE)
+
+    if shuffle:
+        ds = ds.map(augment, num_parallel_calls=tf.data.AUTOTUNE)
 
     ds = ds.batch(batch_size, drop_remainder=True)
 
@@ -321,7 +349,11 @@ def classify_audio(file_path: str, extractor) -> dict:
 
     batch = (batch - mean) / (std + 1e-8)
 
+    temperature = 1.5  # tune between 1.2–2.5; higher = flatter/less confident
     probs = _model.predict(batch, verbose=0)
+    log_probs = np.log(probs + 1e-8) / temperature
+    probs = np.exp(log_probs - log_probs.max(axis=-1, keepdims=True))  # numerically stable
+    probs = probs / probs.sum(axis=-1, keepdims=True)
     avg = probs.mean(axis=0)
 
     pairs = sorted(
