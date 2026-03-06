@@ -331,7 +331,7 @@ def classify_audio(file_path: str, extractor) -> dict:
     )
 
     print("model output shape" + str(_model.output_shape))
-    print("length of labels variable" + len(_labels))
+    print("length of labels variable" + str(len(_labels)))
     print("labels: " + str(_labels))
     print("pairs: "+ str(pairs))
 

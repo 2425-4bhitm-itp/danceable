@@ -16,11 +16,13 @@ from config.paths import (
     TRAIN_ENV_PATH,
     HYPER_ENV_PATH,
     CNN_DATASET_PATH,
-    CNN_WEIGHTS_PATH
+    CNN_WEIGHTS_PATH,
+    REAL_WORLD_TEST_DIR
 )
 from features.dataset_creator_cnn import AudioDatasetCreatorCNN
 from features.feature_extractor_cnn import AudioFeatureExtractorCNN
 from flask import Flask, request, jsonify, Response
+from training.evaluate_real_world import RealWorldEvaluator
 from training.model_cnn import (
     classify_audio,
     set_model_None
@@ -343,10 +345,45 @@ def hyperparameter_test():
         "replicas": replicas,
     }), 200
 
+
 @flask_app.route("/secret/ml/secret-reset", methods=["GET"])
 def secret_reset():
     set_model_None()
     return "Model reset successfully", 200
+
+@flask_app.route("/secret/ml/evaluate_real_world", methods=["GET"])
+def evaluate_real_world():
+    """
+    Evaluate the model on the phone-recorded test dataset.
+
+    Folder layout:
+        /app/song-storage/songs/test/<label>/(*.wav | *.mp3 | *.webm | *.caf)
+
+    Optional query params:
+        apply_scaler=false   — skip normalisation (default: true)
+
+    Returns JSON with accuracy, per-class metrics, and output file paths.
+    """
+    apply_scaler = request.args.get("apply_scaler", "true").lower() != "false"
+
+    evaluator = RealWorldEvaluator(
+        test_root=REAL_WORLD_TEST_DIR,
+        extractor=extractor,
+        file_converter=file_converter,
+        apply_scaler=apply_scaler,
+    )
+
+    try:
+        summary = evaluator.evaluate()
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 500
+
+    print("Real-world evaluation summary:")
+    print(json.dumps(summary, indent=2))
+    return jsonify(summary), 200
+
 
 def init_train_env():
     defaults = {
@@ -396,6 +433,7 @@ def expand_search_space(search_space: dict) -> list[dict]:
             })
 
     return runs
+
 
 if __name__ == "__main__":
     init_train_env()

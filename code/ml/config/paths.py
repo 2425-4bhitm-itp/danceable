@@ -30,3 +30,5 @@ EVALUATION_RESULTS_DIR = BASE_DIR / "evaluation_results"
 # Hyperparameter search space file
 HYPER_ENV_PATH = TRAIN_ENV_PATH / "hyperparam"
 RESULTS_DIR = BASE_DIR / "hyper_results"
+
+REAL_WORLD_TEST_DIR = Path("/app/song-storage/songs/test")

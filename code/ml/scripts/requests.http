@@ -1,10 +1,10 @@
 ### split all files in /app/song-storage/songs
 
-POST https://it210190.cloud.htl-leonding.ac.at/split_files
+POST https://it210190.cloud.htl-leonding.ac.at/secret/ml/split_files
 
 ### split all files in /app/song-storage/songs and sort them into their respective class
 
-POST https://it210190.cloud.htl-leonding.ac.at/split_and_sort
+POST https://it210190.cloud.htl-leonding.ac.at/secret/ml/split_and_sort
 content-type: application/json
 
 {
@@ -13,7 +13,7 @@ content-type: application/json
 
 ### eextract features from all files
 
-POST https://it210190.cloud.htl-leonding.ac.at/process_all_audio
+POST https://it210190.cloud.htl-leonding.ac.at/secret/ml/process_all_audio
 content-type: application/json
 
 {
@@ -23,11 +23,11 @@ content-type: application/json
 
 ### start training
 
-POST https://it210190.cloud.htl-leonding.ac.at/train
+POST https://it210190.cloud.htl-leonding.ac.at/secret/ml/train
 Content-Type: application/json
 
 {
-    "disabled_labels": ["foxtrott"],
+    "disabled_labels": ["foxtrott", "tango"],
     "test_size": 0.2,
     "batch_size": 128,
     "epochs": 100,
@@ -43,7 +43,7 @@ Content-Type: application/json
 
 ### evaluate the newest model
 
-GET https://it210190.cloud.htl-leonding.ac.at/evaluate
+GET https://it210190.cloud.htl-leonding.ac.at/secret/ml/evaluate
 
 ### classify local file
 
@@ -51,11 +51,11 @@ POST https://it210190.cloud.htl-leonding.ac.at/classify_audio?file_path=/opt/app
 
 ### check if pods are processing
 
-GET https://it210190.cloud.htl-leonding.ac.at/processing
+GET https://it210190.cloud.htl-leonding.ac.at/secret/ml/processing
 
 ### test hyperparameters
 
-POST https://it210190.cloud.htl-leonding.ac.at/hyperparameter-test
+POST https://it210190.cloud.htl-leonding.ac.at/secret/ml/hyperparameter-test
 Content-Type: application/json
 
 {
@@ -84,3 +84,7 @@ POST https://it210190.cloud.htl-leonding.ac.at/audio/uploadStream
 Content-Type: audio/wave
 
 < ../data/Sway_Michael_Buble.wav
+
+### test with phone data
+
+GET https://it210190.cloud.htl-leonding.ac.at/secret/ml/evaluate_real_world?apply_scaler=true
