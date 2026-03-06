@@ -149,8 +149,8 @@ class RealWorldEvaluator:
             batch = batch[:, 0]
 
         if self.apply_scaler and self._scaler is not None:
-            mean = self._scaler["mean"]
-            std = self._scaler["std"]
+            mean = batch.mean(axis=(1, 2, 3), keepdims=True)
+            std = batch.std(axis=(1, 2, 3), keepdims=True)
             batch = (batch - mean) / (std + 1e-8)
 
         probs = self._model.predict(batch, verbose=0)
