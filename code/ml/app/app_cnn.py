@@ -354,23 +354,19 @@ def secret_reset():
 @flask_app.route("/secret/ml/evaluate_real_world", methods=["GET"])
 def evaluate_real_world():
     """
-    Evaluate the model on the phone-recorded test dataset.
-
-    Folder layout:
-        /app/song-storage/songs/test/<label>/(*.wav | *.mp3 | *.webm | *.caf)
-
     Optional query params:
-        apply_scaler=false   — skip normalisation (default: true)
-
-    Returns JSON with accuracy, per-class metrics, and output file paths.
+        apply_scaler=false     — skip normalisation (default: true)
+        temperature=1.5        — softmax temperature, >1 flattens confidence (default: 1.0)
     """
     apply_scaler = request.args.get("apply_scaler", "true").lower() != "false"
+    temperature = float(request.args.get("temperature", "1.0"))
 
     evaluator = RealWorldEvaluator(
         test_root=REAL_WORLD_TEST_DIR,
         extractor=extractor,
         file_converter=file_converter,
         apply_scaler=apply_scaler,
+        temperature=temperature,
     )
 
     try:
@@ -383,7 +379,6 @@ def evaluate_real_world():
     print("Real-world evaluation summary:")
     print(json.dumps(summary, indent=2))
     return jsonify(summary), 200
-
 
 def init_train_env():
     defaults = {

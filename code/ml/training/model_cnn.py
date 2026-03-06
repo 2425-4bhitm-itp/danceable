@@ -6,7 +6,6 @@ import joblib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sympy import true
 from tensorflow.keras.layers import (
     Conv2D,
     MaxPooling2D,
@@ -335,7 +334,7 @@ def classify_audio(file_path: str, extractor) -> dict:
         "CNN_LABELS_PATH is out of sync — retrain or fix the label file."
     )
 
-    patches = extractor.extract_features_from_file(file_path, true)
+    patches = extractor.extract_features_from_file(file_path, True)
     if not patches:
         raise ValueError("No patches extracted")
 

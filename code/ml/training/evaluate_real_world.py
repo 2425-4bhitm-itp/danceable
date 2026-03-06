@@ -90,6 +90,7 @@ class RealWorldEvaluator:
         file_converter=None,
         output_dir=None,
         apply_scaler: bool = True,
+        temperature: float = 1.0,  # ADD THIS
     ):
         self.test_root = Path(test_root)
         self.extractor = extractor
@@ -152,7 +153,14 @@ class RealWorldEvaluator:
             std = self._scaler["std"]
             batch = (batch - mean) / (std + 1e-8)
 
-        probs = self._model.predict(batch, verbose=0)   # (patches, num_classes)
+        probs = self._model.predict(batch, verbose=0)
+
+        # Temperature scaling — flatten overconfident predictions
+        if self.temperature != 1.0:
+            log_probs = np.log(probs + 1e-8) / self.temperature
+            probs = np.exp(log_probs - log_probs.max(axis=-1, keepdims=True))
+            probs = probs / probs.sum(axis=-1, keepdims=True)
+
         avg_probs = probs.mean(axis=0)
         pred_idx = int(np.argmax(avg_probs))
 
