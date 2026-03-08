@@ -179,21 +179,16 @@ def load_prepared_dataset():
 
     label_to_idx = meta["label_to_idx"]
 
-    train_idx = meta["train_idx"]
-    val_idx = meta["val_idx"]
+    train_idx = [int(i) for i in meta["train_idx"]]
+    val_idx = [int(i) for i in meta["val_idx"]]
 
-    train_paths = df.iloc[train_idx]["npy_path"].astype(str).tolist()
-    val_paths = df.iloc[val_idx]["npy_path"].astype(str).tolist()
+    train_df = df.iloc[train_idx]
+    val_df = df.iloc[val_idx]
 
-    train_labels = [
-        label_to_idx[df.iloc[i]["label"]]
-        for i in train_idx
-    ]
-
-    val_labels = [
-        label_to_idx[df.iloc[i]["label"]]
-        for i in val_idx
-    ]
+    train_paths = train_df["npy_path"].astype(str).tolist()
+    val_paths = val_df["npy_path"].astype(str).tolist()
+    train_labels = [label_to_idx[l] for l in train_df["label"]]
+    val_labels = [label_to_idx[l] for l in val_df["label"]]
 
     scaler = joblib.load(SCALER_PATH)
 
