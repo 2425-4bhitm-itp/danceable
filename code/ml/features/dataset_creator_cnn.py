@@ -83,7 +83,7 @@ class AudioDatasetCreatorCNN:
             if wav_path.name in existing_files:
                 continue
 
-            patches = self.extractor.extract_features_from_file(str(wav_path))
+            patches = self.extractor.extract_features_from_file(str(wav_path), simulate_phone=True)
 
             for patch in patches:
                 patch = self._ensure_hwc(patch)
@@ -103,7 +103,7 @@ class AudioDatasetCreatorCNN:
 
     def upload_single_file(self, file_path: str | Path, label: str) -> None:
         file_path = Path(file_path)
-        patches = self.extractor.extract_features_from_file(str(file_path))
+        patches = self.extractor.extract_features_from_file(str(file_path), simulate_phone=True)
 
         rows = []
 
@@ -237,37 +237,68 @@ class AudioDatasetCreatorCNN:
 
     @staticmethod
     def _song_wise_split(
-        df: pd.DataFrame,
-        test_size: float,
-        val_from_test: float,
+            df: pd.DataFrame,
+            test_size: float,
+            val_from_test: float,
     ):
         df = df.copy()
         df["song_id"] = df["filename"].astype(str).str.split("_part").str[0]
+        df["is_phone"] = df["filename"].astype(str).str.startswith("uploaded")
 
         indices = np.arange(len(df))
         labels = df["label"].values
-        groups = df["song_id"].values
 
-        gss = GroupShuffleSplit(
-            n_splits=1,
-            test_size=test_size,
-            random_state=42,
+        # --- Split studio recordings normally via group split ---
+        studio_mask = ~df["is_phone"].values
+        studio_indices = indices[studio_mask]
+        studio_labels = labels[studio_mask]
+        studio_groups = df["song_id"].values[studio_mask]
+
+        gss = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=42)
+        s_train_rel, s_temp_rel = next(gss.split(studio_indices, studio_labels, studio_groups))
+
+        studio_train_idx = studio_indices[s_train_rel]
+        studio_temp_idx = studio_indices[s_temp_rel]
+
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=val_from_test, random_state=42)
+        s_val_rel, s_test_rel = next(
+            sss.split(studio_temp_idx.reshape(-1, 1), studio_labels[s_temp_rel])
         )
-        train_idx, temp_idx = next(gss.split(indices, labels, groups))
+        studio_val_idx = studio_temp_idx[s_val_rel]
+        studio_test_idx = studio_temp_idx[s_test_rel]
 
-        temp_labels = labels[temp_idx]
+        # --- Distribute phone recordings across all three splits ---
+        phone_indices = indices[df["is_phone"].values]
+        phone_labels = labels[df["is_phone"].values]
 
-        sss = StratifiedShuffleSplit(
-            n_splits=1,
-            test_size=val_from_test,
-            random_state=42,
-        )
-        val_rel, test_rel = next(
-            sss.split(temp_idx.reshape(-1, 1), temp_labels)
-        )
+        unique_phone_labels = np.unique(phone_labels)
+        phone_train, phone_val, phone_test = [], [], []
 
-        val_idx = temp_idx[val_rel]
-        test_idx = temp_idx[test_rel]
+        for lbl in unique_phone_labels:
+            lbl_idx = phone_indices[phone_labels == lbl]
+            np.random.default_rng(42).shuffle(lbl_idx)
+
+            n = len(lbl_idx)
+            n_test = max(1, round(n * val_from_test * test_size))
+            n_val = max(1, round(n * val_from_test * test_size))
+            n_train = n - n_test - n_val
+
+            if n_train < 1:
+                # too few samples — just put all in train
+                phone_train.extend(lbl_idx)
+                continue
+
+            phone_train.extend(lbl_idx[:n_train])
+            phone_val.extend(lbl_idx[n_train:n_train + n_val])
+            phone_test.extend(lbl_idx[n_train + n_val:])
+
+        # --- Merge studio and phone splits ---
+        train_idx = np.concatenate([studio_train_idx, phone_train])
+        val_idx = np.concatenate([studio_val_idx, phone_val])
+        test_idx = np.concatenate([studio_test_idx, phone_test])
+
+        print(f"Split sizes — train: {len(train_idx)}, val: {len(val_idx)}, test: {len(test_idx)}")
+        print(f"Phone recordings — train: {len(phone_train)}, val: {len(phone_val)}, test: {len(phone_test)}")
 
         return train_idx, val_idx, test_idx
 

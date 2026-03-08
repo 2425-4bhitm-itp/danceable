@@ -122,7 +122,7 @@ def process_all_audio():
 
     def process_file(file_path, label):
         wav_path = convert_to_wav_if_needed(file_path)
-        patches = extractor.extract_features_from_file(wav_path)
+        patches = extractor.extract_features_from_file(wav_path, simulate_phone=True)
 
         if not patches:
             raise ValueError(f"No patches extracted from {file_path}")

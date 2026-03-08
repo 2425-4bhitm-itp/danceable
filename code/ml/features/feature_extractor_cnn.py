@@ -89,8 +89,67 @@ class AudioFeatureExtractorCNN:
         # stack along channel axis: H x W x C
         return np.stack(feats, axis=-1)
 
-    def extract_features_from_file(self, path, should_print_duration=False):
+    def simulate_phone_recording(self, y, sr=22050):
+        """
+        Apply phone-like degradation to a studio waveform.
+        Tuned against real phone recording analysis:
+        - Real phone spectral centroid ~214Hz (studio: 891Hz) -> very aggressive low-pass
+        - Real phone 85% energy rolloff at ~290Hz (studio: 1571Hz)
+        - Real phone is clean (SNR ~52dB) -> minimal noise
+        - ZCR slightly higher on phone -> mild room reverb
+        """
+        freqs = np.fft.rfftfreq(len(y), d=1 / sr)
+
+        # 1. Aggressive low-pass with gradual shelf
+        #    Full pass below 300Hz, shelf down to 0.05 by 1kHz, near-silence above
+        F = np.fft.rfft(y)
+        gain = np.ones(len(freqs), dtype=np.float32)
+        shelf_mask = (freqs >= 300) & (freqs < 1000)
+        gain[shelf_mask] = np.linspace(1.0, 0.05, shelf_mask.sum())
+        gain[freqs >= 1000] = 0.02
+        F *= gain
+        y = np.fft.irfft(F, n=len(y))
+
+        # 2. Strong low-frequency resonance boost (phone body/room)
+        #    Peak below ~120Hz, much stronger than before
+        F = np.fft.rfft(y)
+        freqs = np.fft.rfftfreq(len(y), d=1 / sr)
+        boost = 1.0 + 3.0 * np.exp(-freqs / 120)
+        F *= boost
+        y = np.fft.irfft(F, n=len(y))
+
+        # 3. Mild room reverb - early reflection at ~18ms
+        #    Accounts for higher ZCR on real phone recording
+        delay_samples = int(0.018 * sr)
+        reverb_tail = np.zeros_like(y)
+        reverb_tail[delay_samples:] = y[:-delay_samples] * 0.18
+        y = y + reverb_tail
+
+        # 4. Very light noise floor - real phone is clean, just a hint
+        noise_level = 0.0005
+        noise = np.random.normal(0, noise_level, size=y.shape)
+        y = y + noise
+
+        # 5. Mild AGC / soft clip
+        threshold = 0.75
+        y = np.where(
+            np.abs(y) > threshold,
+            np.sign(y) * (threshold + (np.abs(y) - threshold) * 0.25),
+            y
+        )
+
+        # 6. Scale down ~6dB to match real phone recording level, then normalize
+        y *= 0.5
+        y = librosa.util.normalize(y)
+
+        return y
+
+    def extract_features_from_file(self, path, simulate_phone=False, should_print_duration=False):
         y = self.load_audio(path, should_print_duration)
+
+        if simulate_phone:
+            y = self.simulate_phone_recording(y, sr=self.sr)
+
         windows = self.slice_into_windows(y)
         outputs = []
         if len(y) < len(windows):
