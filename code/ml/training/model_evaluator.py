@@ -79,10 +79,6 @@ class DanceModelEvaluator:
 
                 arr = np.load(row["npy_path"])["input"].astype(np.float32)
 
-                mean = arr.mean()
-                std = arr.std()
-                arr = (arr - mean) / (std + 1e-8)
-
                 X_list.append(arr)
 
                 y_list.append(self.label_to_idx[label])

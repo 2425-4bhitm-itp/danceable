@@ -120,10 +120,6 @@ def load_npy(path, input_shape):
 
     arr = arr.reshape(input_shape)
 
-    mean = arr.mean()
-    std = arr.std()
-    arr = (arr - mean) / (std + 1e-8)
-
     return arr
 
 def make_tf_dataset(
@@ -317,11 +313,6 @@ def classify_audio(file_path: str, extractor) -> dict:
 
     if batch.ndim == 5 and batch.shape[1] == 1:
         batch = batch[:, 0]
-
-    # Normalize each patch independently — must match load_npy in model_cnn.py
-    means = batch.mean(axis=(1, 2, 3), keepdims=True)
-    stds = batch.std(axis=(1, 2, 3), keepdims=True)
-    batch = (batch - means) / (stds + 1e-8)
 
     probs = _model.predict(batch, verbose=0)
     avg = probs.mean(axis=0)

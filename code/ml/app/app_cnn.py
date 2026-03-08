@@ -53,21 +53,23 @@ def convert_to_wav_if_needed(file_path):
 
 def process_single_audio(path, label):
     wav_path = convert_to_wav_if_needed(path)
-    tensor = extractor.wav_to_spectrogram_tensor(wav_path)
+    patches = extractor.extract_features_from_file(wav_path)
 
-    window_id = str(uuid.uuid4())
-    save_path = dataset_creator.output_dir / f"{window_id}.npz"
+    rows = []
+    for patch in patches:
+        window_id = str(uuid.uuid4())
+        save_path = dataset_creator.output_dir / f"{window_id}.npz"
+        np.savez(save_path, input=patch, label=label)
 
-    np.savez(save_path, input=tensor, label=label)
+        rows.append({
+            "window_id": window_id,
+            "filename": os.path.basename(wav_path),
+            "label": label,
+            "npy_path": str(save_path)
+        })
 
-    row = {
-        "window_id": window_id,
-        "filename": os.path.basename(wav_path),
-        "label": label,
-        "npy_path": str(save_path)
-    }
-    dataset_creator.save_csv([row])
-
+    if rows:
+        dataset_creator.save_csv(rows)
 
 @flask_app.route("/secret/ml/process_all_audio", methods=["POST"])
 def process_all_audio():
@@ -85,19 +87,24 @@ def process_all_audio():
         dataset_creator.clear_files()
         print("Cleared existing processed files")
 
-    labels = os.listdir(SNIPPETS_DIR)
-    print(f"Starting audio processing for {len(labels)} labels")
+    processed_filenames = set()
+    if dataset_creator.output_csv.exists():
+        df = pd.read_csv(dataset_creator.output_csv)
+        processed_filenames = set(df["filename"].tolist())
 
-    processed_files = dataset_creator.load_existing()
+    labels = [l for l in os.listdir(SNIPPETS_DIR) if os.path.isdir(os.path.join(SNIPPETS_DIR, l))]
+    print(f"Starting audio processing for {len(labels)} labels")
 
     tasks = []
     skipped = 0
     for label in labels:
         folder = os.path.join(SNIPPETS_DIR, label)
-        wav_files = [os.path.join(folder, f) for f in os.listdir(folder)
-                     if f.lower().endswith((".wav", ".webm", ".caf"))]
+        wav_files = [
+            os.path.join(folder, f) for f in os.listdir(folder)
+            if f.lower().endswith((".wav", ".webm", ".caf", ".mp3"))
+        ]
         for file_path in wav_files:
-            if str(file_path) in processed_files:
+            if os.path.basename(file_path) in processed_filenames:
                 skipped += 1
                 continue
             tasks.append((file_path, label))
@@ -110,13 +117,30 @@ def process_all_audio():
 
     print(f"Processing {total} files (skipped {skipped} already processed)")
 
-    def process_file(file_path, label):
-        try:
-            process_single_audio(file_path, label)
-        except Exception as e:
-            raise
-
+    errors = []
     processed_count = 0
+
+    def process_file(file_path, label):
+        wav_path = convert_to_wav_if_needed(file_path)
+        patches = extractor.extract_features_from_file(wav_path)
+
+        if not patches:
+            raise ValueError(f"No patches extracted from {file_path}")
+
+        rows = []
+        for patch in patches:
+            window_id = str(uuid.uuid4())
+            save_path = dataset_creator.output_dir / f"{window_id}.npz"
+            np.savez(save_path, input=patch, label=label)
+            rows.append({
+                "window_id": window_id,
+                "filename": os.path.basename(wav_path),
+                "label": label,
+                "npy_path": str(save_path)
+            })
+
+        dataset_creator.save_csv(rows)
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
         future_to_task = {executor.submit(process_file, fp, lbl): (fp, lbl) for fp, lbl in tasks}
 
@@ -126,21 +150,20 @@ def process_all_audio():
                 future.result()
             except Exception as e:
                 print(f"Error processing {fp}: {e}")
+                errors.append({"file": fp, "error": str(e)})
             processed_count += 1
             pct = processed_count / total
             print(f"Progress: {processed_count}/{total} ({pct:.1%}) - last: {os.path.basename(fp)}")
 
     processing_flag = False
     print("Audio processing completed for all files")
-    return jsonify({"message": "Processing completed", "total": total, "skipped": skipped}), 200
-
-
-@flask_app.route("/upload_audio", methods=["POST"])
-def upload_audio():
-    data = request.get_json()
-    process_single_audio(data["file_path"], data["label"])
-    return jsonify({"message": "File processed"}), 200
-
+    return jsonify({
+        "message": "Processing completed",
+        "total": total,
+        "skipped": skipped,
+        "errors": len(errors),
+        "error_details": errors
+    }), 200
 
 @flask_app.route("/secret/ml/train", methods=["POST"])
 def train():
