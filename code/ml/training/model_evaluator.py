@@ -79,10 +79,12 @@ class DanceModelEvaluator:
 
                 arr = np.load(row["npy_path"])["input"].astype(np.float32)
 
-                if self.apply_scaler and self.scaler is not None:
-                    arr = (arr - self.scaler["mean"]) / self.scaler["std"]
+                mean = arr.mean()
+                std = arr.std()
+                arr = (arr - mean) / (std + 1e-8)
 
                 X_list.append(arr)
+
                 y_list.append(self.label_to_idx[label])
 
             if not X_list:

@@ -413,6 +413,21 @@ def expand_search_space(search_space: dict) -> list[dict]:
     train_space = search_space.get("train", {})
     model_space = search_space.get("model", {})
 
+    # Keys where the value is a list-of-lists (should stay as a single item per combo)
+    # vs a list of scalar options to sweep over
+    def prep_values(space: dict) -> dict:
+        prepped = {}
+        for k, v in space.items():
+            if k == "disabled_labels":
+                # Always a single fixed value, not a sweep axis — wrap it
+                prepped[k] = [v]
+            else:
+                prepped[k] = v
+        return prepped
+
+    train_space = prep_values(train_space)
+    model_space = prep_values(model_space)
+
     train_keys = list(train_space.keys())
     model_keys = list(model_space.keys())
 

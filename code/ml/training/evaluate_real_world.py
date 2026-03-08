@@ -90,8 +90,9 @@ class RealWorldEvaluator:
         file_converter=None,
         output_dir=None,
         apply_scaler: bool = True,
-        temperature: float = 1.0,  # ADD THIS
+        temperature: float = 1.0,
     ):
+        self.temperature: float = temperature,
         self.test_root = Path(test_root)
         self.extractor = extractor
         self.file_converter = file_converter

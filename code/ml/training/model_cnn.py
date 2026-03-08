@@ -259,7 +259,7 @@ def train_model(
     callbacks = [
         tf.keras.callbacks.EarlyStopping(
             monitor="val_loss",
-            patience=12,
+            patience=7,
             restore_best_weights=True,
         ),
         tf.keras.callbacks.ModelCheckpoint(
@@ -271,7 +271,7 @@ def train_model(
         tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss",
             factor=0.5,
-            patience=5,
+            patience=3,
             min_lr=1e-6,
         ),
     ]
@@ -300,8 +300,6 @@ def classify_audio(file_path: str, extractor) -> dict:
     if _model is None:
         _model = tf.keras.models.load_model(CNN_MODEL_PATH)
         print("loaded model")
-    if _scaler is None:
-        _scaler = joblib.load(SCALER_PATH)
     if _labels is None:
         with open(CNN_LABELS_PATH) as f:
             _labels = json.load(f)
@@ -320,15 +318,12 @@ def classify_audio(file_path: str, extractor) -> dict:
     if batch.ndim == 5 and batch.shape[1] == 1:
         batch = batch[:, 0]
 
-    mean = batch.mean(axis=(1, 2, 3), keepdims=True)
-    std = batch.std(axis=(1, 2, 3), keepdims=True)
-    batch = (batch - mean) / (std + 1e-8)
+    # Normalize each patch independently — must match load_npy in model_cnn.py
+    means = batch.mean(axis=(1, 2, 3), keepdims=True)
+    stds = batch.std(axis=(1, 2, 3), keepdims=True)
+    batch = (batch - means) / (stds + 1e-8)
 
-    temperature = 1.5  # tune between 1.2–2.5; higher = flatter/less confident
     probs = _model.predict(batch, verbose=0)
-    log_probs = np.log(probs + 1e-8) / temperature
-    probs = np.exp(log_probs - log_probs.max(axis=-1, keepdims=True))  # numerically stable
-    probs = probs / probs.sum(axis=-1, keepdims=True)
     avg = probs.mean(axis=0)
 
     pairs = sorted(
@@ -337,18 +332,12 @@ def classify_audio(file_path: str, extractor) -> dict:
         reverse=True
     )
 
-    print("model output shape" + str(_model.output_shape))
-    print("length of labels variable" + str(len(_labels)))
-    print("labels: " + str(_labels))
-    print("pairs: "+ str(pairs))
-
     return {
         "predictions": [
             {"danceName": label, "confidence": float(f"{conf:.6f}")}
             for label, conf in pairs
         ]
     }
-
 
 def load_model():
     global _model, _scaler

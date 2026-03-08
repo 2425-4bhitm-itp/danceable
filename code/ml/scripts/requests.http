@@ -29,14 +29,14 @@ Content-Type: application/json
 {
     "disabled_labels": ["foxtrott", "tango"],
     "test_size": 0.2,
-    "batch_size": 128,
+    "batch_size": 64,
     "epochs": 100,
     "downsampling": false,
     "model_config": {
         "filters": [64, 128, 256, 256],
-        "kernel_size": [7, 7],
-        "dense_units": 512,
-        "dropout_rate": 0.5,
+        "kernel_size": [5, 5],
+        "dense_units": 256,
+        "dropout_rate": 0.3,
         "learning_rate": 0.0001
     }
 }
@@ -61,18 +61,23 @@ Content-Type: application/json
 {
   "search_space": {
     "train": {
-      "batch_size": [32, 64, 128],
+      "batch_size": [64, 128, 256],
       "epochs": [100],
       "test_size": [0.2],
       "downsampling": [false],
-      "disabled_labels": ["foxtrott"]
+      "disabled_labels": ["foxtrott", "tango"]
     },
     "model": {
-      "filters": [[64, 128, 256], [64, 128, 256, 256]],
-      "dense_units": [512, 256],
-      "dropout_rate": [0.2, 0.4, 0.5],
-      "learning_rate": [0.0001],
-      "kernel_size": [[7, 7], [5, 5]]
+      "filters": [
+        [32, 64, 128],
+        [64, 128, 256],
+        [64, 128, 256, 256],
+        [64, 128, 256, 512]
+      ],
+      "dense_units": [256, 512],
+      "dropout_rate": [0.3, 0.5],
+      "learning_rate": [0.0001, 0.00005],
+      "kernel_size": [[5, 5], [7, 7]]
     }
   },
   "replicas": 8
@@ -85,6 +90,6 @@ Content-Type: audio/wave
 
 < ../data/Sway_Michael_Buble.wav
 
-### test with phone data
+### evaluate with phone data
 
 GET https://it210190.cloud.htl-leonding.ac.at/secret/ml/evaluate_real_world?temperature=1.0

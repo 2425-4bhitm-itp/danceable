@@ -1,5 +1,9 @@
+import warnings
 import librosa
 import numpy as np
+
+warnings.filterwarnings("ignore", message="PySoundFile failed")
+warnings.filterwarnings("ignore", category=FutureWarning, module="librosa")
 
 class AudioFeatureExtractorCNN:
     def __init__(
