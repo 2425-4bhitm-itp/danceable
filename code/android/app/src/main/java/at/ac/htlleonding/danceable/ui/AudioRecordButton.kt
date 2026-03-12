@@ -1,6 +1,7 @@
 package at.ac.htlleonding.danceable.ui
 
 import AudioRecorder
+import RecordingAnimationView
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,7 +49,11 @@ fun AudioRecorderButtonRaw(viewModel: ViewModel, size: Dp = 240.dp) {
     val context = LocalContext.current
     val recorder = remember { AudioRecorder(context) }
 
+    val volume by recorder.volume.collectAsState()
+
     var isRecording by remember { mutableStateOf(false) }
+
+    print(volume)
 
     val permissionLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -91,7 +96,8 @@ fun AudioRecorderButtonRaw(viewModel: ViewModel, size: Dp = 240.dp) {
                     }
                 }
         ) {
-            if (isRecording) RecordingAnimationView(emptyList())
+            Text(text = volume.toString())//this alawys is 0.0 when it is not recordeing and 1.0 when it is
+            if (isRecording) RecordingAnimationView(volume)
             else Icon(painter = painterResource(R.drawable.microphone), contentDescription = null, tint = Color.White, modifier = Modifier.size(72.dp))
         }
     }
