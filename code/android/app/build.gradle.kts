@@ -2,13 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.android)
+    jacoco
 }
 
 android {
     namespace = "at.ac.htlleonding.danceable"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "at.ac.htlleonding.danceable"
@@ -21,6 +20,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            enableAndroidTestCoverage = true
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -39,6 +42,56 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+}
+
+// JaCoCo configuration
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    // Exclude auto-generated, framework, and DI files from coverage
+    val excludes = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        // Compose compiler generated
+        "**/*\$\$inlined*",
+        "**/*ComposableSingletons*",
+        "**/*_Factory*",
+        "**/*_HiltComponents*",
+        "**/*Hilt_*",
+        // Navigation
+        "**/navigation/**",
+        // Data classes / models (optional — remove if you want them covered)
+        "**/model/**",
+    )
+
+    val kotlinDebugTree = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
+        exclude(excludes)
+    }
+
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+    classDirectories.setFrom(files(kotlinDebugTree))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.get()) {
+            include(
+                "jacoco/testDebugUnitTest.exec",
+                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
+            )
+        }
+    )
 }
 
 dependencies {
