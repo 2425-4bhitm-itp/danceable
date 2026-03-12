@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,7 +27,8 @@ fun DanceView(dance: Dance, onItemClick: (String) -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .testTag("dance_item_${dance.id}"),
         color = Color(0xFFE0E0E0),
         shape = RoundedCornerShape(8.dp),
         shadowElevation = 2.dp
@@ -54,4 +56,3 @@ fun DanceView(dance: Dance, onItemClick: (String) -> Unit) {
         }
     }
 }
-
