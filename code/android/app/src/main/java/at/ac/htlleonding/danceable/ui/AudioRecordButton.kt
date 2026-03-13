@@ -89,7 +89,6 @@ fun AudioRecorderButton(viewModel: ViewModel, size: Dp = 240.dp) {
                     }
                 }
         ) {
-            Text(text = volume.toString())//this alawys is 0.0 when it is not recordeing and 1.0 when it is
             if (isRecording) RecordingAnimationView(volume)
             else Icon(painter = painterResource(R.drawable.microphone), contentDescription = null, tint = Color.White, modifier = Modifier.size(72.dp))
         }
